@@ -1,0 +1,27 @@
+[build]
+  publish = "website"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[redirects]]
+  from = "/markalar"
+  to = "/is-birligi.html"
+  status = 301
+[[redirects]]
+  from = "/urunler"
+  to = "/kesfet.html"
+  status = 301
+[[redirects]]
+  from = "/gizlilik"
+  to = "/gizlilik.html"
+  status = 301
+[[redirects]]
+  from = "/kosullar"
+  to = "/kosullar.html"
+  status = 301
