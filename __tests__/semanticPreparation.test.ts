@@ -1,5 +1,4 @@
 import type { Product } from '../types/product';
-import { getDisplayPrice } from '../types/product';
 import { catalogSemanticKey } from '../src/intelligence/outfits/catalogCompatibility';
 import { createRecommendationMemo, normalizedRecommendationToken, withRecommendationMemo } from '../lib/recommendationMemo';
 
@@ -11,7 +10,7 @@ const product = (): Product => ({ id: 'semantic-test', outfitRole: 'top', catego
 const reference = (p: Product): string => {
   const token = (value: string | undefined) => value == null ? '' : value.trim().toLocaleLowerCase('tr-TR');
   return JSON.stringify([p.outfitRole, p.category, p.gender, token(p.subcategory), token(p.brand),
-    token(p.title), getDisplayPrice(p), [...(p.colorSlugs ?? [])].map(token).sort(), token(p.fit)]);
+    token(p.title), [...(p.colorSlugs ?? [])].map(token).sort(), token(p.fit)]);
 };
 
 describe('shared string and semantic preparation', () => {
@@ -47,7 +46,7 @@ describe('shared string and semantic preparation', () => {
     const p = product();
     const edits: Partial<Product>[] = [{ outfitRole: 'outerwear' }, { category: 'bags' },
       { gender: 'men' }, { subcategory: 'Jean' }, { brand: 'Other' }, { title: 'Other Title' },
-      { currentPrice: 20 }, { currentPrice: undefined, price: 70 }, { fit: 'Slim' }];
+      { fit: 'Slim' }];
     expect(catalogSemanticKey(p)).toBe(reference(p));
     for (const edit of edits) {
       Object.assign(p, edit);
@@ -55,6 +54,16 @@ describe('shared string and semantic preparation', () => {
     }
     const other = { ...p, title: 'Distinct same-ID product' };
     expect(catalogSemanticKey(other)).toBe(reference(other));
+    expect(catalogSemanticKey(p)).toBe(reference(p));
+  });
+
+  it('does not order equal products by price', () => {
+    const p = product();
+    const before = catalogSemanticKey(p);
+    Object.assign(p, { currentPrice: 20 });
+    expect(catalogSemanticKey(p)).toBe(before);
+    Object.assign(p, { currentPrice: undefined, price: 70 });
+    expect(catalogSemanticKey(p)).toBe(before);
     expect(catalogSemanticKey(p)).toBe(reference(p));
   });
 

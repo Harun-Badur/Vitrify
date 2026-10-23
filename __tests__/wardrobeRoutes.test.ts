@@ -40,6 +40,7 @@ interface Tree {
     findAllByProps: (props: Record<string, unknown>) => Node[];
   };
   unmount: () => void;
+  update: (element: ReactElement) => void;
 }
 const renderer = jest.requireActual('react-test-renderer') as {
   create: (element: ReactElement) => Tree;
@@ -47,6 +48,7 @@ const renderer = jest.requireActual('react-test-renderer') as {
 };
 const mockPush = jest.fn();
 const mockBack = jest.fn();
+const mockDismissTo = jest.fn();
 const mockNavigate = jest.fn();
 let mockParams: { section?: string; id?: string } = {};
 const mockState = {
@@ -54,30 +56,37 @@ const mockState = {
   savedOutfits: [] as SavedOutfit[],
   likedProducts: [] as { product: (typeof MOCK_PRODUCTS)[number] }[],
   wardrobeStatus: 'ready',
+  wardrobeSync: undefined as {state:'pending'|'synced'|'conflict';pending:number;message?:string} | undefined,
   sessionUserId: 'owner',
   addWardrobeItem: jest.fn().mockResolvedValue(undefined),
   updateWardrobeItem: jest.fn().mockResolvedValue(undefined),
   removeWardrobeItem: jest.fn().mockResolvedValue(undefined),
   unlikeProduct: jest.fn().mockResolvedValue(undefined),
   hydrateWardrobe: jest.fn().mockResolvedValue(undefined),
+  refreshWardrobe: jest.fn().mockResolvedValue(undefined),
 };
 jest.mock('../store/useAppStore', () => ({
-  useAppStore: (selector: (state: typeof mockState) => unknown) =>
-    selector(mockState),
+  useAppStore: Object.assign((selector: (state: typeof mockState) => unknown) =>
+    selector(mockState), { getState: () => mockState }),
 }));
 jest.mock('expo-router', () => ({
   router: {
     push: (...args: unknown[]) => mockPush(...args),
     back: () => mockBack(),
+    dismissTo: (...args: unknown[]) => mockDismissTo(...args),
     navigate: (...args: unknown[]) => mockNavigate(...args),
   },
   Stack: { Screen: 'StackScreen' },
   useLocalSearchParams: () => mockParams,
+  useFocusEffect: (callback: () => void | (() => void)) => jest.requireActual<typeof import('react')>('react').useEffect(callback, [callback]),
 }));
 jest.mock('expo-image', () => ({ Image: 'Image' }));
+jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 24, bottom: 12 }) }));
 jest.mock('lucide-react-native', () => ({
   Layers: () => null,
   Shirt: () => null,
+  Camera: () => null, ImagePlus: () => null, Footprints: () => null,
+  Tag: () => null, ArrowDown: () => null, ChevronLeft: () => null,
 }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
 jest.mock('../components/VirtualTryOnModal', () => 'VirtualTryOnModal');
@@ -124,6 +133,7 @@ describe('Dolap child routes', () => {
     mockState.wardrobeItems = [];
     mockState.savedOutfits = [];
     mockState.likedProducts = [];
+    mockState.wardrobeSync = undefined;
     mockState.addWardrobeItem.mockResolvedValue(undefined);
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     jest.mocked(ImagePicker.requestCameraPermissionsAsync).mockResolvedValue({
@@ -145,6 +155,21 @@ describe('Dolap child routes', () => {
     if (tree) await renderer.act(async () => tree.unmount());
     jest.restoreAllMocks();
   });
+
+  it('shows pending cloud state and exposes a safe retry without hiding records', async () => {
+    mockParams={section:'clothes'};
+    mockState.wardrobeSync={state:'pending',pending:1,message:'Yerel kayıt korundu; bulut bekleniyor.'};
+    await mount(WardrobeListScreen);
+    expect(tree.root.findByProps({accessibilityLabel:'Dolap bulut durumu'})).toBeDefined();
+    await press('Dolabı senkronize et');
+    expect(mockState.refreshWardrobe).toHaveBeenCalledTimes(1);
+  });
+  it('does not show wardrobe sync warnings in the favorites-only list', async () => {
+    mockParams={section:'favorites'};
+    mockState.wardrobeSync={state:'pending',pending:1,message:'Bekliyor'};
+    await mount(WardrobeListScreen);
+    expect(tree.root.findAllByProps({accessibilityLabel:'Dolap bulut durumu'})).toHaveLength(0);
+  });
   it.each(['Fotoğraf çek', 'Galeriden seç'])(
     'adds an actual image via %s and returns only after saving',
     async (label) => {
@@ -161,8 +186,8 @@ describe('Dolap child routes', () => {
         brand: '',
         category: 'upper_body',
         imageUrl: 'file:///cache/selected.jpg',
-      });
-      expect(mockBack).toHaveBeenCalledTimes(1);
+      }, expect.objectContaining({ requestId: expect.any(String), onStage: expect.any(Function) }));
+      expect(mockDismissTo).toHaveBeenCalledWith('/(tabs)/liked');
       const picker =
         label === 'Fotoğraf çek'
           ? ImagePicker.launchCameraAsync
@@ -184,6 +209,7 @@ describe('Dolap child routes', () => {
     await press('Kıyafeti kaydet');
     expect(mockState.addWardrobeItem).not.toHaveBeenCalled();
     expect(mockBack).not.toHaveBeenCalled();
+    expect(mockDismissTo).not.toHaveBeenCalled();
     await press('Galeriden seç');
     await renderer.act(async () =>
       tree.root
@@ -192,8 +218,10 @@ describe('Dolap child routes', () => {
     );
     mockState.addWardrobeItem.mockRejectedValueOnce(new Error('disk full'));
     await press('Kıyafeti kaydet');
-    expect(Alert.alert).toHaveBeenLastCalledWith('Kaydedilemedi', 'disk full');
+    expect(Alert.alert).not.toHaveBeenCalledWith('Kaydedilemedi', 'disk full');
+    expect(tree.root.findByProps({ accessibilityLabel: 'Kayıt durumu' })).toBeDefined();
     expect(mockBack).not.toHaveBeenCalled();
+    expect(mockDismissTo).not.toHaveBeenCalled();
   });
   it('reports denied camera access and does not launch the camera', async () => {
     jest
@@ -376,4 +404,127 @@ describe('Dolap child routes', () => {
     expect(tree.root.findByProps({ children: 'Günlük kombin' })).toBeDefined();
     expect(tree.root.findByProps({ outfit: true })).toBeDefined();
   });
+
+  it('blocks same-frame duplicate saves while a slow request is in flight', async () => {
+    await mount(AddWardrobeScreen);
+    await press('Galeriden seç');
+    await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Gömlek'));
+    let finish!: () => void;
+    mockState.addWardrobeItem.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    const save = tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress;
+    await renderer.act(() => { save(); save(); });
+    expect(mockState.addWardrobeItem).toHaveBeenCalledTimes(1);
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockDismissTo).not.toHaveBeenCalled();
+    expect(tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.disabled).toBe(true);
+    await renderer.act(async () => { finish(); });
+    expect(mockDismissTo).toHaveBeenCalledWith('/(tabs)/liked');
+  });
+
+  it('does not navigate after leaving during a pending save', async () => {
+    await mount(AddWardrobeScreen);
+    await press('Galeriden seç');
+    await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Gömlek'));
+    let finish!: () => void;
+    mockState.addWardrobeItem.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    await renderer.act(() => { tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress(); });
+    await renderer.act(() => tree.unmount());
+    await renderer.act(async () => { finish(); });
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockDismissTo).not.toHaveBeenCalled();
+  });
+
+  it.each([['Üst', 'upper_body'], ['Alt', 'lower_body'], ['Ayakkabı', 'shoes'], ['Aksesuar', 'accessories']])('shows the %s category card and keeps its stored value', async (label, category) => {
+    await mount(AddWardrobeScreen);
+    await press('Galeriden seç');
+    await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parçam'));
+    await press(`${label} kategorisi`);
+    await press('Kıyafeti kaydet');
+    expect(mockState.addWardrobeItem).toHaveBeenCalledWith(expect.objectContaining({ category }), expect.any(Object));
+  });
+
+  it.each(['dresses', 'bags', 'hats'] as const)('preserves legacy %s on edit without changing category semantics', async category => {
+    mockParams = { id: 'old' };
+    mockState.wardrobeItems = [{ id: 'old', title: 'Eski', brand: '', imageUrl: 'old.jpg', category, createdAt: '' }];
+    await mount(AddWardrobeScreen);
+    await press('Kıyafeti kaydet');
+    expect(mockState.updateWardrobeItem).toHaveBeenCalledWith('old', expect.objectContaining({ category }), expect.any(Function));
+  });
+
+
+  it('retries a failed save with the same intent identity', async () => {
+    await mount(AddWardrobeScreen);
+    await press('Galeriden seç');
+    await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Gömlek'));
+    mockState.addWardrobeItem.mockRejectedValueOnce(new Error('disk full'));
+    await press('Kıyafeti kaydet');
+    const options = mockState.addWardrobeItem.mock.calls[0][1];
+    await press('Kıyafeti kaydet');
+    expect(mockState.addWardrobeItem.mock.calls[1][1].requestId).toBe(options.requestId);
+    expect(mockDismissTo).toHaveBeenCalledWith('/(tabs)/liked');
+  });
+
+  it('ignores a picker result delivered after leaving the screen', async () => {
+    let finish!: (value: ImagePicker.ImagePickerResult) => void;
+    jest.mocked(ImagePicker.launchImageLibraryAsync).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    await mount(AddWardrobeScreen);
+    await renderer.act(() => { tree.root.findByProps({ accessibilityLabel: 'Galeriden seç' }).props.onPress(); });
+    await renderer.act(() => tree.unmount());
+    await renderer.act(async () => { finish({ canceled: false, assets: [{ uri: 'private.jpg', width: 10, height: 20 }] } as ImagePicker.ImagePickerResult); });
+    expect(mockState.addWardrobeItem).not.toHaveBeenCalled();
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockDismissTo).not.toHaveBeenCalled();
+  });
+
+
+  it.each([['Üst', 'Elbise', 'dresses'], ['Aksesuar', 'Çanta', 'bags'], ['Aksesuar', 'Şapka', 'hats']])('retains %s / %s as a real stored subcategory', async (main, sub, category) => {
+    await mount(AddWardrobeScreen);
+    await press('Galeriden seç');
+    await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parça'));
+    await press(`${main} kategorisi`);
+    await press(`${sub} alt kategorisi`);
+    await press('Kıyafeti kaydet');
+    expect(mockState.addWardrobeItem).toHaveBeenCalledWith(expect.objectContaining({ category }), expect.any(Object));
+  });
+
+  it('prevents duplicate picker launches from same-frame taps', async () => {
+    await mount(AddWardrobeScreen);
+    const pick = tree.root.findByProps({ accessibilityLabel: 'Galeriden seç' }).props.onPress;
+    await renderer.act(() => { pick(); pick(); });
+    expect(ImagePicker.requestMediaLibraryPermissionsAsync).toHaveBeenCalledTimes(1);
+    expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('shows the actual pending stage then returns directly to Dolap without a local-save success dialog', async () => {
+    await mount(AddWardrobeScreen);
+    await press('Galeriden seç');
+    await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parça'));
+    let finish!: () => void;
+    mockState.addWardrobeItem.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    await renderer.act(() => { tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress(); });
+    await renderer.act(() => mockState.addWardrobeItem.mock.calls[0][1].onStage('upload'));
+    expect(tree.root.findAllByProps({ children: 'Fotoğraf güvenli biçimde yükleniyor…' }).length).toBeGreaterThan(0);
+    expect(mockBack).not.toHaveBeenCalled();
+    expect(mockDismissTo).not.toHaveBeenCalled();
+    mockState.wardrobeSync = { state: 'pending', pending: 1, message: 'internal implementation detail' };
+    await renderer.act(async () => { finish(); });
+    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockDismissTo).toHaveBeenCalledWith('/(tabs)/liked');
+    expect(mockState.wardrobeSync).toMatchObject({ state: 'pending', pending: 1 });
+    expect(mockState.addWardrobeItem).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('does not resubmit a completed intent before navigation unmounts the screen', async () => {
+    await mount(AddWardrobeScreen);
+    await press('Galeriden seç');
+    await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parça'));
+    const save = tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress;
+    await renderer.act(async () => { save(); });
+    await renderer.act(async () => { save(); });
+    expect(mockState.addWardrobeItem).toHaveBeenCalledTimes(1);
+    expect(mockDismissTo).toHaveBeenCalledWith('/(tabs)/liked');
+  });
+
 });

@@ -1,0 +1,5 @@
+Vitrify 1.0 — İlk dahili test sürümü
+
+Keşfet, Favoriler, Dolap ve yenilenen Profil ekranını test edebilirsiniz.
+Premium satın alma bu test sürümünde kullanıma açık değildir.
+Karşılaştığınız sorunları test geri bildirim kanalından iletebilirsiniz.

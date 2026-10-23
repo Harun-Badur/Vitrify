@@ -1,4 +1,5 @@
 export const VTON_HISTORY_CAP = 20;
+export const VTON_HISTORY_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 export const VTON_HISTORY_KEY_PREFIX = 'kabin.vton.history.v1';
 
 export interface TryOnHistoryEntry {
@@ -60,9 +61,15 @@ export const parseTryOnHistory = (raw: string | null): TryOnHistoryEntry[] => {
 export const mergeTryOnHistory = (
   existing: TryOnHistoryEntry[],
   incoming: TryOnHistoryEntry,
+  now: number = Date.now(),
 ): HistoryMergeResult => {
-  const combined = [incoming, ...existing];
-  const next = combined
+  return pruneTryOnHistory([incoming, ...existing], now);
+};
+
+/** Recorded device clock; future timestamps are not guessed to be expired. */
+export const pruneTryOnHistory = (existing: TryOnHistoryEntry[], now: number = Date.now()): HistoryMergeResult => {
+  const next = existing
+    .filter(entry => now - entry.ts < VTON_HISTORY_MAX_AGE_MS)
     .slice()
     .sort((left, right) => right.ts - left.ts)
     .slice(0, VTON_HISTORY_CAP);

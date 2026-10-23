@@ -1,0 +1,11 @@
+# Deploy only this directory using --path-as-root. Never upload local secrets,
+# Python environments, cached models or images to the build service.
+*
+!Dockerfile
+!requirements.txt
+!processor.py
+!server.py
+!v2.py
+!railway.toml
+!.dockerignore
+!.railwayignore

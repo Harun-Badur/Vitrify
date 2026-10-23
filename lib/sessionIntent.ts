@@ -109,7 +109,7 @@ export const attrsFromProduct = (product: Product): SessionProductAttrs => {
         : inferred.colors,
     fit: product.fit ?? inferred.fit,
     priceBand: product.priceBand ?? inferred.price_band,
-    gender: product.gender ?? inferred.gender,
+    gender: product.gender ?? inferred.gender ?? '',
   };
 };
 

@@ -1,3 +1,4 @@
+import { invalidateStyleProfileSnapshot } from './recsConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, type AppStateStatus } from 'react-native';
 import { logger } from './logger';
@@ -6,7 +7,10 @@ import type {
   AnalyticsEventType,
   AnalyticsPayload,
   AnalyticsQueueItem,
+  AnalyticsActionContext,
 } from '../types/analytics';
+import { createUuid } from './analyticsAction';
+export { createUuid } from './analyticsAction';
 import {
   ANALYTICS_FLUSH_INTERVAL_MS,
   ANALYTICS_FLUSH_SIZE,
@@ -16,6 +20,8 @@ import {
   LEGACY_RECOMMENDATION_ID,
 } from '../types/analytics';
 import { getLastFeedMode, getLastRecommendationId } from './recsFeedState';
+import { analyticsPayloadForPersistence, hasUnapprovedRawSearch } from './analyticsPrivacy';
+import { accountWriteBlockedNow, fenceAccountWrites, isAccountWriteFenced } from './accountWriteFence';
 
 export {
   ANALYTICS_FLUSH_INTERVAL_MS,
@@ -29,28 +35,6 @@ export {
 const INITIAL_BACKOFF_MS = 1_000;
 const MAX_BACKOFF_MS = 60_000;
 
-export const createUuid = (): string => {
-  const cryptoObj = globalThis.crypto;
-  if (cryptoObj && typeof cryptoObj.randomUUID === 'function') {
-    return cryptoObj.randomUUID();
-  }
-
-  const bytes = new Uint8Array(16);
-  if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
-    cryptoObj.getRandomValues(bytes);
-  } else {
-    for (let index = 0; index < bytes.length; index += 1) {
-      bytes[index] = Math.floor(Math.random() * 256);
-    }
-  }
-  const byte6 = bytes[6] ?? 0;
-  const byte8 = bytes[8] ?? 0;
-  bytes[6] = (byte6 & 0x0f) | 0x40;
-  bytes[8] = (byte8 & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'));
-  return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10, 16).join('')}`;
-};
-
 const SESSION_ID = createUuid();
 const queuedOrSentIds = new Set<string>();
 const impressionKeys = new Set<string>();
@@ -63,6 +47,9 @@ let flushTimer: ReturnType<typeof setInterval> | null = null;
 let appStateSubscription: { remove: () => void } | null = null;
 let backoffMs = INITIAL_BACKOFF_MS;
 let initialized = false;
+let queueEpoch = 0;
+let persistence: Promise<unknown> = Promise.resolve();
+const inFlight = new Map<Promise<unknown>, string>();
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -118,10 +105,11 @@ export const getAnalyticsSessionId = (): string => SESSION_ID;
 export const capAnalyticsQueue = (
   items: AnalyticsQueueItem[],
 ): AnalyticsQueueItem[] => {
-  if (items.length <= ANALYTICS_QUEUE_CAP) {
-    return items;
-  }
-  return items.slice(items.length - ANALYTICS_QUEUE_CAP);
+  const eligible = items.filter(item => !hasUnapprovedRawSearch(item));
+  if (eligible.length <= ANALYTICS_QUEUE_CAP) return items;
+  const retained = new Set(eligible.slice(-ANALYTICS_QUEUE_CAP));
+  // Historical raw text awaits disposition and must not be silently cap-evicted.
+  return items.filter(item => hasUnapprovedRawSearch(item) || retained.has(item));
 };
 
 export const parseAnalyticsQueue = (raw: string | null): AnalyticsQueueItem[] => {
@@ -140,8 +128,11 @@ export const parseAnalyticsQueue = (raw: string | null): AnalyticsQueueItem[] =>
 };
 
 const persistQueue = async (): Promise<void> => {
+  const snapshot = JSON.stringify(queue);
+  const write = persistence.catch(() => undefined).then(() => AsyncStorage.setItem(ANALYTICS_QUEUE_KEY, snapshot));
+  persistence = write;
   try {
-    await AsyncStorage.setItem(ANALYTICS_QUEUE_KEY, JSON.stringify(queue));
+    await write;
   } catch (error) {
     logger.debug('Analytics kuyruk yazılamadı', { error });
   }
@@ -200,11 +191,18 @@ const sendBatch = async (batch: AnalyticsQueueItem[]): Promise<boolean> => {
     return false;
   }
 
-  const { error } = await client.rpc('ingest_events', { p_batch: batch });
+  const owner = batch[0]?.user_id;
+  if (!owner || await isAccountWriteFenced(owner) || await readUserId() !== owner) return false;
+  if (accountWriteBlockedNow(owner)) return false;
+  const request = Promise.resolve(client.rpc('ingest_events', { p_batch: batch }));
+  inFlight.set(request, owner);
+  let error;
+  try { ({ error } = await request); } finally { inFlight.delete(request); }
   if (error) {
     logger.debug('Analytics ingest başarısız', { detail: error.message });
     return false;
   }
+  if (batch.some(item => item.event_type !== 'impression' && item.event_type !== 'search' && item.event_type !== 'filter')) invalidateStyleProfileSnapshot(owner);
   return true;
 };
 
@@ -223,7 +221,10 @@ export const flushAnalytics = async (): Promise<void> => {
     await hydrateQueue();
 
     while (queue.length > 0) {
-      const batch = queue.slice(0, ANALYTICS_FLUSH_SIZE);
+      const owner = await readUserId();
+      if (!owner || await isAccountWriteFenced(owner)) break;
+      const batch = queue.filter(item => item.user_id === owner && !hasUnapprovedRawSearch(item)).slice(0, ANALYTICS_FLUSH_SIZE);
+      if (batch.length === 0) break;
       const batchIds = new Set(batch.map((item) => item.event_id));
       const ok = await sendBatch(batch);
 
@@ -244,8 +245,10 @@ export const flushAnalytics = async (): Promise<void> => {
   }
 };
 
-const enqueueItem = async (item: AnalyticsQueueItem): Promise<void> => {
+const enqueueItem = async (item: AnalyticsQueueItem, epoch: number): Promise<void> => {
   await hydrateQueue();
+  if (epoch !== queueEpoch || await isAccountWriteFenced(item.user_id)) return;
+  if (epoch !== queueEpoch || accountWriteBlockedNow(item.user_id)) return;
 
   if (queuedOrSentIds.has(item.event_id)) {
     return;
@@ -264,10 +267,14 @@ export const track = (
   type: AnalyticsEventType,
   productId?: string | null,
   payload: AnalyticsPayload = {},
+  committedAction?: AnalyticsActionContext,
 ): void => {
+  const epoch = queueEpoch;
   void (async () => {
     try {
-      const userId = await readUserId();
+      // A bound write belongs to the user who initiated it, even if a new user
+      // is now logged in. Existing flush owner checks keep it out of that JWT.
+      const userId = committedAction?.userId ?? await readUserId();
       if (!userId) {
         logger.debug('Analytics atlandı: oturum yok', { type });
         return;
@@ -279,10 +286,13 @@ export const track = (
         session_id: SESSION_ID,
         event_type: type,
         product_id: productId?.trim() ? productId.trim() : null,
-        payload,
-        created_at: new Date().toISOString(),
+        payload: analyticsPayloadForPersistence(type, committedAction ? {
+          ...payload, action_id: committedAction.actionId, action_origin: committedAction.origin,
+          outcome: 'committed', action_version: 1,
+        } : payload),
+        created_at: committedAction?.occurredAt ?? new Date().toISOString(),
       };
-      await enqueueItem(item);
+      await enqueueItem(item, epoch);
     } catch (error) {
       logger.debug('Analytics track başarısız', { error });
     }
@@ -340,6 +350,9 @@ export const initAnalytics = (): void => {
 };
 
 export const clearAnalyticsQueue = async (): Promise<void> => {
+  queueEpoch++;
+  await hydratePromise;
+  await persistence.catch(() => undefined);
   queue = [];
   queuedOrSentIds.clear();
   impressionKeys.clear();
@@ -351,7 +364,26 @@ export const clearAnalyticsQueue = async (): Promise<void> => {
   }
 };
 
+/** Explicit deletion path: persist owner tombstone, drain actual RPCs, then verify owner queue absence. */
+export async function quiesceAnalyticsForDeletion(userId: string, timeoutMs = 10_000): Promise<void> {
+  await fenceAccountWrites(userId);
+  await hydrateQueue();
+  const pending = [...inFlight].filter(([, owner]) => owner === userId).map(([request]) => request);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([Promise.allSettled(pending), new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Analytics drain pending')), timeoutMs);
+    })]);
+  } finally { clearTimeout(timer); }
+  queue = queue.filter(item => item.user_id !== userId);
+  await persistQueue();
+  const stored = parseAnalyticsQueue(await AsyncStorage.getItem(ANALYTICS_QUEUE_KEY));
+  if (stored.some(item => item.user_id === userId) || [...inFlight.values()].includes(userId)) throw new Error('Analytics cleanup unverified');
+}
+
 export const resetAnalyticsForTests = async (): Promise<void> => {
+  queueEpoch++;
+  await persistence.catch(() => undefined);
   if (flushTimer !== null) {
     clearInterval(flushTimer);
     flushTimer = null;

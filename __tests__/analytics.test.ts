@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { invalidateStyleProfileSnapshot } from '../lib/recsConfig';
+jest.mock('../lib/recsConfig', () => ({ invalidateStyleProfileSnapshot: jest.fn() }));
 import {
   capAnalyticsQueue,
   flushAnalytics,
@@ -42,6 +44,7 @@ const sampleItem = (index: number): AnalyticsQueueItem => ({
 describe('analytics queue', () => {
   beforeEach(async () => {
     mockRpc.mockReset();
+    jest.mocked(invalidateStyleProfileSnapshot).mockClear();
     mockGetSession.mockReset();
     mockGetSession.mockResolvedValue({
       data: { session: { user: { id: 'user-1' } } },
@@ -97,11 +100,49 @@ describe('analytics queue', () => {
     expect(impressions[0]?.payload.dwell_ms).toBe(1200);
     expect(impressions[0]?.payload.feed_mode).toBe('personal');
   });
+  it('refreshes only the committed owner profile after wardrobe analytics are ingested', async () => {
+    track('dolap_add', 'prd-wardrobe', { source: 'wardrobe' });
+    await settle();
+    expect(invalidateStyleProfileSnapshot).not.toHaveBeenCalled();
+    await flushAnalytics();
+    expect(invalidateStyleProfileSnapshot).toHaveBeenCalledWith('user-1');
+  });
 
   it('1 saniyeden kısa dwell impression yazmaz', async () => {
     trackFeedImpression('prd-short', 0, 400);
     await settle();
     await flushAnalytics();
     expect(mockRpc).not.toHaveBeenCalled();
+  });
+  it('bound action queues for its initiating user even after session changes', async () => {
+    const action = { actionId:'action-a', userId:'user-1', origin:'favorite' as const, occurredAt:'2026-10-12T10:00:00.000Z' };
+    mockGetSession.mockResolvedValue({data:{session:{user:{id:'user-2'}}},error:null});
+    track('like','p',{source:'feed'},action);track('dolap_add','p',{source:'feed'},action);
+    await settle();await flushAnalytics();expect(mockRpc).not.toHaveBeenCalled();
+    mockGetSession.mockResolvedValue({data:{session:{user:{id:'user-1'}}},error:null});
+    await flushAnalytics();
+    const batch = mockRpc.mock.calls[0][1].p_batch as AnalyticsQueueItem[];
+    expect(batch).toHaveLength(2);
+    expect(batch.every(item=>item.user_id==='user-1' && item.payload.action_id==='action-a'
+      && item.payload.action_origin==='favorite' && item.payload.outcome==='committed')).toBe(true);
+    expect(batch[0].event_id).not.toBe(batch[1].event_id);
+    expect(batch.every(item=>item.created_at===action.occurredAt)).toBe(true);
+  });
+  it('RPC retry preserves event and action identity; success dequeues without another send', async () => {
+    const action = {actionId:'action-r',userId:'user-1',origin:'pass' as const,occurredAt:'2026-10-12T10:00:00.000Z'};
+    track('pass','p',{},action);await settle();
+    mockRpc.mockResolvedValueOnce({error:{message:'synthetic'}});
+    await flushAnalytics();const failed=mockRpc.mock.calls[0][1].p_batch;
+    await flushAnalytics();expect(mockRpc.mock.calls[1][1].p_batch).toEqual(failed);
+    await flushAnalytics();expect(mockRpc).toHaveBeenCalledTimes(2);
+    expect(failed[0].payload.action_id).toBe('action-r');
+  });
+  it('persisted action metadata and event IDs survive queue rehydration', async () => {
+    const action={actionId:'action-durable',userId:'user-1',origin:'favorite' as const,occurredAt:'2026-10-12T10:00:00.000Z'};
+    track('like','p',{},action);track('dolap_add','p',{},action);await settle();
+    const raw=await AsyncStorage.getItem('kabin.analytics.queue.v1');
+    const stored=parseAnalyticsQueue(raw);expect(stored).toHaveLength(2);
+    await resetAnalyticsForTests();await AsyncStorage.setItem('kabin.analytics.queue.v1',raw!);
+    await flushAnalytics();expect(mockRpc.mock.calls[0][1].p_batch).toEqual(stored);
   });
 });

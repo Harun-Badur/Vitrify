@@ -52,6 +52,7 @@ export async function runRecommendationCacheCli(args: string[], signal?: AbortSi
     throw new Error('Import mode requires empty wardrobe and exposure; use context mode for user snapshots');
   }
   if (new Set(snapshot.exposure?.map(([id]) => id)).size !== (snapshot.exposure?.length ?? 0)) throw new Error('Duplicate exposure ID');
+  if (destination === 'supabase') throw new Error('Supabase publication requires a v2 job claim. Use the job worker; public catalog provenance is not attested.');
   config({ quiet: true });
   const url = process.env.EXPO_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (destination === 'supabase' && (!url || !key)) throw new Error('Existing Supabase URL/service-role credentials required');

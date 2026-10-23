@@ -1,5 +1,5 @@
 import { createElement, type ElementType, type ReactElement } from 'react';
-import { TextInput } from 'react-native';
+import { Platform, TextInput } from 'react-native';
 import { Image } from 'expo-image';
 import FeedScreen from '../app/(tabs)/index';
 import { complementaryProductsForDisplay } from '../components/DiscoverRecommendations';
@@ -7,6 +7,8 @@ import { loadDiscoverRecommendationPacket } from '../services/discoverRecommenda
 import { anchorContext } from '../src/recommendationCache/feedPacket';
 import { serializeFinal } from '../src/recommendationCache/codec';
 const getDiscoverRecommendations = jest.fn<Promise<ReturnType<typeof realService.getDiscoverRecommendations>>, [Parameters<typeof realService.getDiscoverRecommendations>[0], unknown?]>();
+import { loadWardrobe } from '../services/wardrobeService';
+jest.mock('../services/wardrobeService', () => ({ loadWardrobe: jest.fn(() => new Promise(() => {})) }));
 import { fetchRecommendationCatalog } from '../services/productService';
 import { getSupabaseClient } from '../lib/supabase';
 import { getProductRepository } from '../services/productRepository';
@@ -21,6 +23,8 @@ const mockUndoPass = jest.fn();
 const mockSwipeCardRender = jest.fn();
 const mockRouter = { push: jest.fn() };
 const mockState = {
+  sessionUserId: null as string | null,
+  sessionSyncStatus: 'idle',
   currentProducts: [] as Product[],
   feedStatus: 'success',
   likedProducts: [],
@@ -197,6 +201,7 @@ describe('Discover recommendation wiring', () => {
     global.cancelIdleCallback = jest.fn(id => { mockIdleTasks.delete(id); });
     mockFocused = true;
     mockUser = null;
+    mockState.sessionUserId = null; mockState.sessionSyncStatus = 'idle';
     mockState.feedStatus = 'success';
     mockState.hasMore = false;
     mockState.isFetchingNext = false;
@@ -214,6 +219,34 @@ describe('Discover recommendation wiring', () => {
         tree?.unmount();
       });
     tree = null;
+  });
+  it('starts the initial feed once after same-owner hydration and never during another owner session', async () => {
+    mockUser = { id: 'A' };
+    await renderer.act(() => { tree = renderer.create(createElement(FeedScreen)); });
+    expect(mockLoadFeed).not.toHaveBeenCalled();
+    mockState.sessionUserId = 'A'; mockState.sessionSyncStatus = 'loading';
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    expect(mockLoadFeed).not.toHaveBeenCalled();
+    mockState.sessionSyncStatus = 'success';
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    expect(mockLoadFeed).toHaveBeenCalledTimes(1);
+    mockState.sessionSyncStatus = 'loading';
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    mockState.sessionSyncStatus = 'success';
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    expect(mockLoadFeed).toHaveBeenCalledTimes(1);
+    mockUser = { id: 'B' };
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    expect(mockLoadFeed).toHaveBeenCalledTimes(1);
+    mockState.sessionUserId = 'B';
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    expect(mockLoadFeed).toHaveBeenCalledTimes(2);
+    mockUser = null;
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    expect(mockLoadFeed).toHaveBeenCalledTimes(2);
+    mockState.sessionUserId = null; mockState.sessionSyncStatus = 'idle';
+    await renderer.act(() => { tree!.update(createElement(FeedScreen)); });
+    expect(mockLoadFeed).toHaveBeenCalledTimes(3);
   });
 
   const flushIdle = async (): Promise<void> => {
@@ -291,9 +324,9 @@ describe('Discover recommendation wiring', () => {
   });
 
   it('delivers three canonical complements to SwipeCard through the real service when the cache misses', async () => {
-    const query = { select: jest.fn(), eq: jest.fn(), in: jest.fn(), abortSignal: jest.fn(),
+    const query = { select: jest.fn(), eq: jest.fn(), gt: jest.fn(), in: jest.fn(), abortSignal: jest.fn(),
       limit: jest.fn().mockResolvedValue({ data: [], error: null }) };
-    for (const method of [query.select, query.eq, query.in, query.abortSignal]) method.mockReturnValue(query);
+    for (const method of [query.select, query.eq, query.gt, query.in, query.abortSignal]) method.mockReturnValue(query);
     const client = { from: jest.fn(() => query), rpc: jest.fn(), channel: jest.fn() };
     jest.mocked(getSupabaseClient).mockReturnValue(client as never);
     mockState.currentProducts = [top];
@@ -302,8 +335,18 @@ describe('Discover recommendation wiring', () => {
     const mockedEngine = jest.requireMock<typeof import('../src/intelligence/recommendations/getDiscoverRecommendations')>(
       '../src/intelligence/recommendations/getDiscoverRecommendations');
     jest.mocked(mockedEngine.getDiscoverRecommendationsAsync).mockImplementation(async input => realService.getDiscoverRecommendations(input));
+    jest.mocked(mockedEngine.prepareDiscoverRankingAsync).mockImplementation(async input => ({
+      ...await realService.prepareDiscoverRankingAsync(input, {}),
+    }));
+    jest.mocked(mockedEngine.completeDiscoverRecommendationsAsync).mockImplementation(realService.completeDiscoverRecommendationsAsync);
     jest.mocked(loadDiscoverRecommendationPacket).mockImplementation(actualTransport.loadDiscoverRecommendationPacket);
     const view = await mount();
+    const deadline = Date.now() + 5000;
+    while (!(view.root.findAllByType('SwipeCard')[0].props.recommendations as unknown[]).length && Date.now() < deadline) {
+      // The real cooperative engine yields through host timers, not just microtasks.
+      await renderer.act(async () => { await new Promise(resolve => setTimeout(resolve, 5)); });
+      await flushIdle();
+    }
     const swipeCard = view.root.findAllByType('SwipeCard')[0];
     const recommendations = swipeCard.props.recommendations as ReturnType<typeof realService.getDiscoverRecommendations>;
     const expected = realService.getDiscoverRecommendations(anchorContext(catalog, top, [], new Map()).input);
@@ -314,6 +357,32 @@ describe('Discover recommendation wiring', () => {
     products.forEach(product => expect(product).toBe(resolved.get(product.id)));
     expect(view.root.findByType('DiscoverRecommendations').props.recommendations).toBe(recommendations);
     expect(client.rpc).not.toHaveBeenCalled(); expect(client.channel).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite an in-flight swipe offset when pagination appends behind the same active card', async () => {
+    const view = await mount();
+    const drag = view.root.findAllByType('SwipeCard')[0].props.dragOffset as { value: number };
+    const writeOffset = jest.fn();
+    Object.defineProperty(drag, 'value', { configurable: true, get: () => -650, set: writeOffset });
+    mockState.currentProducts = [...catalog, { ...top, id: 'pagination-appended' }];
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    expect(writeOffset).not.toHaveBeenCalled();
+    expect(view.root.findAllByType('SwipeCard')[0].props.product).toBe(top);
+    mockState.currentProducts = catalog.slice(1);
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    expect(writeOffset).toHaveBeenCalledTimes(1);
+  });
+
+  it('warms Android cards through mounted images without full-resolution native prefetch jobs', async () => {
+    const platform = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
+    try {
+      const view = await mount();
+      const result = view.root.findByType('DiscoverRecommendations').props.recommendations as ReturnType<typeof realService.getDiscoverRecommendations>;
+      expect(complementaryProductsForDisplay(result, top.id)).toHaveLength(3);
+      expect(view.root.findAllByType('SwipeCard')).toHaveLength(3);
+      expect(Image.prefetch).not.toHaveBeenCalled();
+    } finally { Object.defineProperty(Platform, 'OS', { configurable: true, value: platform }); }
   });
 
   it('finds a catalog bottom when the visible feed contains only a top', async () => {
@@ -343,39 +412,21 @@ describe('Discover recommendation wiring', () => {
     expect(view.root.findAllByType('SwipeCard')[0].props.product).toBe(bottom);
   });
 
-  it('passes real wardrobe rows while preserving their full source references', async () => {
+  it('prepares exactly three catalog complements for a signed-in user without reading wardrobe', async () => {
     mockUser = { id: 'user-1' };
     mockState.currentProducts = [top];
-    jest
-      .mocked(fetchRecommendationCatalog)
-      .mockResolvedValue([top, shoes, jacket, bag]);
-    const wardrobeRow = {
-      id: 'wardrobe-jeans',
-      user_id: 'user-1',
-      category: 'bottom',
-      color: 'black',
-    };
-    const eq = jest
-      .fn()
-      .mockResolvedValue({ data: [wardrobeRow], error: null });
-    const select = jest.fn().mockReturnValue({ eq });
-    const from = jest.fn().mockReturnValue({ select });
+    const from = jest.fn(() => { throw new Error('wardrobe must not be read'); });
     jest.mocked(getSupabaseClient).mockReturnValue({ from } as never);
     const view = await mount();
-    expect(from).toHaveBeenCalledWith('wardrobe_items');
-    expect(eq).toHaveBeenCalledWith('user_id', 'user-1');
-    const result = view.root.findByType('DiscoverRecommendations').props
-      .recommendations as ReturnType<
-      typeof realService.getDiscoverRecommendations
-    >;
-    expect(
-      result.some((entry) =>
-        entry.candidate.items.some(
-          (item) =>
-            item.sourceType === 'wardrobe' && item.wardrobeItem === wardrobeRow,
-        ),
-      ),
-    ).toBe(true);
+    expect(from).not.toHaveBeenCalled();
+    expect(loadWardrobe).not.toHaveBeenCalled();
+    const result = view.root.findByType('DiscoverRecommendations').props.recommendations as ReturnType<typeof realService.getDiscoverRecommendations>;
+    const products = complementaryProductsForDisplay(result, top.id);
+    expect(products).toHaveLength(3);
+    expect(new Set(products.map(product => product.id)).size).toBe(3);
+    expect(products.every(product => product.id !== top.id && catalog.some(candidate => candidate === product))).toBe(true);
+    expect(getDiscoverRecommendations).toHaveBeenCalledWith(expect.objectContaining({ wardrobeItems: [] }), expect.anything());
+    expect(result[0].sources).toEqual(['catalog']);
   });
 
   it('keeps the empty result and main product card when there is no recommendation', async () => {
@@ -384,6 +435,7 @@ describe('Discover recommendation wiring', () => {
     expect(
       view.root.findByType('DiscoverRecommendations').props.recommendations,
     ).toEqual([]);
+    expect(view.root.findAllByType('SwipeCard')[0].props.recommendationStatus).toBe('ready');
     expect(view.root.findAllByType('SwipeCard')).toHaveLength(3);
   });
 
@@ -495,4 +547,132 @@ describe('Discover recommendation wiring', () => {
     expect(props.recommendations).toEqual([]);
     expect(view.root.findAllByType('SwipeCard')[0].props.product).toBe(bottom);
   });
+
+  it('retains the same product recommendations and avoids a replacement worker for an unchanged catalog on refocus', async () => {
+    const view = await mount();
+    const ready = view.root.findByType('DiscoverRecommendations').props.recommendations;
+    expect(ready).not.toEqual([]);
+    const renders = mockSwipeCardRender.mock.calls.length;
+    expect(loadDiscoverRecommendationPacket).toHaveBeenCalledTimes(1);
+    mockFocused = false;
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    // A fresh catalog fetch returns a new array/objects with identical content.
+    jest.mocked(fetchRecommendationCatalog).mockResolvedValue(catalog.map(product => ({ ...product })));
+    jest.mocked(loadDiscoverRecommendationPacket).mockImplementation(() => new Promise(() => {}));
+    mockFocused = true;
+    await renderer.act(async () => {
+      view.update(createElement(FeedScreen));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect({
+      sameRecommendations: view.root.findByType('DiscoverRecommendations').props.recommendations === ready,
+      workerStarts: jest.mocked(loadDiscoverRecommendationPacket).mock.calls.length,
+      catalogReads: jest.mocked(fetchRecommendationCatalog).mock.calls.length,
+      additionalCardRenders: mockSwipeCardRender.mock.calls.length - renders,
+    }).toEqual({ sameRecommendations: true, workerStarts: 2, catalogReads: 2, additionalCardRenders: 0 });
+  });
+
+  it('keeps valid recommendations through a slow or failed catalog refresh', async () => {
+    const view = await mount();
+    const ready = view.root.findByType('DiscoverRecommendations').props.recommendations;
+    let fail!: (reason: Error) => void;
+    jest.mocked(fetchRecommendationCatalog).mockImplementation(() => new Promise((_resolve, reject) => { fail = reject; }));
+    mockFocused = false;
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    mockFocused = true;
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    expect(view.root.findByType('DiscoverRecommendations').props.recommendations).toBe(ready);
+    await renderer.act(async () => { fail(new Error('slow network failed')); });
+    expect(view.root.findByType('DiscoverRecommendations').props.recommendations).toBe(ready);
+  });
+
+  it('ignores packets from an old focus during fast product changes and undo', async () => {
+    const delayed: Array<() => void> = [];
+    jest.mocked(loadDiscoverRecommendationPacket).mockImplementation(async (request, _owner, _signal, publish) => {
+      delayed.push(() => {
+        const anchor = request.anchors[0];
+        const context = anchorContext(request.candidatePool, anchor, [], new Map(request.exposure));
+        publish({ ...request, entries: [{ anchorProductId: anchor.id, exposure: request.exposure,
+          serialized: serializeFinal(realService.getDiscoverRecommendations(context.input), context) }] });
+      });
+    });
+    const view = await mount();
+    mockState.currentProducts = [bottom, shoes];
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    mockFocused = false;
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    mockFocused = true;
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    await renderer.act(() => { delayed[0](); });
+    expect(view.root.findByType('DiscoverRecommendations').props.currentProductId).toBe(bottom.id);
+    expect(view.root.findByType('DiscoverRecommendations').props.recommendations).toEqual([]);
+    await renderer.act(() => { delayed[1](); });
+    const readyB = view.root.findByType('DiscoverRecommendations').props.recommendations;
+    expect(readyB).not.toEqual([]);
+    mockState.currentProducts = [top, bottom, shoes];
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    expect(view.root.findByType('DiscoverRecommendations').props.recommendations).toEqual([]);
+    mockState.currentProducts = [bottom, shoes];
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    expect(view.root.findByType('DiscoverRecommendations').props.recommendations).toBe(readyB);
+    expect(loadDiscoverRecommendationPacket).toHaveBeenCalledTimes(2);
+  });
+
+
+  it.each(['replacement', 'in-place'] as const)('invalidates real catalog changes (%s), even if product references are reused', async kind => {
+    const refreshed = catalog.map(product => ({ ...product }));
+    jest.mocked(fetchRecommendationCatalog).mockResolvedValue(refreshed);
+    const view = await mount();
+    const initialSession = jest.mocked(loadDiscoverRecommendationPacket).mock.calls[0][0].sessionId;
+    mockFocused = false;
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    if (kind === 'replacement') {
+      jest.mocked(fetchRecommendationCatalog).mockResolvedValue(refreshed.map((product, index) =>
+        index === 1 ? { ...product, price: product.price + 1 } : product));
+    } else refreshed[1].price += 1;
+    jest.mocked(loadDiscoverRecommendationPacket).mockImplementation(() => new Promise(() => {}));
+    mockFocused = true;
+    await renderer.act(async () => { view.update(createElement(FeedScreen)); await Promise.resolve(); });
+    const calls = jest.mocked(loadDiscoverRecommendationPacket).mock.calls;
+    expect(calls.at(-1)![0].sessionId).not.toBe(initialSession);
+    expect(view.root.findByType('DiscoverRecommendations').props.recommendations).toEqual([]);
+    expect(view.root.findAllByType('SwipeCard')[0].props.recommendationStatus).toBe('loading');
+  });
+
+  it('distinguishes pending, successful empty and failed preparation without hiding the feed', async () => {
+    let fail!: (reason: Error) => void;
+    jest.mocked(loadDiscoverRecommendationPacket).mockImplementation(() => new Promise((_resolve, reject) => { fail = reject; }));
+    const view = await mount();
+    expect(view.root.findAllByType('SwipeCard')[0].props.recommendationStatus).toBe('loading');
+    await renderer.act(async () => { fail(new Error('preparation failed')); });
+    expect(view.root.findAllByType('SwipeCard')[0].props.recommendationStatus).toBe('error');
+    expect(view.root.findAllByType('SwipeCard')[0].props.product).toBe(top);
+  });
+
+
+  it('reopens after unmount without publishing a previous screen packet under the new product', async () => {
+    const deliveries: Array<() => void> = [];
+    jest.mocked(loadDiscoverRecommendationPacket).mockImplementation(async (request, _owner, _signal, publish) => {
+      deliveries.push(() => {
+        const anchor = request.anchors[0];
+        const context = anchorContext(request.candidatePool, anchor, [], new Map(request.exposure));
+        publish({ ...request, entries: [{ anchorProductId: anchor.id, exposure: request.exposure,
+          serialized: serializeFinal(realService.getDiscoverRecommendations(context.input), context) }] });
+      });
+    });
+    const old = await mount();
+    await renderer.act(() => { old.unmount(); });
+    tree = null;
+    mockState.currentProducts = [bottom, shoes];
+    const view = await mount();
+    await renderer.act(() => { deliveries[0](); });
+    expect(view.root.findByType('DiscoverRecommendations').props.currentProductId).toBe(bottom.id);
+    expect(view.root.findAllByType('SwipeCard')[0].props.recommendationStatus).toBe('loading');
+    await renderer.act(() => { deliveries[1](); });
+    expect(view.root.findAllByType('SwipeCard')[0].props.recommendationStatus).toBe('ready');
+    expect(view.root.findByType('DiscoverRecommendations').props.recommendations).not.toEqual([]);
+    expect(loadDiscoverRecommendationPacket).toHaveBeenCalledTimes(2);
+  });
+
 });

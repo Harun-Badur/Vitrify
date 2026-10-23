@@ -1,5 +1,5 @@
 import { createElement, type ElementType, type ReactElement } from 'react';
-import { Alert, FlatList, TextInput } from 'react-native';
+import { Alert, FlatList, Modal, ScrollView, TextInput } from 'react-native';
 import FavoritesScreen from '../app/(tabs)/style';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import type { LikedProduct } from '../types/product';
@@ -20,15 +20,25 @@ interface TestTree {
     findAllByProps: (props: Record<string, unknown>) => TestNode[];
   };
   unmount: () => void;
+  update: (element: ReactElement) => void;
 }
 const renderer = jest.requireActual('react-test-renderer') as {
   create: (element: ReactElement) => TestTree;
-  act: (callback: () => void) => Promise<void>;
+  act: (callback: () => void | Promise<void>) => Promise<void>;
 };
+
+// RN exports these through lazy getters. Resolve the real components once during
+// suite setup, so the first mount hook measures rendering rather than Babel's
+// cold transformation of their native dependency graph. No components are mocked.
+const nativeComponents = { FlatList, Modal, ScrollView };
 
 const mockRemove = jest.fn().mockResolvedValue(undefined);
 const mockRefresh = jest.fn().mockResolvedValue(undefined);
 const mockState = {
+  favoritesOwner: 'alice' as string | null,
+  favoritesStatus: 'success' as 'idle' | 'loading' | 'success' | 'error',
+  favoritesError: null as string | null,
+  sessionUserId: 'alice' as string | null,
   likedProducts: [] as LikedProduct[],
   unlikeProduct: mockRemove,
   refreshLikedProducts: mockRefresh,
@@ -108,6 +118,10 @@ describe('Favorites screen', () => {
   let view: TestTree;
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockState.favoritesOwner = 'alice';
+    mockState.favoritesStatus = 'success';
+    mockState.favoritesError = null;
+    mockState.sessionUserId = 'alice';
     mockGestures.length = 0;
     mockState.likedProducts = MOCK_PRODUCTS.slice(0, 3).map(
       (product, index) => ({
@@ -116,18 +130,39 @@ describe('Favorites screen', () => {
         notifyOnPriceDrop: true,
       }),
     );
-    await renderer.act(() => {
+    await renderer.act(async () => {
       view = renderer.create(createElement(FavoritesScreen));
     });
   });
   afterEach(async () => {
-    await renderer.act(() => view.unmount());
+    await renderer.act(async () => { view?.unmount(); });
     jest.restoreAllMocks();
+  });
+
+  it('distinguishes first loading and failed reads from a genuinely empty collection', async () => {
+    mockState.likedProducts = [];
+    mockState.favoritesStatus = 'loading';
+    await renderer.act(() => view.update(createElement(FavoritesScreen)));
+    expect(view.root.findByProps({ accessibilityLabel: 'Favoriler yükleniyor' })).toBeDefined();
+    expect(view.root.findAllByProps({ children: 'Henüz favori ürün yok.' })).toHaveLength(0);
+    mockState.favoritesStatus = 'error';
+    mockState.favoritesError = 'Bağlantı kurulamadı.';
+    await renderer.act(() => view.update(createElement(FavoritesScreen)));
+    expect(view.root.findByProps({ accessibilityLabel: 'Favorileri yeniden yükle' })).toBeDefined();
+    expect(view.root.findAllByProps({ children: 'Henüz favori ürün yok.' })).toHaveLength(0);
+  });
+
+  it('keeps cached favorites visible during a refresh failure', async () => {
+    mockState.favoritesStatus = 'error';
+    mockState.favoritesError = 'Bağlantı kurulamadı.';
+    await renderer.act(() => view.update(createElement(FavoritesScreen)));
+    expect(view.root.findByType(FlatList).props.data).toHaveLength(3);
+    expect(view.root.findByProps({ accessibilityLabel: 'Favorileri yeniden yükle' })).toBeDefined();
   });
 
   it('uses existing favorite references in a wardrobe list and sorts without mutating state', async () => {
     const before = [...mockState.likedProducts];
-    const list = (): TestNode => view.root.findByType(FlatList);
+    const list = (): TestNode => view.root.findByType(nativeComponents.FlatList);
     expect(list().props.numColumns).toBeUndefined();
     expect(list().props.data).toEqual([...before].reverse());
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -175,7 +210,7 @@ describe('Favorites screen', () => {
     expect(mockRemove).toHaveBeenCalledWith(product.id);
     expect(alert).toHaveBeenCalledWith(
       'Favori kaldırılamadı',
-      'Ürün geri eklendi. Lütfen tekrar dene.',
+      'Kayıt korundu. Lütfen tekrar dene.',
     );
   });
 
@@ -208,7 +243,27 @@ describe('Favorites screen', () => {
     expect(withSpring).toHaveBeenCalledWith(0, { damping: 18, stiffness: 180 });
     expect(alert).toHaveBeenCalledWith(
       'Favori kaldırılamadı',
-      'Ürün geri eklendi. Lütfen tekrar dene.',
+      'Kayıt korundu. Lütfen tekrar dene.',
     );
+  });
+  it('old owner removal does not alert or animate a new owner card', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    let reject!: (error: Error) => void;
+    mockRemove.mockReturnValueOnce(new Promise<void>((_, r) => { reject = r; }));
+    await renderer.act(() => {
+      mockGestures[0].update?.({ translationX: -100 });mockGestures[0].end?.();
+    });
+    mockState.sessionUserId = 'bob';
+    await renderer.act(async () => { view.update(createElement(FavoritesScreen)); });
+    const before = jest.mocked(withSpring).mock.calls.length;
+    await renderer.act(() => reject(new Error('old owner')));
+    expect(alert).not.toHaveBeenCalled();
+    expect(jest.mocked(withSpring).mock.calls.length).toBe(before);
+  });
+  it('reloads on mount and owner change through the existing refresh action', async () => {
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    mockState.sessionUserId = 'bob';
+    await renderer.act(async () => { view.update(createElement(FavoritesScreen)); });
+    expect(mockRefresh).toHaveBeenCalledTimes(2);
   });
 });

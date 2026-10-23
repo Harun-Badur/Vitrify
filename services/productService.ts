@@ -1,3 +1,5 @@
+import { catalogMetadataRepair } from '../lib/catalogMetadata';
+import { measureDiscoverStage, measureDiscoverStageSync, recordDiscoverStage } from '../lib/discoverStageTiming';
 import { DISCOVER_CATALOG_PAGE_SIZE, isRecord, isFeedProductRow, isAttributeRow, mapFeedRow } from './catalogProductAdapter';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import { getProductRepository, productsById } from './productRepository';
@@ -10,6 +12,7 @@ import { emptySessionIntent } from '../lib/scoring';
 import { buildIntent } from '../lib/sessionIntent';
 import { getSupabaseClient } from '../lib/supabase';
 import { rankCatalog } from '../src/intelligence/ranking/rankCatalog';
+import { selectRecommendationPool } from '../src/intelligence/recommendations/selectRecommendationPool';
 import { runCooperatively } from '../src/intelligence/cooperativeWork';
 import {
   ensureNonEmptyFeed,
@@ -17,10 +20,12 @@ import {
 } from '../src/intelligence/recommendations/feedFallback';
 import {
   enrichProduct,
+  resolveCatalogOutfitRole,
   type ProductAttributeRow,
 } from '../src/intelligence/style/productStyle';
 import {
   isGarmentCategory,
+  isOutfitRole,
   type Product,
 } from '../types/product';
 import type {
@@ -38,6 +43,12 @@ export type { ProductGender } from '../types/product';
 
 export type FeedSource = 'supabase' | 'mock' | 'edge';
 
+export class FeedServiceError extends Error {
+  constructor(public readonly code: 'FEED_AUTH' | 'FEED_SERVER' | 'FEED_NETWORK' | 'FEED_TIMEOUT' | 'FEED_RESPONSE') {
+    super(code); this.name = 'FeedServiceError';
+  }
+}
+
 export interface FetchFeedProductsResult {
   hasMore?: boolean;
   products: Product[];
@@ -48,11 +59,15 @@ export interface FetchFeedProductsResult {
   fallback?: boolean;
   /** Soft facets dropped during progressive relax. */
   relaxed?: string[];
+  warning?: 'LOCAL_RANK_FAILED';
 }
 
 const DEFAULT_FEED_LIMIT = 20;
 const CATALOG_PAGE_SIZE = DISCOVER_CATALOG_PAGE_SIZE;
-const EDGE_TIMEOUT_MS = 1_200;
+const MAX_RECOMMENDATION_CATALOG_PAGES = 20;
+// A response deadline, not a warm-request latency target: cold Edge startup
+// and mobile networking may legitimately exceed the former 1.2s limit.
+const EDGE_TIMEOUT_MS = 10_000;
 let edgeSupportsPagination: boolean | undefined;
 
 const isProductSnapshotLite = (value: unknown): value is Product => {
@@ -170,10 +185,23 @@ const catalogPages = new Map<string, { at: number; result: Promise<CatalogQueryR
 const preparedCatalogProducts = new Map<string, { at: number; key: string; product: Product }>();
 let catalogCacheClient: ReturnType<typeof getSupabaseClient>;
 
+interface DeferredCatalogProduct {
+  product: Product;
+  attributes: ProductAttributeRow | undefined;
+  rowKey: string;
+  cacheable: boolean;
+}
+interface CatalogPage {
+  products: Product[];
+  hasMore: boolean;
+  deferred?: Map<string, DeferredCatalogProduct>;
+}
+
 const queryCatalogPage = async (
   excludeIds: readonly string[] = [],
   offset = 0,
-): Promise<{ products: Product[]; hasMore: boolean }> => {
+  deferEnrichment = false,
+): Promise<CatalogPage> => {
   const client = getSupabaseClient();
   if (!client) {
     throw new Error('Supabase bağlantısı yok');
@@ -192,13 +220,13 @@ const queryCatalogPage = async (
   let productsResult: {
     data: unknown[] | null;
     error: { message: string } | null;
-  } = await catalogQuery(productSelectWithImages);
+  } = await measureDiscoverStage('catalog.products', () => catalogQuery(productSelectWithImages));
 
   function catalogQuery(columns: string) {
     const serverExclusions = excludeIds.slice(0, CATALOG_PAGE_SIZE);
     const key = JSON.stringify([columns, [...serverExclusions].sort(), offset]);
     const cached = catalogPages.get(key);
-    if (cached && Date.now() - cached.at < CATALOG_CACHE_MS) return cached.result;
+    if (cached && Date.now() - cached.at < CATALOG_CACHE_MS) { recordDiscoverStage('catalog.cache', 0); return cached.result; }
     let query = client!.from('products').select(columns).order('created_at', { ascending: true }).order('id');
     if (excludeIds.length > 0) {
       // Bound the GET URL: a long session of UUIDs can exceed gateway URL limits.
@@ -218,7 +246,7 @@ const queryCatalogPage = async (
     /column .*images.* does not exist/i.test(productsResult.error.message)
   ) {
     logger.warn('products.images yok; legacy select kullanılıyor');
-    productsResult = await catalogQuery(productSelectLegacy);
+    productsResult = await measureDiscoverStage('catalog.products', () => catalogQuery(productSelectLegacy));
   }
 
   if (productsResult.error) throw new Error(productsResult.error.message);
@@ -237,20 +265,20 @@ const queryCatalogPage = async (
   if (validRows.length === 0) return { products: [], hasMore: (productsResult.data?.length ?? 0) > CATALOG_PAGE_SIZE };
 
   let attributesResult: { data: unknown[] | null; error: { message: string } | null } = ids.length === 0
-    ? { data: [], error: null } : await client
+    ? { data: [], error: null } : await measureDiscoverStage('catalog.attributes', () => client
     .from('product_attributes')
     .select(
       'product_id, gender, colors, fit, subcategory, brand_slug, price_band, outfit_role',
-    ).in('product_id', ids);
+    ).in('product_id', ids));
 
   if (
     attributesResult.error &&
     /column .*outfit_role.* does not exist/i.test(attributesResult.error.message)
   ) {
-    attributesResult = await client
+    attributesResult = await measureDiscoverStage('catalog.attributes', () => client
       .from('product_attributes')
       .select('product_id, gender, colors, fit, subcategory, brand_slug, price_band')
-      .in('product_id', ids);
+      .in('product_id', ids));
   }
 
   const attributesById = new Map<string, ProductAttributeRow>();
@@ -261,6 +289,7 @@ const queryCatalogPage = async (
   }
 
   const repository = getProductRepository();
+  const deferred = new Map<string, DeferredCatalogProduct>();
   function* prepareProducts(): Generator<void, Product[], void> {
     const products: Product[] = [];
     for (const row of validRows) {
@@ -269,11 +298,20 @@ const queryCatalogPage = async (
       else {
         const product = mapFeedRow(row);
         if (product) {
-          const enriched = repository.register([enrichProduct(product, attributesById.get(product.id))])[0];
-          products.push(enriched);
-          if (!attributesResult.error) {
-            preparedCatalogProducts.set(row.id, { at: Date.now(), key: JSON.stringify(row), product: enriched });
-            if (preparedCatalogProducts.size > 400) preparedCatalogProducts.delete(preparedCatalogProducts.keys().next().value!);
+          const attributes = attributesById.get(product.id);
+          if (deferEnrichment) {
+            // Pool seats depend only on provider/id/role, including existing P0 repairs.
+            // Never publish these lightweight records to the canonical repository/UI.
+            products.push({ ...product, outfitRole: resolveCatalogOutfitRole(product.category,
+              catalogMetadataRepair(product.id)?.outfitRole ?? (isOutfitRole(attributes?.outfit_role) ? attributes.outfit_role : product.outfitRole)) });
+            deferred.set(product.id, { product, attributes, rowKey: JSON.stringify(row), cacheable: !attributesResult.error });
+          } else {
+            const enriched = repository.register([enrichProduct(product, attributes)])[0];
+            products.push(enriched);
+            if (!attributesResult.error) {
+              preparedCatalogProducts.set(row.id, { at: Date.now(), key: JSON.stringify(row), product: enriched });
+              if (preparedCatalogProducts.size > 400) preparedCatalogProducts.delete(preparedCatalogProducts.keys().next().value!);
+            }
           }
         }
       }
@@ -281,14 +319,17 @@ const queryCatalogPage = async (
     }
     return products;
   }
-  const prepared = await runCooperatively(prepareProducts());
-  const resolved = await repository.productsById(prepared.map(product => product.id));
+  const prepared = await measureDiscoverStage('catalog.prepare', () => runCooperatively(prepareProducts(), { diagnosticStage: 'catalog' }));
+  if (deferEnrichment) return { products: prepared, deferred, hasMore: (productsResult.data?.length ?? 0) > CATALOG_PAGE_SIZE };
+  const resolved = await measureDiscoverStage('catalog.resolve', () => repository.productsById(prepared.map(product => product.id)));
   const products = prepared.map(product => resolved.get(product.id)!);
   return { products, hasMore: (productsResult.data?.length ?? 0) > CATALOG_PAGE_SIZE };
 };
 
 let initialCatalogRequest: Promise<{ products: Product[]; hasMore: boolean }> | null = null;
-const fetchCatalogPage = (excludeIds: readonly string[] = [], offset = 0) => {
+const fetchCatalogPage = (excludeIds: readonly string[] = [], offset = 0, deferEnrichment = false) => {
+  // SQL page promises are still shared; lightweight records never enter feed-page requests.
+  if (deferEnrichment) return queryCatalogPage(excludeIds, offset, true);
   if (excludeIds.length > 0 || offset > 0) return queryCatalogPage(excludeIds, offset);
   if (!initialCatalogRequest) {
     initialCatalogRequest = queryCatalogPage().finally(() => { initialCatalogRequest = null; });
@@ -296,18 +337,76 @@ const fetchCatalogPage = (excludeIds: readonly string[] = [], offset = 0) => {
   return initialCatalogRequest;
 };
 
-// Keep the existing bounded recommendation pool; reuse it on focus without re-ranking.
+// The swipe feed still reads the oldest page. Recommendations need later imports too,
+// then a bounded pool so outfit search does not combine the whole catalog.
 let recommendationPool: { products: Product[]; at: number } | null = null;
+let recommendationPoolClient: ReturnType<typeof getSupabaseClient>;
 let recommendationRequest: Promise<Product[]> | null = null;
+
+const loadRecommendationCatalog = async (): Promise<Product[]> => {
+  const client = getSupabaseClient();
+  const collected: Product[] = [];
+  let offset = 0;
+  const deferred = new Map<string, DeferredCatalogProduct>();
+  const collect = (page: CatalogPage) => {
+    collected.push(...page.products);
+    for (const [id, value] of page.deferred ?? []) deferred.set(id, value);
+  };
+  let page = await fetchCatalogPage([], offset, true);
+  collect(page);
+  let pages = 1;
+  while (page.hasMore && pages < MAX_RECOMMENDATION_CATALOG_PAGES) {
+    // Bound concurrency to two pages. Keep the same ordered scan and pool;
+    // a terminal page may cause at most one speculative empty read.
+    const batchSize = Math.min(2, MAX_RECOMMENDATION_CATALOG_PAGES - pages);
+    const batch = await Promise.all(Array.from({ length: batchSize }, (_, index) =>
+      fetchCatalogPage([], offset + (index + 1) * CATALOG_PAGE_SIZE, true)));
+    for (const next of batch) {
+      collect(next);
+      page = next;
+      pages += 1;
+      offset += CATALOG_PAGE_SIZE;
+      if (!page.hasMore) break;
+    }
+  }
+  const selected = measureDiscoverStageSync('catalog.pool', () => selectRecommendationPool(collected));
+  const repository = getProductRepository();
+  function* enrichSelected(): Generator<void, Product[], void> {
+    const result: Product[] = [];
+    for (const product of selected) {
+      const pending = deferred.get(product.id);
+      if (!pending) result.push(product);
+      else {
+        const enriched = repository.register([enrichProduct(pending.product, pending.attributes)])[0];
+        result.push(enriched);
+        if (pending.cacheable) {
+          preparedCatalogProducts.set(product.id, { at: Date.now(), key: pending.rowKey, product: enriched });
+          if (preparedCatalogProducts.size > 400) preparedCatalogProducts.delete(preparedCatalogProducts.keys().next().value!);
+        }
+      }
+      yield;
+    }
+    return result;
+  }
+  const products = await measureDiscoverStage('catalog.prepare', () => runCooperatively(enrichSelected(), { diagnosticStage: 'catalog' }));
+  if (getSupabaseClient() === client) {
+    recommendationPool = { products, at: Date.now() };
+    recommendationPoolClient = client;
+  }
+  return products;
+};
+
 export const fetchRecommendationCatalog = (): Promise<Product[]> => {
+  const client = getSupabaseClient();
+  // Page cache may already have switched clients during a feed read.
+  // Compare against the pool's own source, not the page cache's source.
+  if (recommendationPoolClient !== client) recommendationPool = null;
   if (recommendationPool && Date.now() - recommendationPool.at < 60_000) {
+    recordDiscoverStage('catalog.cache', 0);
     return Promise.resolve(recommendationPool.products);
   }
   if (!recommendationRequest) {
-    recommendationRequest = fetchCatalogPage().then(({ products }) => {
-      recommendationPool = { products, at: Date.now() };
-      return products;
-    }).finally(() => { recommendationRequest = null; });
+    recommendationRequest = measureDiscoverStage('catalog.total', loadRecommendationCatalog).finally(() => { recommendationRequest = null; });
   }
   return recommendationRequest;
 };
@@ -344,7 +443,8 @@ const fetchEdgeFeed = async (
 
   const { data, error } = await client.auth.getSession();
   const accessToken = data.session?.access_token?.trim();
-  if (error || !accessToken) {
+  if (error) throw new FeedServiceError('FEED_AUTH');
+  if (!accessToken) {
     return null;
   }
 
@@ -370,15 +470,18 @@ const fetchEdgeFeed = async (
       signal: controller.signal,
     });
     if (!response.ok) {
-      logger.debug('recs-feed HTTP hata', { status: response.status });
-      return null;
+      throw new FeedServiceError(response.status === 401 || response.status === 403 ? 'FEED_AUTH' : 'FEED_SERVER');
     }
-    const parsed = parseFeedResponse(await response.json());
-    if (!parsed) return null;
+    let payload: unknown;
+    try { payload = await response.json(); } catch { throw new FeedServiceError('FEED_RESPONSE'); }
+    const parsed = parseFeedResponse(payload);
+    if (!parsed) throw new FeedServiceError('FEED_RESPONSE');
     edgeSupportsPagination = typeof parsed.has_more === 'boolean';
     // Preserve the first legacy ranking, but never reuse a finite legacy response as a next page.
     if (!edgeSupportsPagination && (excludeIds.length > 0 || parsed.items.length === 0)) return null;
-    const resolved = await productsById(parsed.items.map(item => item.productId));
+    let resolved: ReadonlyMap<string, Product>;
+    try { resolved = await productsById(parsed.items.map(item => item.productId)); }
+    catch { throw new FeedServiceError('FEED_SERVER'); }
     // A missing catalog record follows the existing unavailable-edge fallback.
     if (parsed.items.some(item => !resolved.has(item.productId))) return null;
     return { ...parsed, items: parsed.items.map(({ productId, ...metadata }) => {
@@ -387,8 +490,9 @@ const fetchEdgeFeed = async (
       return { ...metadata, product };
     }) };
   } catch (error) {
-    logger.debug('recs-feed çağrısı düştü', { error });
-    return null;
+    if (error instanceof FeedServiceError) throw error;
+    if (controller.signal.aborted) throw new FeedServiceError('FEED_TIMEOUT');
+    throw new FeedServiceError('FEED_NETWORK');
   } finally {
     clearTimeout(timeout);
   }
@@ -413,6 +517,9 @@ export const fetchFeedProducts = async (
   if (userId) {
     const edge = await fetchEdgeFeed(userId, intent, limit, mode, filters, excludeIds);
     const excluded = new Set(excludeIds);
+    if (edge && edge.has_more === true && !edge.items.some(item => !excluded.has(item.product.id))) {
+      throw new FeedServiceError('FEED_RESPONSE');
+    }
     // An empty/non-progressing batch with hasMore cannot be advanced using ID exclusions.
     if (edge && (edge.has_more === false || edge.items.some(item => !excluded.has(item.product.id)))) {
       setLastRecommendationId(edge.recommendation_id);
@@ -486,7 +593,7 @@ export const fetchFeedProducts = async (
       relaxed: selected.relaxed,
     };
   } catch (error) {
-    logger.debug('Yerel skorlama düştü; katalog sırası kullanılıyor', { error });
+    logger.warn('Yerel skorlama düştü; katalog sırası kullanılıyor', { code: 'LOCAL_RANK_FAILED' });
     track('feed_fallback', null, { reason: 'local_rank_failed' });
     const selected = selectLocalFeed(catalog, filters, limit);
     return {
@@ -494,6 +601,7 @@ export const fetchFeedProducts = async (
       hasMore: poolHasMore || catalog.length > selected.products.length,
       source: 'supabase',
       isPersonalized: false,
+      warning: 'LOCAL_RANK_FAILED',
       fallback: selected.fallback,
       relaxed: selected.relaxed,
     };

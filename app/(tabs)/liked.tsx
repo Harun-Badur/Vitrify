@@ -1,3 +1,5 @@
+import { wardrobeCutoutPresentation } from '../../lib/wardrobeCutoutState';
+import { itemCutoutV2Confirmed } from '../../lib/wardrobeCutoutV2Gate';
 import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import {
   Alert,
@@ -40,7 +42,7 @@ import OutfitCover from '../../components/OutfitCover';
 import { colors, radius, shadows, spacing } from '../../lib/theme';
 import { openProductPage } from '../../services/deeplinkService';
 import { useAppStore } from '../../store/useAppStore';
-import { wardrobeProduct, type SavedOutfit } from '../../types/wardrobe';
+import { wardrobeProduct, type SavedOutfit, type WardrobeItem } from '../../types/wardrobe';
 import {
   openOutfitCreator,
   openWardrobeEditor,
@@ -80,7 +82,7 @@ function categoryLabel(category: GarmentCategory): string {
 const SWIPE_DELETE_THRESHOLD_PX = 72;
 
 interface LikedItemProps {
-  item: LikedProduct;
+  item: LikedProduct & { wardrobeItem?: WardrobeItem };
   width: number;
   favorite?: boolean;
   matchFavoriteLayout?: boolean;
@@ -108,19 +110,26 @@ function LikedItem({
 }: LikedItemProps) {
   const { product } = item;
   const useFavoriteLayout = favorite || matchFavoriteLayout;
-  const [hasImageError, setHasImageError] = useState(false);
-  const [wardrobeImageIndex, setWardrobeImageIndex] = useState(0);
+  const [catalogImageError, setCatalogImageError] = useState(false);
+  const [wardrobeFailure, setWardrobeFailure] = useState({ key: '', index: 0, failed: false });
   const images = getProductImages(product);
-  const wardrobeImageKey = wardrobe ? images.join('\n') : '';
+  const wardrobeImageKey = wardrobe ? `${product.id}\n${images.join('\n')}` : '';
+  const wardrobeImageIndex = wardrobeFailure.key === wardrobeImageKey ? wardrobeFailure.index : 0;
+  const hasImageError = wardrobe ? wardrobeFailure.key === wardrobeImageKey && wardrobeFailure.failed : catalogImageError;
   const imageUri = images[wardrobe ? wardrobeImageIndex : 0];
+  const activeImage = useRef({ key: wardrobeImageKey, uri: imageUri });
+  activeImage.current = { key: wardrobeImageKey, uri: imageUri };
+  const sync = useAppStore(state => state.wardrobeSync);
+  const cutoutJob = useAppStore(state => state.wardrobeCutoutJobs?.[product.id]);
+  const cutoutConfirmation=useAppStore(state=>state.wardrobeConfirmedItems?.[product.id]);
+  const cutoutOwner=useAppStore(state=>state.sessionUserId);
+  let cutoutStatus = wardrobe && item.wardrobeItem ? wardrobeCutoutPresentation(item.wardrobeItem, cutoutJob,
+    item.wardrobeItem.cutoutProtocol===2 || Boolean(process.env.EXPO_PUBLIC_WARDROBE_CUTOUT_URL?.trim()),
+    item.wardrobeItem.cutoutProtocol===2 ? !!cutoutOwner && itemCutoutV2Confirmed(cutoutOwner,item.wardrobeItem,cutoutConfirmation) : sync?.state === 'synced' && sync.pending === 0) : undefined;
+  if (cutoutStatus && item.wardrobeItem?.cutoutStatus === 'ready' && wardrobeImageIndex > 0 &&
+    (imageUri === item.wardrobeItem.imageUrl || imageUri === item.wardrobeItem.imageLocalUri))
+    cutoutStatus = { ...cutoutStatus, text: 'Düzenlenen fotoğraf yüklenemedi. Orijinal gösteriliyor.' };
   const translateX = useSharedValue(0);
-
-  useEffect(() => {
-    if (wardrobe) {
-      setWardrobeImageIndex(0);
-      setHasImageError(false);
-    }
-  }, [wardrobe, wardrobeImageKey]);
 
   useEffect(
     () => () => {
@@ -215,12 +224,15 @@ function LikedItem({
                 contentFit={useFavoriteLayout ? 'cover' : 'contain'}
                 contentPosition="center"
                 accessibilityLabel={`${product.title} ürün görseli`}
-                cachePolicy="memory-disk"
-                recyclingKey={product.id}
+                cachePolicy={wardrobe ? 'none' : 'memory-disk'}
+                recyclingKey={wardrobe ? `${product.id}:${imageUri}` : product.id}
                 onError={() => {
-                  if (wardrobe && wardrobeImageIndex + 1 < images.length)
-                    setWardrobeImageIndex((index) => index + 1);
-                  else setHasImageError(true);
+                  if (!wardrobe) { setCatalogImageError(true); return; }
+                  // A late error from the previous original must not replace a
+                  // successfully published cutout with the old image again.
+                  if (activeImage.current.key !== wardrobeImageKey || activeImage.current.uri !== imageUri) return;
+                  setWardrobeFailure({ key: wardrobeImageKey, index: Math.min(wardrobeImageIndex + 1, images.length - 1),
+                    failed: wardrobeImageIndex + 1 >= images.length });
                 }}
               />
             )}
@@ -231,7 +243,7 @@ function LikedItem({
                 {favorite ? product.brand : product.title}
               </Text>
               <Text style={styles.category} numberOfLines={1}>
-                {favorite ? product.title : categoryLabel(product.category)}
+                {favorite ? product.title : cutoutStatus?.text ?? categoryLabel(product.category)}
               </Text>
             </View>
             <PressableScale
@@ -391,8 +403,8 @@ export default function LikedScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const compactScreen = height < 740;
-  const cardWidth = Math.max(0, (width - spacing.xl * 2 - GRID_GAP * 2) / 3);
-  const compactAddWidth = Math.min(144, (width - spacing.xl * 2) / 2);
+  const cardWidth = Math.max(0, (width - insets.left - insets.right - spacing.xl * 2 - GRID_GAP * 2) / 3);
+  const compactAddWidth = Math.min(144, (width - insets.left - insets.right - spacing.xl * 2) / 2);
   const [clothesGridHeight, setClothesGridHeight] = useState(
     compactScreen ? 190 : 232,
   );
@@ -408,11 +420,13 @@ export default function LikedScreen() {
   const [brand, setBrand] = useState<string | null>(null);
   const wardrobeItems = useAppStore((state) => state.wardrobeItems);
   const savedOutfits = useAppStore((state) => state.savedOutfits);
+  const refreshWardrobe = useAppStore((state) => state.refreshWardrobe);
   const removeWardrobeItem = useAppStore((state) => state.removeWardrobeItem);
   const wardrobeProducts = useMemo(
     () =>
       wardrobeItems.map((item) => ({
         product: wardrobeProduct(item),
+        wardrobeItem: item,
         likedAt: item.createdAt,
         notifyOnPriceDrop: false,
       })),
@@ -438,7 +452,7 @@ export default function LikedScreen() {
       }
 
       try {
-        await refreshLikedProducts();
+        await Promise.all([refreshLikedProducts(), refreshWardrobe()]);
         lastLoadedAtRef.current = Date.now();
       } catch {
         // Zaman damgası güncellenmedi; sonraki odakta tekrar denenir.
@@ -448,7 +462,7 @@ export default function LikedScreen() {
         );
       }
     },
-    [refreshLikedProducts],
+    [refreshLikedProducts, refreshWardrobe],
   );
 
   useFocusEffect(
@@ -491,7 +505,16 @@ export default function LikedScreen() {
     ]);
   };
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.md }]}>
+    <View
+      style={[
+        styles.root,
+        {
+          paddingTop: insets.top + spacing.md,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}
+    >
       <View style={styles.headerRow}>
         <Text style={styles.header}>Dolabım</Text>
         <PressableScale

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useOwnedState } from '../../hooks/useOwnedState';
 import {
   Alert,
   ActivityIndicator,
@@ -19,7 +19,7 @@ import {
 } from '../(tabs)/liked';
 import { useAppStore } from '../../store/useAppStore';
 import type { LikedProduct, Product } from '../../types/product';
-import { wardrobeProduct, type SavedOutfit } from '../../types/wardrobe';
+import { wardrobeProduct, type SavedOutfit, type WardrobeItem } from '../../types/wardrobe';
 import { colors, radius, spacing } from '../../lib/theme';
 import {
   openOutfitCreator,
@@ -28,7 +28,7 @@ import {
 import { openProductPage } from '../../services/deeplinkService';
 
 type GridEntry =
-  | { id: string; kind: 'product'; item: LikedProduct; wardrobe: boolean }
+  | { id: string; kind: 'product'; item: LikedProduct & { wardrobeItem?: WardrobeItem }; wardrobe: boolean }
   | { id: string; kind: 'outfit'; outfit: SavedOutfit }
   | { id: string; kind: 'add' };
 const GRID_GAP = 6;
@@ -41,15 +41,18 @@ export default function WardrobeListScreen() {
     height < 740 ? 190 : 232,
     cardWidth * (148 / 112) + 66,
   );
+  const owner = useAppStore(state => state.sessionUserId);
   const clothes = useAppStore((state) => state.wardrobeItems);
   const favorites = useAppStore((state) => state.likedProducts);
   const outfits = useAppStore((state) => state.savedOutfits);
   const status = useAppStore((state) => state.wardrobeStatus);
+  const sync = useAppStore((state) => state.wardrobeSync);
+  const refresh = useAppStore((state) => state.refreshWardrobe);
   const remove = useAppStore((state) => state.removeWardrobeItem);
   const unlike = useAppStore((state) => state.unlikeProduct);
   const hydrate = useAppStore((state) => state.hydrateWardrobe);
   const userId = useAppStore((state) => state.sessionUserId);
-  const [tryOnProduct, setTryOnProduct] = useState<Product | null>(null);
+  const [tryOnProduct, setTryOnProduct] = useOwnedState<Product | null>(owner, null);
   const isClothes = section === 'clothes';
   const isFavorites = section === 'favorites';
   const title = isClothes
@@ -88,6 +91,7 @@ export default function WardrobeListScreen() {
         wardrobe: true,
         item: {
           product: wardrobeProduct(item),
+          wardrobeItem: item,
           likedAt: item.createdAt,
           notifyOnPriceDrop: false,
         },
@@ -120,6 +124,17 @@ export default function WardrobeListScreen() {
   return (
     <View style={styles.root}>
       <Stack.Screen options={{ title }} />
+      {!isFavorites && sync && sync.state !== 'synced' ? (
+        <View style={{ padding: spacing.xl, gap: spacing.sm }}>
+          <Text accessibilityLabel="Dolap bulut durumu" style={{ color: colors.textSecondary }}>
+            {sync.message ?? 'Değişiklikler cihazda korundu; bulut senkronizasyonu bekliyor.'}
+          </Text>
+          <PressableScale accessibilityRole="button" accessibilityLabel="Dolabı senkronize et"
+            onPress={() => { void refresh(); }} style={styles.button}>
+            <Text style={styles.buttonText}>Tekrar Dene</Text>
+          </PressableScale>
+        </View>
+      ) : null}
       {!isFavorites && status === 'loading' ? (
         <View style={styles.empty}>
           <ActivityIndicator color={colors.accent} />

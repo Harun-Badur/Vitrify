@@ -1,3 +1,5 @@
+jest.mock('expo/virtual/env', () => ({ env: process.env }), { virtual: true });
+
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -6,6 +8,7 @@ import { runRecommendationSnapshotCli } from '../scripts/createRecommendationSna
 import { runRecommendationCacheCli } from '../scripts/prepareRecommendationCache';
 import * as worker from '../scripts/lib/recommendationCacheWorker';
 import { fetchFeedProducts, fetchRecommendationCatalog } from '../services/productService';
+import { selectRecommendationPool } from '../src/intelligence/recommendations/selectRecommendationPool';
 import { getSupabaseClient } from '../lib/supabase';
 import { fingerprint, createFinalCacheKey } from '../src/recommendationCache/fingerprint';
 import type { ImportPreparationInput } from '../scripts/lib/recommendationCacheWorker';
@@ -57,14 +60,15 @@ function backend() {
 describe('offline Discover recommendation import snapshot', () => {
   beforeEach(() => jest.clearAllMocks());
   afterEach(() => jest.restoreAllMocks());
-  it('matches Discover candidate pool and all 278 paginated mapped anchors including undefined fields', async () => {
+  it('keeps the frozen 80-product import snapshot while the live pool reads the full catalog', async () => {
     const client = backend(); jest.mocked(getSupabaseClient).mockReturnValue(client as never);
     const snapshot = createDiscoverImportSnapshot(raw);
     const pool = await fetchRecommendationCatalog();
     expect(snapshot.candidatePool).toHaveLength(80);
-    expect(snapshot.candidatePool).toStrictEqual(pool);
-    expect(fingerprint(snapshot.candidatePool)).toBe(fingerprint(pool));
-    expect(client.orders).toEqual([['created_at', { ascending: true }], ['id']]);
+    expect(snapshot.candidatePool).toStrictEqual(snapshot.anchors.slice(0, 80));
+    expect(pool.map((product) => product.id)).toEqual(selectRecommendationPool(snapshot.anchors).map((product) => product.id));
+    expect(client.orders.slice(0, 2)).toEqual([['created_at', { ascending: true }], ['id']]);
+    expect(client.orders.length).toBeGreaterThan(2);
     const anchors: Product[] = [];
     let more = true;
     while (more) {

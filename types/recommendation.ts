@@ -149,7 +149,7 @@ export interface ScoringCandidate {
   colors: string[];
   priceBand: string;
   price: number;
-  gender: 'women' | 'men' | 'unisex';
+  gender: 'women' | 'men' | 'unisex' | '';
   createdAtMs: number;
   impressionCount: number;
   /** 1: katalog fiyat düşüşü, 0: yok. */

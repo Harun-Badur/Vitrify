@@ -40,7 +40,7 @@ import {
 } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
-import DiscoverRecommendations from './DiscoverRecommendations';
+import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 import { logger } from '../lib/logger';
 import {
@@ -119,7 +119,7 @@ export interface SwipeCardProps {
   onVirtualTryOn: (product: Product) => void;
   onBuy: (product: Product) => void;
   /** Undo settle sonrası tek store reconcile. */
-  onUndoPass?: () => void;
+  onUndoPass?: () => boolean | void | Promise<boolean | void>;
   onRequireAuth?: () => void;
   onImpression: (product: Product, dwellMs: number) => void;
   canLike?: boolean;
@@ -131,6 +131,7 @@ export interface SwipeCardProps {
   /** Parent registry delete on unmount. */
   unregisterPageIndexSV?: (productId: string) => void;
   recommendations?: readonly DiscoverRecommendation[];
+  recommendationStatus?: RecommendationStatus;
   selectedRecommendationProductIds?: readonly string[];
   onSelectRecommendation?: (product: Product) => void;
 }
@@ -177,6 +178,7 @@ function SwipeCard({
   registerPageIndexSV,
   unregisterPageIndexSV,
   recommendations,
+  recommendationStatus,
   selectedRecommendationProductIds,
   onSelectRecommendation,
 }: SwipeCardProps) {
@@ -369,13 +371,24 @@ function SwipeCard({
     }
   }, [onBuy, product]);
 
-  const handleUndoPass = useCallback((): void => {
+  const handleUndoPass = useCallback(async (animationId: number): Promise<void> => {
+    let restored = false;
     try {
-      onUndoPass?.();
+      restored = onUndoPass !== undefined && (await onUndoPass()) !== false;
     } catch (error) {
       logger.error('Geçme geri alınamadı', { error });
     }
-  }, [onUndoPass]);
+    if (!restored) {
+      runOnUI(() => {
+        'worklet';
+        // A failed/no-op undo has no rollover to release the exit lock.
+        // A late result must never reset a newer card or gesture.
+        if (exitAnimationId.value !== animationId || pageIndexSV.value !== 0) return;
+        hasExited.value = false;
+        dragOffset.value = withSpring(0, CARD_SPRING_BACK);
+      })();
+    }
+  }, [onUndoPass, exitAnimationId, pageIndexSV, hasExited, dragOffset]);
 
   const handleStorePress = useCallback((): void => {
     handleBuy();
@@ -448,7 +461,7 @@ function SwipeCard({
           (finished) => {
             if (exitAnimationId.value !== animationId) return;
             if (finished) {
-              runOnJS(handleUndoPass)();
+              runOnJS(handleUndoPass)(animationId);
             } else {
               hasExited.value = false;
             }
@@ -836,6 +849,7 @@ function SwipeCard({
         <DiscoverRecommendations
           currentProductId={product.id}
           recommendations={recommendations}
+          status={recommendationStatus}
           selectedProductIds={selectedRecommendationProductIds}
           onSelectProduct={onSelectRecommendation}
         />

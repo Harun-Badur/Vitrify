@@ -104,3 +104,8 @@ venv/
 /scripts/data/pdf_catalog_*.json
 /scripts/data/pdf_catalog_valid.csv
 /pdf-catalog-source.txt
+
+# Local toolchain, release logs, and machine-specific artifacts
+.tmp/
+/reports/
+NUL

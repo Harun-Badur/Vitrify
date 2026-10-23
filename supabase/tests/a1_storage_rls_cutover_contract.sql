@@ -1,0 +1,22 @@
+-- Existing isolated PostgreSQL runner only; synthetic catalog rows, not Storage API/JWT proof.
+begin;
+select style_test.ok(has_table_privilege('authenticated','storage.objects','INSERT,UPDATE,DELETE'),'MANAGED_STORAGE_TABLE_GRANTS_RETAINED');
+select style_test.ok(not exists(select 1 from pg_policies where schemaname='storage' and tablename in ('objects','buckets') and cmd in ('ALL','INSERT','UPDATE','DELETE')),'NO_CLIENT_STORAGE_WRITE_POLICIES');
+set local role authenticated;
+select style_test.claim('A');
+select style_test.denied($q$insert into storage.objects(bucket_id,name) values('model-photos','00000000-0000-4000-8000-000000000001/new.png')$q$,'row-level security','AUTHENTICATED_INSERT_DENIED_BY_RLS');
+with changed as (update storage.objects set name='changed' where name='00000000-0000-4000-8000-000000000001/model.jpg' returning *) select style_test.ok((select count(*)=0 from changed),'AUTHENTICATED_UPDATE_DENIED_BY_RLS');
+with changed as (delete from storage.objects where name='00000000-0000-4000-8000-000000000001/model.jpg' returning *) select style_test.ok((select count(*)=0 from changed),'AUTHENTICATED_DELETE_DENIED_BY_RLS');
+select style_test.denied($q$insert into storage.buckets(id,public) values('synthetic',false)$q$,'row-level security','BUCKET_INSERT_DENIED_BY_RLS');
+select style_test.ok((select count(*)=1 from storage.objects),'OWN_OBJECT_READ_PRESERVED');
+select style_test.ok(not exists(select 1 from storage.objects where name like '00000000-0000-4000-8000-000000000002/%'),'OTHER_OBJECT_READ_DENIED');
+set local role anon;
+select style_test.denied($q$insert into storage.objects(bucket_id,name) values('model-photos','anon.png')$q$,'row-level security','ANON_INSERT_DENIED_BY_RLS');
+with changed as (update storage.buckets set public=true returning *) select style_test.ok((select count(*)=0 from changed),'ANON_BUCKET_UPDATE_DENIED');
+with changed as (delete from storage.buckets returning *) select style_test.ok((select count(*)=0 from changed),'ANON_BUCKET_DELETE_DENIED');
+set local role service_role;
+insert into storage.objects(bucket_id,name) values('model-photos','service-synthetic.png');
+select style_test.ok(exists(select 1 from storage.objects where name='service-synthetic.png'),'SERVICE_STORAGE_WRITER_PRESERVED');
+reset role;
+select style_test.ok(exists(select 1 from storage.objects where name='00000000-0000-4000-8000-000000000001/model.jpg'),'CLIENT_MUTATIONS_LEFT_EXISTING_OBJECT_UNCHANGED');
+rollback;

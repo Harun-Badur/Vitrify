@@ -132,6 +132,18 @@ describe('progressive relax', () => {
   });
 });
 
+describe('explicit price range', () => {
+  it('drops prices outside the existing hard bounds and keeps unknown numeric prices', () => {
+    const priced = base({ price: 100, currentPrice: undefined });
+    expect(productMatchesFilters(priced, { priceMin: 200 })).toBe(false);
+    expect(productMatchesFilters(priced, { priceMax: 50 })).toBe(false);
+    expect(productMatchesFilters(priced, { priceMin: 50, priceMax: 150 })).toBe(true);
+    expect(productMatchesFilters(base({ price: 140 }), { priceMin: 50, priceMax: 150 })).toBe(true);
+    expect(productMatchesFilters(base({ currentPrice: 40, price: 140 }), { priceMin: 50 })).toBe(false);
+    expect(productMatchesFilters(base({ price: Number.NaN }), { priceMin: 50, priceMax: 150 })).toBe(true);
+  });
+});
+
 describe('searchRelaxBannerText', () => {
   it('uses personal fallback copy', () => {
     expect(

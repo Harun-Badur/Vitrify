@@ -1,4 +1,8 @@
+import { withFashnTrial, readFashnTrialStatus } from '../_shared/fashnTrial.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { membershipPorts, readMembershipConfig } from '../_shared/premiumRuntime.ts';
+import { reserveMembershipVton, settleMembershipVton } from '../_shared/premiumVton.ts';
+import { beginProviderDispatch, providerDispatchRpcPort, type ProviderDispatchOperation } from '../_shared/accountProviderDispatch.ts';
 import {
   buildFashnTryOnMaxRequest,
   parseFashnGenerationMode,
@@ -22,8 +26,8 @@ const DAY_LIMIT = 20;
 
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, content-type, x-provider-request',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
 interface QuotaResult {
@@ -234,7 +238,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
-  if (request.method !== 'POST') {
+  if (request.method !== 'POST' && request.method !== 'GET') {
     return jsonResponse({ detail: 'Yalnızca POST destekleniyor.' }, 405);
   }
 
@@ -275,6 +279,16 @@ Deno.serve(async (request: Request): Promise<Response> => {
     );
   }
 
+  // paused is a closed admission window for history capture / safe rollback.
+  const trialFlag = Deno.env.get('VTON_TEST_TRIAL_ENABLED');
+  if (trialFlag === 'paused') return jsonResponse({ detail: 'Sanal deneme geçici olarak kapalı.' }, 503);
+  const trialEnabled = trialFlag === 'true';
+  if (request.method === 'GET') {
+    try {
+      return jsonResponse(trialEnabled ? await readFashnTrialStatus(admin, user.id) : { enabled: false, used: false }, 200, { 'Cache-Control': 'no-store' });
+    } catch { return jsonResponse({ detail: 'Deneme hakkı doğrulanamadı.' }, 503); }
+  }
+
   let rawBody: unknown;
   try {
     rawBody = await request.json();
@@ -287,7 +301,27 @@ Deno.serve(async (request: Request): Promise<Response> => {
     return jsonResponse({ detail: 'Geçersiz sanal deneme isteği.' }, 400);
   }
 
-  const { data: quotaData, error: quotaError } = await admin.rpc(
+  const suppliedTrialRequest = request.headers.get('x-provider-request');
+  const trialHash = trialEnabled ? [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([payload.model_image, payload.product_image]))))].map(byte => byte.toString(16).padStart(2, '0')).join('') : '';
+  return withFashnTrial(admin, trialEnabled, user.id, suppliedTrialRequest, trialHash, async claimTrial => {
+  // Explicit activation only after the separately approved schema/config package.
+  const membershipEnabled = Deno.env.get('VTON_MEMBERSHIP_ENABLED') === 'true';
+  const suppliedRequest = request.headers.get('x-provider-request');
+  if (membershipEnabled && (!suppliedRequest || !/^[a-zA-Z0-9-]{1,100}$/.test(suppliedRequest))) {
+    return jsonResponse({ detail: 'Geçersiz sanal deneme kimliği.' }, 400);
+  }
+  let quotaData: QuotaResult & { daily_limit?: number };
+  let quotaError: unknown = null;
+  if (membershipEnabled) {
+    try {
+      const config = readMembershipConfig(name => Deno.env.get(name));
+      const ports = membershipPorts(admin, config);
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([payload.model_image, payload.product_image])));
+      const hash = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      quotaData = await reserveMembershipVton({ ...ports, rpc: (name, args) => admin.rpc(name, args) }, user.id, suppliedRequest!, hash);
+    } catch { return jsonResponse({ detail: 'Üyelik ve kota doğrulanamadı. Yeni deneme başlatılmadı.' }, 503); }
+  } else {
+    const legacyQuota = await admin.rpc(
     'consume_vton_quota',
     {
       p_user_id: user.id,
@@ -295,6 +329,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
       p_day_limit: DAY_LIMIT,
     },
   );
+    quotaData = legacyQuota.data;
+    quotaError = legacyQuota.error;
+  }
 
   if (quotaError || !isQuotaResult(quotaData)) {
     console.error('Kota kontrolü başarısız');
@@ -305,16 +342,22 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   if (!quotaData.allowed) {
+    if (membershipEnabled && !['daily_limit','minute_limit'].includes(quotaData.reason ?? '')) {
+      return jsonResponse({ detail: 'İşlem zaten kayıtlı veya üyelik doğrulanamadı. Otomatik tekrar yapılmadı.', code: quotaData.reason ?? 'QUOTA_UNVERIFIED' }, quotaData.reason === 'membership_unverified' ? 503 : 409);
+    }
     const retryAfter = quotaData.retry_after_seconds ?? 60;
     const detail =
       quotaData.reason === 'daily_limit'
-        ? `Günlük sanal deneme limitine ulaştın (${DAY_LIMIT}). Yarın tekrar dene.`
+        ? 'Günlük sanal deneme limitine ulaştın. Hakların 00.00 UTC’de yenilenir.'
         : `Çok hızlı deniyorsun. ${retryAfter} saniye sonra tekrar dene.`;
     return jsonResponse({ detail }, 429, {
       'Retry-After': String(retryAfter),
     });
   }
 
+  let quotaOutcome: 'not_sent' | 'unknown' | 'completed' | 'failed' = 'not_sent';
+  let quotaPrediction: string | null = null;
+  try {
   const resolution = parseFashnResolution(Deno.env.get('FASHN_RESOLUTION'));
   const generationMode = parseFashnGenerationMode(
     Deno.env.get('FASHN_GENERATION_MODE'),
@@ -359,8 +402,26 @@ Deno.serve(async (request: Request): Promise<Response> => {
     });
   };
 
+  const providerPort = providerDispatchRpcPort(admin);
+  let providerOperation: ProviderDispatchOperation;
+  try {
+    const supplied = request.headers.get('x-provider-request');
+    const requestId = supplied ?? [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
+      JSON.stringify([user.id, payload.model_image, payload.product_image]))))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+    if (!/^[a-zA-Z0-9-]{1,100}$/.test(requestId)) return jsonResponse({ detail: 'Geçersiz sanal deneme kimliği.' }, 400);
+    providerOperation = await beginProviderDispatch(providerPort, user.id, 'fashn', requestId);
+  } catch {
+    return jsonResponse({ detail: 'Doğrulanabilir sağlayıcı işlem kaydı hazır değil.' }, 503);
+  }
   let runResponse: Response;
   try {
+    if (membershipEnabled) {
+      // Durable uncertainty BEFORE network I/O. A crash cannot trigger a blind refund.
+      quotaOutcome = 'unknown';
+      await settleMembershipVton(admin, user.id, suppliedRequest!, 'dispatched');
+    }
+    await claimTrial();
+    quotaOutcome = 'unknown';
     runResponse = await fetch(`${FASHN_API_BASE_URL}/run`, {
       method: 'POST',
       headers: fashnHeaders,
@@ -393,6 +454,13 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (predictionId.length === 0) {
     return jsonResponse({ detail: 'Sanal deneme tamamlanamadı.' }, 502);
   }
+  quotaPrediction = predictionId;
+  if (membershipEnabled) {
+    try { await settleMembershipVton(admin, user.id, suppliedRequest!, 'unknown', predictionId); }
+    catch { return jsonResponse({ detail: 'İşlem uzlaştırma için bekliyor; otomatik tekrar yapılmadı.' }, 503); }
+  }
+  try { await providerPort.observe(providerOperation, predictionId); }
+  catch { return jsonResponse({ detail: 'Sağlayıcı yanıtı kalıcı olarak doğrulanamadı; otomatik tekrar durduruldu.' }, 503); }
 
   const startedAt = Date.now();
   while (Date.now() - startedAt < FASHN_POLL_TIMEOUT_MS) {
@@ -436,6 +504,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
 
     if (pollStatus === 'completed') {
+      quotaOutcome = 'completed';
       const output = statusJson.output;
       const first =
         Array.isArray(output) && typeof output[0] === 'string' ? output[0] : null;
@@ -452,10 +521,18 @@ Deno.serve(async (request: Request): Promise<Response> => {
     }
 
     const errorName = readFashnErrorName(statusJson.error);
+    if (pollStatus === 'failed') quotaOutcome = 'failed';
     emitDebug(pollStatus);
     return errorResponse(mapFashnRuntimeFailure(errorName));
   }
 
   emitDebug('timeout');
   return errorResponse(FASHN_TIMEOUT_ERROR);
+  } finally {
+    if (membershipEnabled) {
+      try { await settleMembershipVton(admin, user.id, suppliedRequest!, quotaOutcome, quotaPrediction); }
+      catch { return jsonResponse({ detail: 'İşlem kaydı doğrulanamadı; otomatik tekrar veya iade yapılmadı.' }, 503); }
+    }
+  }
+  });
 });

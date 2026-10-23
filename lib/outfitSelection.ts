@@ -5,6 +5,7 @@ import { generateWardrobeCatalogOutfits } from '../src/intelligence/outfits/gene
 export const OUTFIT_SLOTS = [
   { key: 'upper_body', label: 'Üst' },
   { key: 'lower_body', label: 'Alt' },
+  { key: 'dresses', label: 'Elbise' },
   { key: 'shoes', label: 'Ayakkabı' },
   { key: 'accessories', label: 'Aksesuar' },
 ] as const;
@@ -18,7 +19,7 @@ export const choiceSlot = (choice: OutfitChoice): OutfitSlot | null => {
   if (
     category === 'upper_body' ||
     category === 'lower_body' ||
-    category === 'shoes'
+    category === 'shoes' || category === 'dresses'
   )
     return category;
   return ['accessories', 'bags', 'hats'].includes(category)
@@ -26,11 +27,20 @@ export const choiceSlot = (choice: OutfitChoice): OutfitSlot | null => {
     : null;
 };
 export const canCreateOutfit = (selection: OutfitSelection): boolean =>
-  Boolean(selection.upper_body && selection.lower_body);
+  selection.dresses ? !selection.upper_body && !selection.lower_body : Boolean(selection.upper_body && selection.lower_body);
+/** Selecting a core form replaces only the mutually exclusive core pieces. */
+export const selectOutfitChoice = (selection: OutfitSelection, choice: OutfitChoice): OutfitSelection => {
+  const slot = choiceSlot(choice);
+  if (!slot) return selection;
+  const next = { ...selection, [slot]: choice };
+  if (slot === 'dresses') { delete next.upper_body; delete next.lower_body; }
+  if (slot === 'upper_body' || slot === 'lower_body') delete next.dresses;
+  return next;
+};
 
 export function selectedOutfitCandidate(selection: OutfitSelection) {
   if (!canCreateOutfit(selection))
-    throw new Error('Üst ve Alt parçalarını seçmelisin.');
+    throw new Error('Üst ve Alt parçalarını veya bir Elbise seçmelisin.');
   const chosen = OUTFIT_SLOTS.flatMap(({ key }) =>
     selection[key] ? [selection[key]!] : [],
   );
@@ -42,6 +52,7 @@ export function selectedOutfitCandidate(selection: OutfitSelection) {
   const role = (choice: OutfitChoice): OutfitRole => {
     if (choice.item.category === 'upper_body') return 'top';
     if (choice.item.category === 'lower_body') return 'bottom';
+    if (choice.item.category === 'dresses') return 'one_piece';
     if (choice.item.category === 'shoes') return 'shoes';
     if (choice.item.category === 'bags') return 'bag';
     if (choice.item.category === 'hats') return 'hat';

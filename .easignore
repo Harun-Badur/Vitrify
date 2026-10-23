@@ -1,0 +1,118 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+coverage/
+
+# debug / logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+logs/
+.logs/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.pem
+
+# local env files
+.env*
+!.env.example
+*.env
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# generated native folders
+/ios
+/android
+
+# supabase cli scratch
+supabase/.temp/
+
+# Build outputs and local verification artifacts
+build/
+out/
+output/
+tmp/
+/.tmp/
+.cache/
+.turbo/
+.gradle/
+*.tsbuildinfo
+*.apk
+*.aab
+*.ipa
+*.xcarchive/
+*.dSYM/
+
+# Credentials and signing material
+credentials/
+credentials.json
+secrets/
+*.keystore
+*.pfx
+*.cer
+*.csr
+*.der
+*.provisionprofile
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+serviceAccount*.json
+.npmrc
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.suo
+*.user
+*.swp
+*.swo
+$RECYCLE.BIN/
+
+# Python runtime and downloaded models
+.venv/
+venv/
+.models/
+.pytest_cache/
+.mypy_cache/
+
+# Local catalog extraction/import reports (keep source and example inputs)
+/scripts/data/pdf_catalog_*.json
+/scripts/data/pdf_catalog_valid.csv
+/pdf-catalog-source.txt
+
+# Android development build: omit local reports and server-only artifacts
+/reports/
+/__tests__/
+/scripts/
+/.env.example
+/supabase/migrations/
+/supabase/deferred/
+/supabase/tests/
+/.agents/
+/.codex/

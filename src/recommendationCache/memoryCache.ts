@@ -8,6 +8,8 @@ export type CacheLookup<T> = { status: 'hit'; value: T } |
 
 /** Explicit reads/writes only: no engine, network, preparation jobs or fallback. */
 export class RecommendationMemoryCache<T extends WardrobeItemForCandidate = WardrobeItemForCandidate> {
+  private closed = false;
+  dispose(): void { this.closed = true; this.clear(); }
   private readonly rankings = new Map<string, { key: RankingCacheKey; value: PreparedDiscoverRanking<T> }>();
   private readonly finals = new Map<string, { key: FinalCacheKey; value: readonly OutfitDiscoverRecommendation<T>[] }>();
 
@@ -24,6 +26,7 @@ export class RecommendationMemoryCache<T extends WardrobeItemForCandidate = Ward
   }
 
   private write<K, V>(entries: Map<string, { key: K; value: V }>, key: string, entry: { key: K; value: V }): void {
+    if (this.closed) return;
     entries.delete(key);
     entries.set(key, entry);
     if (entries.size > this.capacityPerKind) entries.delete(entries.keys().next().value!);

@@ -1,0 +1,7 @@
+# Only the existing service sources enter the image; never photos/env/models.
+*
+!Dockerfile
+!requirements.txt
+!processor.py
+!server.py
+!v2.py

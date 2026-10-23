@@ -1,0 +1,21 @@
+'use strict';
+// Generates only fixed synthetic localhost fixture files inside the runner-owned temp directory.
+const fs=require('node:fs'),path=require('node:path');
+const {makeManifest,cleanupSql}=require('../../scripts/backend/style-v2-kabin-acceptance.cjs');
+const folder=process.argv[2];if(!folder)throw Error('LOCAL_FIXTURE_DIRECTORY_REQUIRED');
+const owners=['00000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002'];
+const m=makeManifest(owners,'20000000-0000-4000-8000-000000000001');
+const source='90000000-0000-4000-8000-000000000001',foreign='90000000-0000-4000-8000-000000000003',extra='90000000-0000-4000-8000-000000000004';
+const write=(name,sql)=>fs.writeFileSync(path.join(folder,name),sql);
+write('acceptance-gate-baseline.sql',"create table style_bench.acceptance_saved_gates as select key,value from public.recs_config where key in ('style_preference_writer_v2','style_profile_v2');delete from public.recs_config where key in ('style_preference_writer_v2','style_profile_v2');");
+write('acceptance-seed.sql',`insert into public.style_preference_actions(user_id,action_id,product_id,kind,event_ids,revokes,request) values('${owners[0]}','${m.actions[0]}','fixture-1','favorite',array['${source}']::uuid[],'{}','{}');
+insert into public.user_events(event_id,user_id,session_id,event_type,product_id,payload) values('${source}','${owners[0]}','20000000-0000-4000-8000-000000000001','like','fixture-1','{}'),('${m.legacyEvents[0]}','${owners[0]}','20000000-0000-4000-8000-000000000001','like','fixture-2','{}');
+insert into public.liked_products(id,user_id,product_id,product_snapshot) values('${m.legacyRows[0]}','${owners[0]}','fixture-2','{}'),('${foreign}','00000000-0000-4000-8000-000000000003','fixture-6','{}');
+insert into public.passed_products(id,user_id,product_id) values('${m.legacyRows[1]}','${owners[0]}','fixture-3');
+insert into public.user_style_profiles(user_id) values('${owners[0]}');`);
+write('acceptance-cleanup.sql',cleanupSql(m));
+write('acceptance-extra.sql',`update public.recs_config set value='{"enabled":false}' where key='style_preference_writer_v2';insert into public.user_events(event_id,user_id,session_id,event_type,product_id,payload) values('${extra}','${owners[0]}','20000000-0000-4000-8000-000000000001','like','fixture-8','{}');`);
+write('acceptance-clear-extra.sql',`delete from public.user_events where event_id='${extra}';`);
+write('acceptance-old-profile.sql',`update public.user_style_profiles set computed_at='2000-01-01' where user_id='${owners[0]}';`);
+write('acceptance-fresh-profile.sql',`update public.user_style_profiles set computed_at=clock_timestamp() where user_id='${owners[0]}';`);
+write('acceptance-verify.sql',`select style_test.ok(exists(select 1 from public.liked_products where id='${foreign}'),'KABIN_CLEANUP_FOREIGN_ROWS_PRESERVED');delete from public.liked_products where id='${foreign}';insert into public.recs_config(key,value) select key,value from style_bench.acceptance_saved_gates;`);

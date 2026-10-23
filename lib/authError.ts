@@ -1,3 +1,8 @@
+export const isEmailRateLimitError = (error: unknown): boolean => {
+  const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null;
+  return code === 'over_email_send_rate_limit' || (error instanceof Error && /email rate limit|over_email_send_rate_limit/i.test(error.message));
+};
+
 const AUTH_MESSAGE_BY_NEEDLE: Array<{ needle: string; message: string }> = [
   {
     needle: 'invalid login credentials',
@@ -54,6 +59,7 @@ const AUTH_MESSAGE_BY_NEEDLE: Array<{ needle: string; message: string }> = [
 ];
 
 export const toTurkishAuthMessage = (error: unknown): string => {
+  if (isEmailRateLimitError(error)) return 'Şu anda doğrulama e-postası gönderilemiyor. Bir süre sonra tekrar dene. Hesabın varsa giriş yapabilir veya sosyal giriş kullanabilirsin.';
   const raw =
     error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.';
   const lower = raw.toLowerCase();

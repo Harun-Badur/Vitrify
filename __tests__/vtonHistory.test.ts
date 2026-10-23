@@ -41,7 +41,7 @@ describe('vtonHistory', () => {
       entry(index, index),
     );
     const incoming = entry(99, 10_000);
-    const { next, evicted } = mergeTryOnHistory(existing, incoming);
+    const { next, evicted } = mergeTryOnHistory(existing, incoming, 10_000);
 
     expect(next).toHaveLength(VTON_HISTORY_CAP);
     expect(next[0]).toEqual(incoming);

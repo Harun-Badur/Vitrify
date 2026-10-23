@@ -20,13 +20,11 @@ import Animated, {
 import PressableScale from './PressableScale';
 import {
   DiscoverFanIllustration,
-  PriceAlertIllustration,
   TryOnScanIllustration,
 } from './OnboardingIllustrations';
 import {
   ONBOARDING_DOT_SPRING,
   ONBOARDING_ENTER_SPRING,
-  ONBOARDING_PAGE_COUNT,
   ONBOARDING_PARALLAX_FACTOR,
   ONBOARDING_STAGGER_MS,
 } from '../lib/motion';
@@ -47,10 +45,6 @@ const PAGES: readonly OnboardingPageCopy[] = [
   {
     title: 'AI ile Üzerinde Dene',
     body: 'Fotoğrafını yükle, ürünü üzerinde gör; kararını güvenle ver.',
-  },
-  {
-    title: 'Fiyat Düşünce Haber Ver',
-    body: 'Dolabındaki ürünler takipte; indirim anında bildiririz.',
   },
 ];
 
@@ -177,7 +171,7 @@ export default function OnboardingScreen({
       );
       const clamped = Math.max(
         0,
-        Math.min(ONBOARDING_PAGE_COUNT - 1, nextIndex),
+        Math.min(PAGES.length - 1, nextIndex),
       );
       setPageIndex(clamped);
       pageProgress.value = withSpring(clamped, ONBOARDING_DOT_SPRING);
@@ -186,7 +180,7 @@ export default function OnboardingScreen({
   );
 
   const goNext = useCallback((): void => {
-    if (pageIndex >= ONBOARDING_PAGE_COUNT - 1) {
+    if (pageIndex >= PAGES.length - 1) {
       onComplete();
       return;
     }
@@ -196,7 +190,7 @@ export default function OnboardingScreen({
     scrollRef.current?.scrollTo({ x: next * SCREEN_WIDTH, animated: true });
   }, [onComplete, pageIndex, pageProgress]);
 
-  const isLastPage = pageIndex === ONBOARDING_PAGE_COUNT - 1;
+  const isLastPage = pageIndex === PAGES.length - 1;
   const ctaLabel = isLastPage ? 'Başla' : 'Devam';
 
   return (
@@ -229,10 +223,8 @@ export default function OnboardingScreen({
             illustration={
               index === 0 ? (
                 <DiscoverFanIllustration />
-              ) : index === 1 ? (
-                <TryOnScanIllustration />
               ) : (
-                <PriceAlertIllustration />
+                <TryOnScanIllustration />
               )
             }
           />

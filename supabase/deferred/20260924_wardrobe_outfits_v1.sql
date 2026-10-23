@@ -1,7 +1,33 @@
 -- Wardrobe and outfits V1. Requires schema_products.sql and schema.sql.
 -- Favorites remain in liked_products; wardrobe items are separate user-owned data.
+-- One-time staging install only: execute the WHOLE file. No existing object is overwritten.
+begin;
+do $$
+begin
+  if to_regclass('public.wardrobe_items') is not null
+    or to_regclass('public.outfits') is not null
+    or to_regclass('public.outfit_items') is not null
+    or exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+      where n.nspname='public' and p.proname='set_wardrobe_outfit_updated_at') then
+    raise exception 'Wardrobe installation requires absent target objects';
+  end if;
+  if exists (
+    select 1 from (values ('users','uuid'::regtype),('products','text'::regtype)) v(name,typ)
+    where not exists (
+      select 1 from pg_attribute a join pg_index i on i.indrelid=a.attrelid
+      where a.attrelid=to_regclass('public.'||v.name) and a.attname='id'
+        and not a.attisdropped and a.atttypid=v.typ and a.attnotnull
+        and i.indisunique and i.indisvalid and i.indimmediate and i.indnkeyatts=1
+        and i.indkey[0]=a.attnum and i.indpred is null and i.indexprs is null
+    )
+  ) or to_regprocedure('auth.uid()') is null
+    or not exists(select 1 from pg_roles where rolname='authenticated')
+    or not exists(select 1 from pg_roles where rolname='anon') then
+    raise exception 'Wardrobe dependency mismatch';
+  end if;
+end $$;
 
-create table if not exists public.wardrobe_items (
+create table public.wardrobe_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users (id) on delete cascade,
   image_url text not null,
@@ -22,7 +48,7 @@ create table if not exists public.wardrobe_items (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.outfits (
+create table public.outfits (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users (id) on delete cascade,
   name text not null,
@@ -34,7 +60,7 @@ create table if not exists public.outfits (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.outfit_items (
+create table public.outfit_items (
   id uuid primary key default gen_random_uuid(),
   outfit_id uuid not null references public.outfits (id) on delete cascade,
   source_type text not null check (source_type in ('wardrobe', 'catalog')),
@@ -49,26 +75,27 @@ create table if not exists public.outfit_items (
   )
 );
 
-create index if not exists wardrobe_items_user_created_at_idx
+create index wardrobe_items_user_created_at_idx
   on public.wardrobe_items (user_id, created_at desc);
-create index if not exists outfits_user_created_at_idx
+create index outfits_user_created_at_idx
   on public.outfits (user_id, created_at desc);
-create index if not exists outfit_items_outfit_position_idx
+create index outfit_items_outfit_position_idx
   on public.outfit_items (outfit_id, position, id);
-create index if not exists outfit_items_wardrobe_item_id_idx
+create index outfit_items_wardrobe_item_id_idx
   on public.outfit_items (wardrobe_item_id)
   where wardrobe_item_id is not null;
-create index if not exists outfit_items_product_id_idx
+create index outfit_items_product_id_idx
   on public.outfit_items (product_id)
   where product_id is not null;
 
-create or replace function public.set_wardrobe_outfit_updated_at()
+create function public.set_wardrobe_outfit_updated_at()
 returns trigger
 language plpgsql
 set search_path = public
 as $$
 begin
-  new.updated_at = now();
+  -- Strictly advance after row-lock acquisition, including repeated RPCs in one transaction.
+  new.updated_at = greatest(clock_timestamp(), old.updated_at + interval '1 microsecond');
   return new;
 end;
 $$;
@@ -182,6 +209,11 @@ for delete to authenticated using (
   )
 );
 
+revoke all on public.wardrobe_items, public.outfits, public.outfit_items from public, anon;
 grant select, insert, update, delete on public.wardrobe_items to authenticated;
 grant select, insert, update, delete on public.outfits to authenticated;
 grant select, insert, update, delete on public.outfit_items to authenticated;
+commit;
+-- Failure: stop; ROLLBACK any still-open failed transaction. Never continue to the RPC file.
+-- Successful installation rollback: do not DROP data-bearing tables automatically.
+-- Leave the schema intact and stop client use pending review; this file changes no existing user rows.

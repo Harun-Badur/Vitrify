@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useOwnedState } from '../hooks/useOwnedState';
+import { useCallback, useEffect } from 'react';
 import {
   Dimensions,
   Modal,
@@ -47,8 +48,8 @@ export default function TryOnHistorySheet({
   userId,
   onClose,
 }: TryOnHistorySheetProps) {
-  const [entries, setEntries] = useState<TryOnHistoryEntry[]>([]);
-  const [selected, setSelected] = useState<TryOnHistoryEntry | null>(null);
+  const [entries, setEntries] = useOwnedState<TryOnHistoryEntry[]>(userId, []);
+  const [selected, setSelected] = useOwnedState<TryOnHistoryEntry | null>(userId, null);
 
   const loadEntries = useCallback(async (): Promise<void> => {
     if (!userId) {
@@ -92,6 +93,7 @@ export default function TryOnHistorySheet({
                 accessibilityLabel={item.title}
               >
                 <Image
+                  cachePolicy="none"
                   source={{ uri: item.imageUri }}
                   style={styles.tileImage}
                   contentFit="cover"
@@ -122,6 +124,7 @@ export default function TryOnHistorySheet({
               <X color={colors.inverseText} size={ICON_SIZE} />
             </PressableScale>
             <Image
+              cachePolicy="none"
               source={{ uri: selected.imageUri }}
               style={styles.previewImage}
               contentFit="contain"

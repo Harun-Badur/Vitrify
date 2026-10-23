@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useAuth } from './useAuth';
+import type { SocialAuthResult, SocialProvider } from '../services/socialAuthService';
 import type {
   AuthUser,
   SignInParams,
@@ -13,6 +14,7 @@ interface AuthContextValue {
   signIn: (params: SignInParams) => Promise<void>;
   signUp: (params: SignUpParams) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  signInSocial: (provider: SocialProvider) => Promise<SocialAuthResult>;
 }
 
 interface AuthProviderProps {

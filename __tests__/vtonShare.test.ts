@@ -15,13 +15,13 @@ const sample: Product = {
 describe('buildTryOnShareMessage', () => {
   it('ürün adı ve affiliate linkini birleştirir', () => {
     expect(buildTryOnShareMessage(sample)).toBe(
-      "Vitirify'da sanal denedim: Keten Gömlek → https://www.trendyol.com/p/1",
+      "Vitrify'da sanal denedim: Keten Gömlek → https://www.trendyol.com/p/1",
     );
   });
 
   it('link yoksa yalnızca ürün adını kullanır', () => {
     expect(
       buildTryOnShareMessage({ ...sample, affiliateUrl: undefined, productUrl: undefined }),
-    ).toBe("Vitirify'da sanal denedim: Keten Gömlek");
+    ).toBe("Vitrify'da sanal denedim: Keten Gömlek");
   });
 });

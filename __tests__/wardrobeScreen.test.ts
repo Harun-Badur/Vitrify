@@ -43,10 +43,12 @@ const renderer = jest.requireActual('react-test-renderer') as {
 
 const mockRemove = jest.fn().mockResolvedValue(undefined);
 const mockRefresh = jest.fn().mockResolvedValue(undefined);
+const mockWardrobeRefresh = jest.fn().mockResolvedValue(undefined);
 const mockNavigate = jest.fn();
 const mockPush = jest.fn();
 const mockRemoveClothes = jest.fn().mockResolvedValue(undefined);
 const mockState = {
+  wardrobeStatus: 'ready' as 'idle' | 'loading' | 'ready' | 'error',
   sessionSyncStatus: 'ready',
   swipeRight: jest.fn(),
   likedProducts: [] as LikedProduct[],
@@ -55,6 +57,8 @@ const mockState = {
   removeWardrobeItem: mockRemoveClothes,
   unlikeProduct: mockRemove,
   refreshLikedProducts: mockRefresh,
+  refreshWardrobe: mockWardrobeRefresh,
+  wardrobeSync: undefined as {state:'pending'|'synced'|'conflict';pending:number;message?:string} | undefined,
 };
 jest.mock('../store/useAppStore', () => ({
   useAppStore: (selector: (state: typeof mockState) => unknown) =>
@@ -151,9 +155,11 @@ describe('Wardrobe screen', () => {
   let view: TestTree;
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockState.wardrobeStatus = 'ready';
     mockState.sessionSyncStatus = 'ready';
     mockState.wardrobeItems = [];
     mockState.savedOutfits = [];
+    mockState.wardrobeSync = undefined;
     mockGestures.length = 0;
     mockState.likedProducts = MOCK_PRODUCTS.slice(0, 4).map(
       (product, index) => ({
@@ -169,6 +175,40 @@ describe('Wardrobe screen', () => {
   afterEach(async () => {
     await renderer.act(async () => view.unmount());
     jest.restoreAllMocks();
+  });
+
+  it('UI: restores the original fixed sections without the new page scroll container', () => {
+    expect(view.root.findAllByProps({ testID: 'wardrobe-sections-scroll' })).toHaveLength(0);
+    expect(view.root.findByProps({ accessibilityLabel: 'Dolap bölümleri' })).toBeDefined();
+  });
+
+  it('UI: restores all wardrobe items in the original three-column grid', async () => {
+    mockState.wardrobeItems = Array.from({ length: 30 }, (_, index) => ({
+      id: `owned-${index}`, title: `Kıyafet ${index}`, category: 'upper_body' as const,
+      brand: '', imageUrl: `file:///wardrobe/${index}.jpg`, createdAt: '2026-09-28',
+    }));
+    await renderer.act(() => { view.unmount(); view = renderer.create(createElement(LikedScreen)); });
+    const grid = view.root.findByType(FlatList);
+    expect(grid.props.numColumns).toBe(3);
+    expect(grid.props.data).toHaveLength(31);
+    expect(grid.props.data[3]).toBeNull();
+    expect(view.root.findByProps({ accessibilityLabel: 'Kıyafetlerim tümünü gör' })).toBeDefined();
+    expect(view.root.findByProps({ accessibilityLabel: 'Yeni parça ekle' })).toBeDefined();
+  });
+
+  it('integration: refreshes the wardrobe journal together with favorites on focus', () => {
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(mockWardrobeRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('integration: pending sync preserves the header and filters without inserting a top banner', async () => {
+    mockState.wardrobeSync={state:'pending',pending:1,message:'Fotoğraf cihazda; bulut bekliyor.'};
+    await renderer.act(async () => { view.unmount(); view=renderer.create(createElement(LikedScreen)); });
+    expect(view.root.findAllByProps({accessibilityLabel:'Dolap bulut durumu'})).toHaveLength(0);
+    expect(view.root.findByProps({ children: 'Dolabım' })).toBeDefined();
+    expect(view.root.findByProps({accessibilityLabel:'Dolapta ara'})).toBeDefined();
+    expect(view.root.findByProps({accessibilityLabel:'Dolabı filtrele'})).toBeDefined();
+    expect(mockState.wardrobeSync?.state).toBe('pending');
   });
   it('separates wardrobe, favorites and saved outfits without inventing owned products', () => {
     for (const title of ['Kıyafetlerim', 'Favorilerim', 'Kombinlerim']) {

@@ -1,8 +1,10 @@
 import {
   fetchStudioProfile,
   upsertStudioProfile,
+  syncDeclaredStyleTags,
 } from '../services/profileService';
 
+jest.mock('../lib/recsConfig', () => ({ invalidateStyleProfileSnapshot: jest.fn() }));
 jest.mock('expo-file-system/legacy', () => ({
   cacheDirectory: null,
   downloadAsync: jest.fn(),
@@ -117,4 +119,21 @@ it('propagates failed persistence instead of reporting success', async () => {
   await expect(
     upsertStudioProfile('owner', { preferredColors: ['Mavi'] }),
   ).rejects.toThrow('kaydedilemedi');
+});
+it('does not report success when declared style synchronization fails', async () => {
+  mockRpc.mockResolvedValueOnce({ error: new Error('offline') } as never);
+  await expect(upsertStudioProfile('owner', { styleTags: ['minimal'] })).rejects.toThrow('senkron');
+});
+it('returns all five saved preferences after a combined save and clears them explicitly', async () => {
+  expect(await upsertStudioProfile('owner', { heightCm: 180, styleTags: ['minimal'], favoriteBrands: ['Mavi'], preferredColors: ['Mavi'], priceRange: { min: 0, max: 1000 } })).toMatchObject({ heightCm: 180, favoriteBrands: ['Mavi'], preferredColors: ['Mavi'], priceRange: { min: 0, max: 1000 }, styleTags: ['minimal'] });
+  await upsertStudioProfile('owner', { heightCm: null, weightKg: null, topSize: null, bottomSize: null, styleTags: [], favoriteBrands: [], preferredColors: [], priceRange: null });
+  expect(await fetchStudioProfile('owner')).toMatchObject({ heightCm: null, weightKg: null, styleTags: [], favoriteBrands: [], preferredColors: [], priceRange: null });
+});
+it('rejects malformed persisted profiles instead of presenting editable empty values', async () => {
+  mockRow.height_cm = 'invalid';
+  await expect(fetchStudioProfile('owner')).rejects.toThrow('yüklenemedi');
+});
+it('does not synchronize another account after the initiating session changes', async () => {
+  await expect(syncDeclaredStyleTags(['minimal'], 'other')).rejects.toThrow('oturum');
+  expect(mockRpc).not.toHaveBeenCalled();
 });

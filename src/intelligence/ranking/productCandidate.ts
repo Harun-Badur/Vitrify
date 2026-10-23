@@ -18,7 +18,7 @@ export const toScoringCandidate = (product: Product): ScoringCandidate => {
         : inferred.colors,
     priceBand: product.priceBand ?? inferred.price_band,
     price: getDisplayPrice(product),
-    gender: product.gender ?? inferred.gender,
+    gender: product.gender ?? inferred.gender ?? '',
     createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
     impressionCount: product.impressionCount ?? 0,
     deal: hasCatalogPriceDrop(product) ? 1 : 0,

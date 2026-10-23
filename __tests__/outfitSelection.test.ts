@@ -29,6 +29,13 @@ const shoes: OutfitChoice = {
   item: { ...MOCK_PRODUCTS[0], id: 'shoes', category: 'shoes' },
 };
 describe('manual outfit selection uses the existing engine', () => {
+  it('supports a dress core and rejects dress plus top/bottom mixtures', () => {
+    const dress: OutfitChoice = { ...top, key: 'catalog:dress', item: { ...top.item, id: 'dress', category: 'dresses' } };
+    expect(choiceSlot(dress)).toBe('dresses');
+    expect(canCreateOutfit({ dresses: dress, shoes })).toBe(true);
+    expect(selectedOutfitCandidate({ dresses: dress, shoes }).roles).toEqual(['one_piece', 'shoes']);
+    expect(canCreateOutfit({ dresses: dress, upper_body: top, lower_body: bottom })).toBe(false);
+  });
   it('requires the existing top and bottom core, with optional shoes', () => {
     expect(canCreateOutfit({ upper_body: top })).toBe(false);
     expect(canCreateOutfit({ upper_body: top, lower_body: bottom })).toBe(true);

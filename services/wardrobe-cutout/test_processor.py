@@ -5,7 +5,7 @@ from io import BytesIO
 from unittest.mock import Mock, patch
 from PIL import Image
 from processor import cutout_png
-from server import authorized, make_handler
+from server import authorized, make_handler, BoundedHTTPServer
 
 
 def photo():
@@ -24,6 +24,43 @@ def remove_fixture(image, session):
 
 
 class ProcessorTests(unittest.TestCase):
+    def test_public_rate_limit_precedes_auth_and_photo_read(self):
+        handler_type = make_handler("https://project.supabase.co", "anon", None, remove_fixture,
+                                    v1_requests_per_minute=1)
+        handler = handler_type.__new__(handler_type)
+        handler.path = "/v1/wardrobe/cutout"
+        handler.headers = Message()
+        handler.respond = Mock()
+        handler.rfile = Mock()
+        with patch("server.authorized", return_value=False) as auth:
+            handler.do_POST()
+            handler.do_POST()
+        self.assertEqual(auth.call_count, 1)
+        self.assertEqual(handler.respond.call_args.args, (429, {"code": "V1_RATE_LIMITED"}))
+        handler.rfile.read.assert_not_called()
+
+    def test_anonymous_auth_user_cannot_start_inference(self):
+        response = Mock()
+        response.read.return_value = b'{"id":"fixture","is_anonymous":true}'
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        with patch("server.urlopen", return_value=response):
+            self.assertFalse(authorized("Bearer fixture", "https://project.supabase.co", "anon"))
+        response.read.return_value = b'{"id":"fixture","is_anonymous":false}'
+        with patch("server.urlopen", return_value=response):
+            self.assertTrue(authorized("Bearer fixture", "https://project.supabase.co", "anon"))
+
+    def test_connection_overflow_is_rejected_without_a_worker(self):
+        server = BoundedHTTPServer.__new__(BoundedHTTPServer)
+        server._slots = Mock()
+        server._slots.acquire.return_value = False
+        server.shutdown_request = Mock()
+        request = Mock()
+        server.process_request(request, ("fixture", 1))
+        request.sendall.assert_called_once()
+        self.assertIn(b"503", request.sendall.call_args.args[0])
+        server.shutdown_request.assert_called_once_with(request)
+
     def test_exports_rgba_png_and_preserves_original_bytes(self):
         original = photo()
         unchanged = bytes(original)

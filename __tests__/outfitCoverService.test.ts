@@ -1,6 +1,8 @@
 import { fetchOutfitCoverParts } from '../services/outfitCoverService';
 import type { SavedOutfit } from '../types/wardrobe';
 const mockFrom = jest.fn();
+const mockOriginalPhotos = jest.fn();
+jest.mock('../services/wardrobeService',()=>({resolveWardrobeOriginalPhotos:(...args:unknown[])=>mockOriginalPhotos(...args)}));
 jest.mock('../lib/supabase', () => ({
   getSupabaseClient: () => ({
     from: (...args: unknown[]) => mockFrom(...args),
@@ -15,6 +17,17 @@ const outfit: SavedOutfit = {
 };
 describe('read-only outfit cover resolution', () => {
   beforeEach(() => jest.clearAllMocks());
+  it('resolves path-only wardrobe cover parts through the shared private read cache in a batch', async () => {
+    const id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const path=id+'/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/original-cccccccc-cccc-4ccc-8ccc-cccccccccccc.png';
+    mockFrom.mockImplementation((table:string)=> table==='outfit_items'
+      ? {select:()=>({eq:()=>({order:async()=>({error:null,data:[{id:'part',source_type:'wardrobe',wardrobe_item_id:id,product_id:null,wardrobe_item:{image_url:''},product:null}]})})})}
+      : {select:()=>({in:async()=>({error:null,data:[{id,image_storage_path:path}]})})});
+    mockOriginalPhotos.mockResolvedValue(new Map([[path,{url:'https://fixture.invalid/signed',expiresAt:1}]]));
+    const parts=await fetchOutfitCoverParts(outfit,[]);
+    expect(parts[0].imageUrl).toBe('https://fixture.invalid/signed');
+    expect(mockOriginalPhotos).toHaveBeenCalledWith([path]);
+  });
   it('reads outfit_items in position order and selects the correct source relation', async () => {
     const order = jest.fn().mockResolvedValue({
       error: null,

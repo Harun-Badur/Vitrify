@@ -1,3 +1,5 @@
+import type { WardrobeCutoutJob } from '../lib/wardrobeCutoutState';
+import { Alert } from 'react-native';
 import { createElement, type ReactElement } from 'react';
 import { DolapProductCard } from '../app/(tabs)/liked';
 import { wardrobeProduct, type WardrobeItem } from '../types/wardrobe';
@@ -21,7 +23,8 @@ jest.mock('react-native-safe-area-context', () => ({
 jest.mock('../components/PressableScale', () => 'PressableScale');
 jest.mock('../components/OutfitCover', () => 'OutfitCover');
 jest.mock('../assets/wardrobe-onboarding.png', () => 1);
-jest.mock('../store/useAppStore', () => ({ useAppStore: jest.fn() }));
+const mockJobs: Record<string, WardrobeCutoutJob> = {};
+jest.mock('../store/useAppStore', () => ({ useAppStore: (selector: (state: object) => unknown) => selector({ wardrobeCutoutJobs: mockJobs, wardrobeSync: { state: 'synced', pending: 0 } }) }));
 jest.mock('../services/deeplinkService', () => ({
   openProductPage: jest.fn(),
 }));
@@ -74,7 +77,7 @@ jest.mock('react-native-reanimated', () => ({
 }));
 
 interface ImageNode {
-  props: { source: { uri: string }; onError: () => void };
+  props: { source: { uri: string }; onError: () => void; onPress?: () => void; accessibilityLabel?: string; children?: unknown };
 }
 interface Tree {
   root: {
@@ -169,4 +172,37 @@ describe('owned clothes use the existing cutout source in Dolap cards', () => {
     await fail();
     expect(tree.root.findAllByType('Image')).toHaveLength(0);
   });
+
+  it('ignores an old original-image failure delivered after a new cutout source', async () => {
+    await renderer.act(() => { tree = renderer.create(element(wardrobeProduct(owned))); });
+    const oldError = tree.root.findByType('Image').props.onError;
+    await renderer.act(() => { tree.update(element(wardrobeProduct({ ...owned, cutoutUrl: 'https://storage/new.png', cutoutStatus: 'ready' }))); });
+    await renderer.act(oldError);
+    expect(uri()).toBe('https://storage/new.png');
+  });
+
+
+  it('shows active processing separately from an interrupted cutout on the wardrobe card', async () => {
+    const raw = { ...owned, cutoutStatus: 'blocked' as const };
+    const node = () => createElement(DolapProductCard, { item: { product: wardrobeProduct(raw), wardrobeItem: raw, likedAt: '', notifyOnPriceDrop: false },
+      wardrobe: true, width: 112, onTryOn: jest.fn(), onOpenStore: jest.fn(), onSwipeDelete: jest.fn(), onCombine: jest.fn() });
+    mockJobs[owned.id] = 'processing';
+    await renderer.act(() => { tree = renderer.create(node()); });
+    expect(tree.root.findAllByType('Text').some(node => node.props.children === 'Arka plan düzenleniyor')).toBe(true);
+    delete mockJobs[owned.id];
+    await renderer.act(() => { tree.update(node()); });
+    expect(tree.root.findAllByType('Text').some(node => node.props.children === 'Fotoğrafın korundu')).toBe(true);
+  });
+
+  it('never offers manual cutout in the wardrobe options, even with a recoverable artifact', async () => {
+    const raw = { ...owned, cutoutStatus: 'blocked' as const, cutoutLocalUri: 'file:///processed.png' };
+    await renderer.act(() => { tree = renderer.create(createElement(DolapProductCard, { item: { product: wardrobeProduct(raw), wardrobeItem: raw, likedAt: '', notifyOnPriceDrop: false }, wardrobe: true, width: 112,
+      onTryOn: jest.fn(), onOpenStore: jest.fn(), onSwipeDelete: jest.fn(), onCombine: jest.fn() })); });
+    const buttons = tree.root.findAllByType('PressableScale');
+    await renderer.act(() => { buttons.find(node => node.props.accessibilityLabel?.includes('seçenek'))?.props.onPress?.(); });
+    expect(Alert.alert).toHaveBeenLastCalledWith(owned.title, undefined, [
+      expect.objectContaining({ text: 'Düzenle' }), expect.objectContaining({ text: 'Sil' }), expect.objectContaining({ text: 'İptal' }),
+    ]);
+  });
+
 });

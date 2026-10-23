@@ -27,6 +27,21 @@ describe('cooperative recommendation work', () => {
     }
   });
 
+  it('preserves complete ranked results through the native background task adapter', async () => {
+    const host = globalThis as typeof globalThis & { nativeRuntimeScheduler?: unknown };
+    const previous = host.nativeRuntimeScheduler;
+    host.nativeRuntimeScheduler = {
+      unstable_LowPriority: 4,
+      unstable_scheduleCallback: (_priority: number, callback: () => void) => setTimeout(callback, 0),
+      unstable_cancelCallback: (task: ReturnType<typeof setTimeout>) => clearTimeout(task),
+    };
+    try {
+      const input = { wardrobeItems: [], catalogProducts: catalog, requiredCatalogProductId: catalog[0].id,
+        firstOnly: true, recommendationExposure: new Map([[catalog[2].id, 9]]) };
+      expect(await getDiscoverRecommendationsAsync(input)).toEqual(getDiscoverRecommendations(input));
+    } finally { host.nativeRuntimeScheduler = previous; }
+  });
+
   it('preserves the unanchored path and hard filters', async () => {
     const input = { wardrobeItems: [], catalogProducts: catalog, catalogFilters: { gender: 'men' as const } };
     expect(await getDiscoverRecommendationsAsync(input)).toEqual(getDiscoverRecommendations(input));

@@ -1,3 +1,10 @@
+import { normalizedRecommendationToken } from './recommendationMemo';
+
+// Exact raw-string key and the existing bounded cache preserve Turkish casing,
+// whitespace and missing evidence while avoiding repeated ICU work on Android.
+const lowerTurkish = (value: string): string => normalizedRecommendationToken(value, false,
+  () => value.toLocaleLowerCase('tr-TR'));
+
 export const FIT_VOCAB = ['oversized', 'relaxed', 'regular', 'slim'] as const;
 
 export type FitSlug = (typeof FIT_VOCAB)[number];
@@ -9,9 +16,9 @@ export type PriceBand = (typeof PRICE_BANDS)[number];
 export type ProductGender = 'women' | 'men' | 'unisex';
 
 export interface InferredProductAttributes {
-  gender: ProductGender;
+  gender: ProductGender | undefined;
   colors: string[];
-  fit: FitSlug;
+  fit: FitSlug | '';
   subcategory: string;
   brand_slug: string;
   price_band: PriceBand;
@@ -51,8 +58,13 @@ export const COLOR_ALIASES: readonly ColorAlias[] = [
   { slug: 'gumus', keys: ['gümüş', 'gumus', 'silver'] },
   { slug: 'turkuaz', keys: ['turkuaz', 'teal'] },
   { slug: 'krem', keys: ['cream'] },
-  { slug: 'desenli', keys: ['desenli', 'çiçek', 'cicek', 'floral', 'çizgili', 'cizgili'] },
 ];
+
+// Precompile alias normalization once, outside catalog preparation and ranking.
+const COLOR_TOKEN_RULES = COLOR_ALIASES.map(alias => ({
+  slug: alias.slug,
+  keys: alias.keys.map(key => lowerTurkish(key).replace(/ı/g, 'i')),
+}));
 
 interface SubcategoryRule {
   slug: string;
@@ -85,9 +97,7 @@ const PRICE_BAND_MID_MAX = 1499.99;
 const PRICE_BAND_HIGH_MAX = 2999.99;
 
 export const slugify = (value: string): string =>
-  value
-    .trim()
-    .toLocaleLowerCase('tr-TR')
+  lowerTurkish(value.trim())
     .replace(/ı/g, 'i')
     .replace(/ğ/g, 'g')
     .replace(/ü/g, 'u')
@@ -98,12 +108,12 @@ export const slugify = (value: string): string =>
     .replace(/^-+|-+$/g, '');
 
 export const normalizeTitleKey = (title: string): string =>
-  title.trim().toLocaleLowerCase('tr-TR');
+  lowerTurkish(title.trim());
 
-const haystackOf = (title: string): string => title.toLocaleLowerCase('tr-TR');
+const haystackOf = (title: string): string => lowerTurkish(title);
 
 const titleHasToken = (haystack: string, token: string): boolean => {
-  const needle = token.toLocaleLowerCase('tr-TR');
+  const needle = lowerTurkish(token);
   const start = haystack.indexOf(needle);
   if (start < 0) {
     return false;
@@ -116,7 +126,7 @@ const titleHasToken = (haystack: string, token: string): boolean => {
   return isBoundary(before ?? '') && isBoundary(after ?? '');
 };
 
-export const inferGenderFromTitle = (title: string): ProductGender => {
+export const inferGenderFromTitle = (title: string): ProductGender | undefined => {
   const haystack = haystackOf(title);
   if (GENDER_MEN_TOKENS.some((token) => titleHasToken(haystack, token))) {
     return 'men';
@@ -124,21 +134,28 @@ export const inferGenderFromTitle = (title: string): ProductGender => {
   if (GENDER_WOMEN_TOKENS.some((token) => titleHasToken(haystack, token))) {
     return 'women';
   }
-  return 'unisex';
+  if (['unisex', 'uniseks'].some(token => titleHasToken(haystack, token))) return 'unisex';
+  return undefined;
 };
 
-export const inferColorsFromText = (text: string): string[] => {
-  const haystack = haystackOf(text);
+/** Exact Unicode words only; patterns and brand tokens are not color evidence. */
+export const inferColorsFromText = (text: string, brand?: string | null): string[] => {
+  const tokens = haystackOf(text).replace(/ı/g, 'i').match(/[\p{L}\p{N}]+/gu) ?? [];
+  const brandTokens = brand ? haystackOf(brand).replace(/ı/g, 'i').match(/[\p{L}\p{N}]+/gu) ?? [] : [];
+  const words = new Set<string>();
+  for (let index = 0; index < tokens.length; index++) {
+    if (brandTokens.length > 0 && brandTokens.every((token, offset) => tokens[index + offset] === token)) {
+      index += brandTokens.length - 1;
+    } else words.add(tokens[index]);
+  }
   const slugs: string[] = [];
-  for (const alias of COLOR_ALIASES) {
-    if (alias.keys.some((key) => haystack.includes(key.toLocaleLowerCase('tr-TR')))) {
-      slugs.push(alias.slug);
-    }
+  for (const alias of COLOR_TOKEN_RULES) {
+    if (alias.keys.some(key => words.has(key))) slugs.push(alias.slug);
   }
   return slugs;
 };
 
-export const inferFitFromTitle = (title: string): FitSlug => {
+export const inferFitFromTitle = (title: string): FitSlug | '' => {
   const haystack = haystackOf(title);
   if (
     haystack.includes('oversize') ||
@@ -165,15 +182,24 @@ export const inferFitFromTitle = (title: string): FitSlug => {
   if (haystack.includes('regular')) {
     return 'regular';
   }
-  return 'regular';
+  return '';
+};
+
+/** Title keyword evidence only; `''` means inferSubcategory would use a category fallback. */
+export const matchSubcategoryFromTitle = (title: string): string => {
+  const haystack = haystackOf(title);
+  for (const rule of SUBCATEGORY_RULES) {
+    if (rule.keys.some((key) => haystack.includes(lowerTurkish(key)))) {
+      return rule.slug;
+    }
+  }
+  return '';
 };
 
 export const inferSubcategory = (title: string, category: string): string => {
-  const haystack = haystackOf(title);
-  for (const rule of SUBCATEGORY_RULES) {
-    if (rule.keys.some((key) => haystack.includes(key.toLocaleLowerCase('tr-TR')))) {
-      return rule.slug;
-    }
+  const matched = matchSubcategoryFromTitle(title);
+  if (matched) {
+    return matched;
   }
   if (category === 'dresses') {
     return 'elbise';
@@ -289,7 +315,7 @@ export const inferProductAttributes = (
 ): InferredProductAttributes => {
   const titleKey = normalizeTitleKey(input.title);
   const curated = CURATED_ATTRIBUTE_OVERRIDES[titleKey];
-  const fromTitle = inferColorsFromText(input.title);
+  const fromTitle = inferColorsFromText(input.title, input.brand);
   const fromExisting = (input.existingColorNames ?? []).flatMap((name) =>
     inferColorsFromText(name),
   );

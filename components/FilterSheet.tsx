@@ -2,15 +2,14 @@ import { useEffect, useState } from 'react';
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PressableScale from './PressableScale';
-import {
-  COLOR_CHIP_LABELS,
-  type FeedQueryFilters,
-} from '../lib/feedQuery';
+import { COLOR_CHIP_LABELS, type FeedQueryFilters } from '../lib/feedQuery';
 import { colors, radius, spacing } from '../lib/theme';
 import type { GarmentCategory } from '../types/product';
 
@@ -36,7 +35,14 @@ const COLOR_CHIPS: { value: string; label: string }[] = [
   label: COLOR_CHIP_LABELS[value] ?? value,
 }));
 
-const STYLE_CHIPS = ['midi', 'maxi', 'mini', 'abiye', 'triko', 'saten'] as const;
+const STYLE_CHIPS = [
+  'midi',
+  'maxi',
+  'mini',
+  'abiye',
+  'triko',
+  'saten',
+] as const;
 
 const PRICE_PRESETS: {
   label: string;
@@ -84,7 +90,10 @@ function ChipGroup<T extends string>({
               accessibilityLabel={option.label}
             >
               <Text
-                style={[styles.chipText, isActive ? styles.chipTextActive : null]}
+                style={[
+                  styles.chipText,
+                  isActive ? styles.chipTextActive : null,
+                ]}
               >
                 {option.label}
               </Text>
@@ -102,6 +111,7 @@ export default function FilterSheet({
   onClose,
   onApply,
 }: FilterSheetProps) {
+  const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState<FeedQueryFilters>(filters);
 
   useEffect(() => {
@@ -152,104 +162,120 @@ export default function FilterSheet({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.root}>
+      <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
         <Pressable
           style={styles.backdrop}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="Filtreleri kapat"
         />
-        <View style={styles.sheet}>
+        <View
+          testID="discover-filter-sheet"
+          accessibilityViewIsModal
+          style={[
+            styles.sheet,
+            {
+              paddingBottom: Math.max(insets.bottom, spacing.lg),
+              paddingLeft: Math.max(insets.left, spacing.xl),
+              paddingRight: Math.max(insets.right, spacing.xl),
+            },
+          ]}
+        >
           <Text style={styles.title}>Filtrele</Text>
-          <ChipGroup
-            label="Kategori"
-            options={CATEGORY_CHIPS}
-            selected={draft.category ?? null}
-            onSelect={(category) =>
-              setDraft((current) => {
-                const next = { ...current };
-                if (category === null) delete next.category;
-                else next.category = category;
-                return next;
-              })
-            }
-          />
-          <ChipGroup
-            label="Renk"
-            options={COLOR_CHIPS}
-            selected={draft.color ?? null}
-            onSelect={(color) =>
-              setDraft((current) => {
-                const next = { ...current };
-                if (color === null) delete next.color;
-                else next.color = color;
-                return next;
-              })
-            }
-          />
-          <ChipGroup
-            label="Stil"
-            options={STYLE_CHIPS.map((style) => ({
-              value: style,
-              label: style,
-            }))}
-            selected={draft.style ?? null}
-            onSelect={(style) =>
-              setDraft((current) => {
-                const next = { ...current };
-                if (style === null) delete next.style;
-                else next.style = style;
-                return next;
-              })
-            }
-          />
-          <View style={styles.group}>
-            <Text style={styles.groupLabel}>Fiyat</Text>
-            <View style={styles.chipRow}>
-              {PRICE_PRESETS.map((preset) => {
-                const isActive = activePriceKey === preset.label;
-                return (
-                  <Pressable
-                    key={preset.label}
-                    onPress={() =>
-                      setDraft((current) => {
-                        const next = { ...current };
-                        if (isActive) {
-                          delete next.priceMin;
-                          delete next.priceMax;
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.options}
+          >
+            <ChipGroup
+              label="Kategori"
+              options={CATEGORY_CHIPS}
+              selected={draft.category ?? null}
+              onSelect={(category) =>
+                setDraft((current) => {
+                  const next = { ...current };
+                  if (category === null) delete next.category;
+                  else next.category = category;
+                  return next;
+                })
+              }
+            />
+            <ChipGroup
+              label="Renk"
+              options={COLOR_CHIPS}
+              selected={draft.color ?? null}
+              onSelect={(color) =>
+                setDraft((current) => {
+                  const next = { ...current };
+                  if (color === null) delete next.color;
+                  else next.color = color;
+                  return next;
+                })
+              }
+            />
+            <ChipGroup
+              label="Stil"
+              options={STYLE_CHIPS.map((style) => ({
+                value: style,
+                label: style,
+              }))}
+              selected={draft.style ?? null}
+              onSelect={(style) =>
+                setDraft((current) => {
+                  const next = { ...current };
+                  if (style === null) delete next.style;
+                  else next.style = style;
+                  return next;
+                })
+              }
+            />
+            <View style={styles.group}>
+              <Text style={styles.groupLabel}>Fiyat</Text>
+              <View style={styles.chipRow}>
+                {PRICE_PRESETS.map((preset) => {
+                  const isActive = activePriceKey === preset.label;
+                  return (
+                    <Pressable
+                      key={preset.label}
+                      onPress={() =>
+                        setDraft((current) => {
+                          const next = { ...current };
+                          if (isActive) {
+                            delete next.priceMin;
+                            delete next.priceMax;
+                            return next;
+                          }
+                          if (preset.priceMin !== undefined) {
+                            next.priceMin = preset.priceMin;
+                          } else {
+                            delete next.priceMin;
+                          }
+                          if (preset.priceMax !== undefined) {
+                            next.priceMax = preset.priceMax;
+                          } else {
+                            delete next.priceMax;
+                          }
                           return next;
-                        }
-                        if (preset.priceMin !== undefined) {
-                          next.priceMin = preset.priceMin;
-                        } else {
-                          delete next.priceMin;
-                        }
-                        if (preset.priceMax !== undefined) {
-                          next.priceMax = preset.priceMax;
-                        } else {
-                          delete next.priceMax;
-                        }
-                        return next;
-                      })
-                    }
-                    style={[styles.chip, isActive ? styles.chipActive : null]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isActive }}
-                    accessibilityLabel={preset.label}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        isActive ? styles.chipTextActive : null,
-                      ]}
+                        })
+                      }
+                      style={[styles.chip, isActive ? styles.chipActive : null]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isActive }}
+                      accessibilityLabel={preset.label}
                     >
-                      {preset.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+                      <Text
+                        style={[
+                          styles.chipText,
+                          isActive ? styles.chipTextActive : null,
+                        ]}
+                      >
+                        {preset.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
-          </View>
+          </ScrollView>
           <View style={styles.actions}>
             <PressableScale
               onPress={handleClear}
@@ -285,6 +311,8 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   sheet: {
+    maxHeight: '100%',
+    flexShrink: 1,
     backgroundColor: colors.bg,
     borderTopLeftRadius: radius.card,
     borderTopRightRadius: radius.card,
@@ -292,6 +320,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
   },
+  options: { paddingBottom: spacing.sm },
   title: {
     color: colors.text,
     fontSize: 20,
@@ -315,6 +344,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   chip: {
+    minHeight: 48,
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

@@ -93,7 +93,7 @@ export const hasGenderConflict = (items: readonly OutfitCandidateItem[]): boolea
 
 /** Unknown age/type stays unknown; title evidence must explicitly identify it. */
 const hardEvidence = new WeakMap<Product, { title: string; subcategory: Product['subcategory'];
-  age: 'child' | 'adult' | null; typeRole: OutfitRole | null }>();
+  age: 'child' | 'adult' | null; typeRole: OutfitRole | null; subtypeRole: OutfitRole | null }>();
 const readHardEvidence = (product: Product) => {
   const cached = hardEvidence.get(product);
   if (cached?.title === product.title && cached.subcategory === product.subcategory) return cached;
@@ -107,7 +107,7 @@ const readHardEvidence = (product: Product) => {
   const explicitType = subtype && title.split(/[^\p{L}-]+/u).includes(subtype);
   const value = { title: product.title, subcategory: product.subcategory,
     age: child ? 'child' as const : adult ? 'adult' as const : null,
-    typeRole: explicitType ? declaredRole ?? null : null };
+    typeRole: explicitType ? declaredRole ?? null : null, subtypeRole: declaredRole ?? null };
   hardEvidence.set(product, value);
   return value;
 };
@@ -119,16 +119,21 @@ export const hasCoreFootwear = (items: readonly OutfitCandidateItem[]): boolean 
 
 export const hasHardConflict = (items: readonly OutfitCandidateItem[]): boolean => {
   let child = false, adult = false, women = false, men = false;
+  let outerLayers = 0;
   for (const item of items) {
+    if (item.role === 'outerwear') outerLayers++;
     if (item.sourceType !== 'catalog') continue;
     const evidence = readHardEvidence(item.product);
     if (evidence.typeRole && evidence.typeRole !== item.role) return true;
+    // A top whose canonical subtype is outerwear (e.g. a blazer) keeps its role, but
+    // the disagreement is unresolved, so it must not be paired with another outer layer.
+    if (item.role === 'top' && evidence.subtypeRole === 'outerwear') outerLayers++;
     child ||= evidence.age === 'child';
     adult ||= evidence.age === 'adult';
     women ||= item.product.gender === 'women';
     men ||= item.product.gender === 'men';
   }
-  return (child && adult) || (women && men);
+  return outerLayers > 1 || (child && adult) || (women && men);
 };
 
 // Shared across anchors using the same catalog objects. Raw evidence is checked on

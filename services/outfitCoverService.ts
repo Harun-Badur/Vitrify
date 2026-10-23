@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '../lib/supabase';
 import type { SavedOutfit } from '../types/wardrobe';
+import { resolveWardrobeOriginalPhotos } from './wardrobeService';
 
 export interface OutfitCoverPart {
   key: string;
@@ -26,6 +27,19 @@ export async function fetchOutfitCoverParts(
 ): Promise<OutfitCoverPart[]> {
   const client = getSupabaseClient();
   if (!client) return local;
+  const withOriginals = async (parts: OutfitCoverPart[]): Promise<OutfitCoverPart[]> => {
+    const missing = parts.filter(part => part.source === 'wardrobe' && !part.imageUrl &&
+      /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(part.sourceId));
+    if (!missing.length) return parts;
+    // Only path-only rows need this read. Existing HTTPS/cached covers stay on their old path.
+    const { data, error } = await client.from('wardrobe_items').select('id,image_storage_path').in('id',[...new Set(missing.map(part=>part.sourceId))]);
+    if (error) throw new Error('Kombin fotoğrafı doğrulanamadı.');
+    const paths = new Map<string,string>();
+    for (const row of data ?? []) if (typeof row.image_storage_path === 'string') paths.set(row.id,row.image_storage_path);
+    if (!paths.size) return parts;
+    const urls = await resolveWardrobeOriginalPhotos([...paths.values()]);
+    return parts.map(part=>({...part,imageUrl:part.imageUrl || urls.get(paths.get(part.sourceId) ?? '')?.url}));
+  };
   if (/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(outfit.id)) {
     const result = await client
       .from('outfit_items')
@@ -36,7 +50,7 @@ export async function fetchOutfitCoverParts(
       .order('position', { ascending: true });
     if (result.error) throw result.error;
     if (result.data?.length)
-      return (result.data as unknown as OutfitItemRow[]).map((row) => ({
+      return withOriginals((result.data as unknown as OutfitItemRow[]).map((row) => ({
         key: row.id,
         source: row.source_type,
         sourceId:
@@ -46,7 +60,7 @@ export async function fetchOutfitCoverParts(
         imageUrl: relationImage(
           row.source_type === 'wardrobe' ? row.wardrobe_item : row.product,
         ),
-      }));
+      })));
   }
   const unresolved = local.filter((part) => !part.imageUrl);
   const images = new Map<string, string>();
@@ -73,8 +87,8 @@ export async function fetchOutfitCoverParts(
           images.set(`${source}:${row.id}`, row.image_url);
     }),
   );
-  return local.map((part) => ({
+  return withOriginals(local.map((part) => ({
     ...part,
     imageUrl: part.imageUrl ?? images.get(`${part.source}:${part.sourceId}`),
-  }));
+  })));
 }

@@ -19,6 +19,14 @@ export type AnalyticsPayload = Record<
   string | number | boolean | null
 >;
 
+/** Captured at action start; pass to track only after the durable write commits. */
+export interface AnalyticsActionContext {
+  readonly actionId: string;
+  readonly userId: string;
+  readonly origin: 'favorite' | 'pass' | 'wardrobe';
+  readonly occurredAt: string;
+}
+
 export interface TrackParams {
   type: AnalyticsEventType;
   productId?: string | null;

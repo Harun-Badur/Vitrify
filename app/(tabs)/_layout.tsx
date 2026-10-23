@@ -1,21 +1,23 @@
 import { useEffect } from 'react';
-import { BackHandler, StyleSheet } from 'react-native';
+import { BackHandler, StyleSheet, useWindowDimensions } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Compass, Heart, Shirt, User } from 'lucide-react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { TAB_TRANSITION_MS } from '../../lib/motion';
-import { colors, layout, spacing } from '../../lib/theme';
+import { colors, spacing } from '../../lib/theme';
+import { getTabBarMetrics } from '../../lib/tabBarLayout';
 
 const ACTIVE_COLOR = colors.accent;
-const INACTIVE_COLOR = colors.tabInactive;
+const INACTIVE_COLOR = colors.textSecondary;
 const ICON_SIZE = 25;
-const TAB_CONTENT_HEIGHT = 46;
 
 export default function TabsLayout() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const bottomInset =
-    insets.bottom > 0 ? insets.bottom : layout.tabBarFallbackPadding;
+  const reduceMotion = useReducedMotion();
+  const { fontScale } = useWindowDimensions();
+  const barMetrics = getTabBarMetrics(insets.bottom, fontScale);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener(
@@ -35,7 +37,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       backBehavior="history"
-      safeAreaInsets={{ bottom: 0 }}
+      safeAreaInsets={{
+        bottom: insets.bottom,
+        left: insets.left,
+        right: insets.right,
+      }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: ACTIVE_COLOR,
@@ -43,14 +49,18 @@ export default function TabsLayout() {
         tabBarStyle: [
           styles.bar,
           {
-            height: TAB_CONTENT_HEIGHT + bottomInset,
-            paddingBottom: bottomInset,
+            ...barMetrics,
+            paddingLeft: Math.max(insets.left, spacing.sm),
+            paddingRight: Math.max(insets.right, spacing.sm),
           },
         ],
         tabBarLabelStyle: styles.label,
+        tabBarLabelPosition: 'below-icon',
+        tabBarIconStyle: styles.icon,
+        tabBarHideOnKeyboard: true,
         tabBarItemStyle: styles.item,
         sceneStyle: styles.scene,
-        animation: 'shift',
+        animation: reduceMotion ? 'none' : 'shift',
         transitionSpec: {
           animation: 'timing',
           config: { duration: TAB_TRANSITION_MS },
@@ -96,14 +106,15 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingTop: 4,
     paddingHorizontal: spacing.sm,
   },
   item: {
-    paddingVertical: 1,
+    minHeight: 48,
   },
+  icon: { width: 28, height: 28 },
   label: {
     fontSize: 11,
+    lineHeight: 16,
     fontWeight: '600',
   },
   scene: {

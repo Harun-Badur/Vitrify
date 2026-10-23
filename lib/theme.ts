@@ -1,5 +1,5 @@
 /**
- * Kabin tasarım sistemi: "Beyaz Taban + Mercan Aksan" (60-30-10).
+ * Vitrify tasarım sistemi: "Beyaz Taban + Mercan Aksan" (60-30-10).
  * 60 beyaz/kırık beyaz zemin, 30 antrasit tipografi, 10 mercan aksan.
  * Ekranlarda ham hex kullanılmaz; tüm renk/ölçü kararları buradan gelir.
  */
@@ -25,6 +25,9 @@ export const colors = {
   /** Küçük metin ve linklerde kontrast için koyu aksan. */
   accentDark: '#D92B1F',
   /** Rozet ve switch zeminleri. */
+  journeyLight: '#FFF8F6',
+  journeyPink: '#FFE1E1',
+  journeyBadge: '#FFDAB5',
   accentSoft: 'rgba(254, 56, 43, 0.1)',
   /** Yalnızca minimal kullanım: silme metin butonları. */
   destructive: '#DC2626',

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { accountStorageUploadFetch } from './accountStorageUploadFetch';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -13,6 +14,7 @@ export const getSupabaseClient = (): SupabaseClient | null => {
 
   if (client === null) {
     client = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { fetch: accountStorageUploadFetch(supabaseUrl, (...args) => fetch(...args)) },
       auth: {
         storage: AsyncStorage,
         persistSession: true,

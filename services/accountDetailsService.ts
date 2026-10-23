@@ -1,6 +1,8 @@
 import type { User } from '@supabase/supabase-js';
 import { getRequiredSupabaseClient } from '../lib/supabase';
 import { toTurkishAuthMessage } from '../lib/authError';
+import { withAccountWriteGuard } from '../lib/accountWriteFence';
+import { captureOwnerPublication, trackOwnerWork } from '../lib/accountDeviceWork';
 
 export interface AccountDetails {
   id: string;
@@ -27,7 +29,7 @@ const accountDetails = (user: User): AccountDetails => {
   };
 };
 
-export async function fetchAccountDetails(
+async function fetchAccountDetailsOwned(
   userId: string,
 ): Promise<AccountDetails> {
   const { data, error } = await getRequiredSupabaseClient().auth.getUser();
@@ -37,7 +39,7 @@ export async function fetchAccountDetails(
   return accountDetails(data.user);
 }
 
-export async function saveAccountDetails(
+async function saveAccountDetailsOwned(
   userId: string,
   input: Pick<AccountDetails, 'username' | 'email'>,
 ): Promise<AccountDetails> {
@@ -48,6 +50,7 @@ export async function saveAccountDetails(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     throw new Error('Geçerli bir e-posta adresi gir.');
   const current = await fetchAccountDetails(userId);
+  if (!captureOwnerPublication(userId)()) throw new Error('Oturum değişti veya hesap silme başladı.');
   const { data, error } = await getRequiredSupabaseClient().auth.updateUser({
     data: { username },
     ...(email.toLowerCase() !== current.email.toLowerCase() &&
@@ -60,3 +63,12 @@ export async function saveAccountDetails(
     throw new Error('Oturum değişti. Hesap bilgilerini tekrar aç.');
   return accountDetails(data.user);
 }
+
+export const saveAccountDetails = (userId: string, input: Pick<AccountDetails, 'username' | 'email'>): Promise<AccountDetails> =>
+  withAccountWriteGuard(userId, () => saveAccountDetailsOwned(userId, input));
+
+export const fetchAccountDetails = (userId: string): Promise<AccountDetails> => {
+  const current = captureOwnerPublication(userId);
+  if (!current()) return Promise.reject(new Error('Owner session changed'));
+  return trackOwnerWork(userId, fetchAccountDetailsOwned(userId).then(value => { if (!current()) throw new Error('Owner session changed'); return value; }));
+};

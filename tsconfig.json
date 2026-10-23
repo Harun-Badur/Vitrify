@@ -3,6 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["jest", "node"]
   },
   "include": [
@@ -10,8 +11,11 @@
     "**/*.tsx"
   ],
   "exclude": [
+    "reports/release/**/supabase/functions/**",
     "scripts",
     "supabase/functions",
-    "node_modules"
+    "node_modules",
+    "tmp",
+    ".tmp"
   ]
 }

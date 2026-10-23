@@ -1,20 +1,25 @@
+import { captureOwnerPublication, trackOwnerWork } from '../lib/accountDeviceWork';
+import { withAccountWriteGuard } from '../lib/accountWriteFence';
+import { createOwnedFileUnderGuard } from './ownedDeviceFiles';
+import { createUuid } from '../lib/analytics';
+import { makeDirectoryAsync } from 'expo-file-system/legacy';
 import { File } from 'expo-file-system';
 import {
   cacheDirectory,
-  deleteAsync,
   EncodingType,
   readAsStringAsync,
   writeAsStringAsync,
 } from 'expo-file-system/legacy';
 import { logger } from '../lib/logger';
-import { preparePersonJpegUri } from '../lib/personPhotoPrepare';
+import { withPreparedPersonJpeg } from '../lib/personPhotoPrepare';
 import { getRequiredSupabaseClient } from '../lib/supabase';
-import { buildVtonClientRequest } from '../lib/vtonEdgeContract';
+import { buildVtonClientRequest, resolveVtonProxyUrl } from '../lib/vtonEdgeContract';
 import {
   isHttpsProductImageUrl,
   preparePersonDataUriFromBase64,
 } from '../lib/vtonPersonImage';
 import { appendTryOnHistory } from './vtonHistoryService';
+import { beginProviderDeviceIntentUnderGuard, observeProviderDeviceResponseUnderGuard } from './providerDeviceJournal';
 
 const FETCH_TIMEOUT_MS = 180_000;
 const BODY_SUMMARY_LIMIT = 240;
@@ -48,7 +53,7 @@ const summarizeBody = (body: string): string => {
 };
 
 const getVtonProxyUrl = (): string => {
-  const url = process.env.EXPO_PUBLIC_VTON_PROXY_URL?.trim().replace(/\/+$/, '');
+  const url = resolveVtonProxyUrl(process.env.EXPO_PUBLIC_VTON_PROXY_URL, process.env.EXPO_PUBLIC_SUPABASE_URL);
   if (!url) {
     throw new VtonServiceError(
       'Sanal deneme adresi eksik. .env içinde EXPO_PUBLIC_VTON_PROXY_URL tanımla.',
@@ -84,7 +89,7 @@ const readImageAsBase64 = async (uri: string): Promise<string> => {
   }
 };
 
-const persistResultPng = async (dataUri: string): Promise<string> => {
+const persistResultPng = async (owner: string, dataUri: string): Promise<string> => {
   const directory = cacheDirectory;
   if (!directory) {
     throw new VtonServiceError(
@@ -92,8 +97,12 @@ const persistResultPng = async (dataUri: string): Promise<string> => {
     );
   }
   const payload = dataUri.replace(RESULT_PNG_DATA_URI_PREFIX, '');
-  const uri = `${directory}kabin-tryon-${Date.now()}.png`;
-  await writeAsStringAsync(uri, payload, { encoding: EncodingType.Base64 });
+  const folder = `${directory}vitrify-owned/${encodeURIComponent(owner)}/`;
+  const uri = `${folder}${createUuid()}.png`;
+  await createOwnedFileUnderGuard(owner, 'vton-result', uri, async () => {
+    await makeDirectoryAsync(folder, { intermediates: true });
+    await writeAsStringAsync(uri, payload, { encoding: EncodingType.Base64 });
+  });
   return uri;
 };
 
@@ -103,7 +112,7 @@ const rememberTryOnResult = async (
   imageUri: string,
 ): Promise<void> => {
   try {
-    const evicted = await appendTryOnHistory(userId, {
+    await appendTryOnHistory(userId, {
       productId: options.productId,
       title: options.productTitle,
       imageUri,
@@ -111,15 +120,6 @@ const rememberTryOnResult = async (
       productUrl: options.productUrl,
       affiliateUrl: options.affiliateUrl,
     });
-    await Promise.all(
-      evicted.map((entry) =>
-        deleteAsync(entry.imageUri, { idempotent: true }).catch(
-          (error: unknown) => {
-            logger.warn('Eski deneme görseli silinemedi', { error });
-          },
-        ),
-      ),
-    );
   } catch (error) {
     logger.warn('Sanal deneme geçmişi kaydedilemedi', { error });
   }
@@ -174,6 +174,25 @@ const fetchWithTimeout = async (
 
 export { buildVtonClientRequest } from '../lib/vtonEdgeContract';
 
+export interface VtonTrialStatus { enabled: boolean; used: boolean }
+
+/** Authenticated read only. No reservation, provider dispatch, or local quota cache. */
+export const getVtonTrialStatus = async (expectedOwner: string): Promise<VtonTrialStatus> => {
+  const session = await getAccessToken();
+  if (session.userId !== expectedOwner) throw new VtonServiceError('Oturum değişti.');
+  const current = captureOwnerPublication(expectedOwner);
+  return trackOwnerWork(expectedOwner, (async () => {
+    const response = await fetchWithTimeout(getVtonProxyUrl(), {
+      method: 'GET', headers: { Authorization: `Bearer ${session.accessToken}` },
+    });
+    if (!response.ok || !current()) throw new VtonServiceError('Deneme hakkı doğrulanamadı.');
+    const body: unknown = await response.json();
+    if (!current() || !body || typeof body !== 'object' || !('enabled' in body) || !('used' in body) ||
+      typeof body.enabled !== 'boolean' || typeof body.used !== 'boolean') throw new VtonServiceError('Deneme hakkı doğrulanamadı.');
+    return { enabled: body.enabled, used: body.used };
+  })());
+};
+
 export const tryOnGarment = async (
   personImageUri: string,
   productImageUrl: string,
@@ -184,7 +203,10 @@ export const tryOnGarment = async (
       throw new VtonServiceError('Geçersiz sanal deneme isteği.');
     }
 
-    const jpegUri = await preparePersonJpegUri(personImageUri);
+    const session = await getAccessToken();
+    const current = captureOwnerPublication(session.userId);
+    return await trackOwnerWork(session.userId, (async () => {
+    const resultUri = await withAccountWriteGuard(session.userId, () => withPreparedPersonJpeg(session.userId, personImageUri, async jpegUri => {
     const personBase64 = await readImageAsBase64(jpegUri);
     const prepared = preparePersonDataUriFromBase64(personBase64);
     if (!prepared.ok) {
@@ -196,17 +218,18 @@ export const tryOnGarment = async (
       );
     }
 
-    const session = await getAccessToken();
     const payload = buildVtonClientRequest(
       prepared.dataUri,
       productImageUrl.trim(),
     );
 
+    const providerIntent = await beginProviderDeviceIntentUnderGuard(session.userId, 'fashn');
     const response = await fetchWithTimeout(getVtonProxyUrl(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.accessToken}`,
+        'x-provider-request': providerIntent.request,
       },
       body: JSON.stringify(payload),
     });
@@ -231,9 +254,14 @@ export const tryOnGarment = async (
       throw new VtonServiceError('Sanal deneme sonucu görseli yok.');
     }
 
-    const resultUri = await persistResultPng(dataUri);
+    await observeProviderDeviceResponseUnderGuard(providerIntent);
+    return persistResultPng(session.userId, dataUri);
+    }));
+    if (!current()) throw new VtonServiceError('Oturum değişti veya hesap silme başladı.');
     await rememberTryOnResult(session.userId, options, resultUri);
+    if (!current()) throw new VtonServiceError('Oturum değişti veya hesap silme başladı.');
     return resultUri;
+    })());
   } catch (error) {
     if (error instanceof VtonServiceError) {
       throw error;

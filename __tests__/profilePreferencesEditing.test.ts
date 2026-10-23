@@ -1,0 +1,58 @@
+import { createElement } from 'react';
+import { Text } from 'react-native';
+import SizeStudioSheet from '../components/SizeStudioSheet';
+import SizeStudioCard from '../components/SizeStudioCard';
+import type { UserStudioProfile } from '../types/profile';
+jest.mock('lucide-react-native', () => ({ ChevronRight: 'Icon', Database: 'Icon', Heart: 'Icon', Check: 'Icon', Palette: 'Icon', Ruler: 'Icon', Search: 'Icon', Shirt: 'Icon', Tag: 'Icon', X: 'Icon' }));
+jest.mock('../components/SizeStudioCard', () => 'SizeStudioCard');
+jest.mock('../components/StyleBrandLogo', () => 'StyleBrandLogo');
+jest.mock('../components/StyleReferenceArt', () => ({ __esModule: true, default: 'Art', STYLE_ART: {} }));
+jest.mock('../components/PressableScale', () => 'PressableScale');
+jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ bottom: 0 }) }));
+const { create, act } = jest.requireActual('react-test-renderer');
+const profile: UserStudioProfile = { userId: 'A', heightCm: null, weightKg: null, topSize: null, bottomSize: null, styleTags: [], modelPhotoPath: null };
+const props = { visible: true, profile, disabled: false, onClose: jest.fn(), onHeightChange: jest.fn(), onWeightChange: jest.fn(), onTopSizeChange: jest.fn(), onBottomSizeChange: jest.fn(), onStyleToggle: jest.fn() };
+test('all editor keeps body changes local until Save and includes all five preference groups', async () => {
+  const save = jest.fn(async () => true); let view: any;
+  await act(() => { view = create(createElement(SizeStudioSheet, { ...props, section: 'all', onSavePreferences: save })); });
+  await act(() => view.root.findByType(SizeStudioCard).props.onHeightChange(181));
+  expect(props.onHeightChange).not.toHaveBeenCalled();
+  expect(save).not.toHaveBeenCalled();
+  expect(view.root.findByType(SizeStudioCard).props.profile.heightCm).toBe(181);
+  expect(view.root.findByProps({ accessibilityLabel: 'Minimum fiyat' })).toBeDefined();
+  await act(async () => view.root.findByProps({ accessibilityLabel: 'Kaydet' }).props.onPress());
+  expect(save).toHaveBeenCalledWith(expect.objectContaining({ heightCm: 181, styleTags: [], preferredColors: [], favoriteBrands: [], priceRange: null }));
+  await act(() => view.unmount());
+});
+test('empty selections can be saved to clear a preference; cancel never writes', async () => {
+  const save = jest.fn(async () => true); let view: any;
+  await act(() => { view = create(createElement(SizeStudioSheet, { ...props, section: 'style', onSavePreferences: save })); });
+  expect(view.root.findByProps({ accessibilityLabel: 'Kaydet' }).props.disabled).toBe(false);
+  await act(async () => view.root.findByProps({ accessibilityLabel: 'Kaydet' }).props.onPress());
+  expect(save).toHaveBeenCalledWith({ styleTags: [] });
+  await act(() => view.unmount());
+});
+test.each(['style', 'body', 'colors', 'brands', 'budget'] as const)('%s discards drafts on close and restores persisted input on reopen', async section => {
+  const save = jest.fn(async () => true); const close = jest.fn(); let view: any;
+  const saved = { ...profile, heightCm: 180, styleTags: ['minimal'] as const, preferredColors: ['Mavi'], favoriteBrands: ['Mavi'], priceRange: { min: 50, max: 500 } };
+  const input = { ...props, profile: { ...saved, styleTags: [...saved.styleTags] }, section, onClose: close, onSavePreferences: save };
+  await act(() => { view = create(createElement(SizeStudioSheet, input)); });
+  await act(() => { view.root.findByProps({ accessibilityLabel: 'Tercihleri temizle' }).props.onPress(); });
+  await act(() => { view.root.findAllByProps({ accessibilityLabel: 'Kapat' })[0].props.onPress(); });
+  expect(close).toHaveBeenCalled(); expect(save).not.toHaveBeenCalled();
+  await act(() => { view.update(createElement(SizeStudioSheet, { ...input, visible: false })); });
+  await act(() => { view.update(createElement(SizeStudioSheet, input)); });
+  await act(async () => { view.root.findByProps({ accessibilityLabel: 'Kaydet' }).props.onPress(); });
+  const expected = section === 'style' ? { styleTags: ['minimal'] } : section === 'body' ? { heightCm: 180 } : section === 'colors' ? { preferredColors: ['Mavi'] } : section === 'brands' ? { favoriteBrands: ['Mavi'] } : { priceRange: { min: 50, max: 500 } };
+  expect(save).toHaveBeenCalledWith(expect.objectContaining(expected));
+  await act(() => view.unmount());
+});
+test('failed save stays open with an error and unknown measurements remain unknown', async () => {
+  const save = jest.fn(async () => false); const close = jest.fn(); let view: any;
+  await act(() => { view = create(createElement(SizeStudioSheet, { ...props, section: 'body', onClose: close, onSavePreferences: save })); });
+  expect(view.root.findByType(SizeStudioCard).props.profile.heightCm).toBeNull();
+  await act(async () => { view.root.findByProps({ accessibilityLabel: 'Kaydet' }).props.onPress(); });
+  expect(close).not.toHaveBeenCalled();
+  expect(view.root.findByProps({ accessibilityRole: 'alert' })).toBeDefined();
+  await act(() => view.unmount());
+});

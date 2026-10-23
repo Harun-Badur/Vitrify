@@ -14,6 +14,8 @@ module.exports = tseslint.config(
       'build/**',
       'output/**',
       'tmp/**',
+      '.tmp/**',
+      'reports/**',
       '**/.venv/**',
       '**/.models/**',
       '**/.logs/**',

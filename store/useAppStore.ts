@@ -10,7 +10,6 @@ export type AppState = DiscoverySlice &
   ProfileSlice &
   WardrobeSlice;
 export type { FeedStatus } from './discoverySlice';
-export type { LikeAlertPatch } from './favoritesSlice';
 export type { SessionSyncStatus } from './profileSlice';
 
 export const useAppStore = create<AppState>((...args) => ({

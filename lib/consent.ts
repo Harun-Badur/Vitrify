@@ -1,25 +1,27 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logger';
+import { captureOwnerPublication, trackOwnerWork } from './accountDeviceWork';
+import { readPrivacyLifecycle, recordPrivacyChoice } from '../services/privacyLifecycleService';
 
-const VTON_CONSENT_KEY = 'kabin.consent.vton.v1';
-const CONSENT_GRANTED_VALUE = 'granted';
+export const VTON_CONSENT_TEXT_VERSION = 'vton-processing-2026-10-20';
 
-export const hasVtonConsent = async (): Promise<boolean> => {
+// Reuse the existing per-account record already covered by device deletion.
+// The legacy device-wide grant does not identify an accepting user.
+export const hasVtonConsent = async (userId: string): Promise<boolean> => {
+  if (!userId.trim()) return false;
+  const current = captureOwnerPublication(userId);
   try {
-    const stored = await AsyncStorage.getItem(VTON_CONSENT_KEY);
-    return stored === CONSENT_GRANTED_VALUE;
-  } catch (error) {
-    logger.warn('Rıza durumu okunamadı; rıza ekranı gösterilecek.', { error });
+    const state = await readPrivacyLifecycle(userId);
+    return current() && state.consent.vton?.choice === 'granted'
+      && state.consent.vton.textVersion === VTON_CONSENT_TEXT_VERSION;
+  } catch {
+    logger.warn('Rıza durumu okunamadı; rıza ekranı gösterilecek.');
     return false;
   }
 };
 
-export const grantVtonConsent = async (): Promise<void> => {
-  try {
-    await AsyncStorage.setItem(VTON_CONSENT_KEY, CONSENT_GRANTED_VALUE);
-  } catch (error) {
-    logger.warn('Rıza kaydedilemedi; bir sonraki açılışta tekrar sorulacak.', {
-      error,
-    });
-  }
+export const grantVtonConsent = async (userId: string): Promise<void> => {
+  const current = captureOwnerPublication(userId);
+  if (!userId.trim() || !current()) throw new Error('Rıza için geçerli hesap gerekli.');
+  await trackOwnerWork(userId, recordPrivacyChoice(userId, 'vton', 'granted', VTON_CONSENT_TEXT_VERSION));
+  if (!current()) throw new Error('Rıza kaydedilirken oturum değişti.');
 };

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -28,8 +30,6 @@ import StyleBrandLogo from './StyleBrandLogo';
 import { colors, radius, spacing } from '../lib/theme';
 import { STYLE_TAGS, STUDIO_BRANDS, STUDIO_COLORS } from '../types/profile';
 import type {
-  GarmentSize,
-  StyleTag,
   UserStudioProfile,
   StudioProfilePatch,
 } from '../types/profile';
@@ -40,11 +40,6 @@ interface SizeStudioSheetProps {
   profile: UserStudioProfile;
   disabled: boolean;
   onClose: () => void;
-  onHeightChange: (value: number) => void;
-  onWeightChange: (value: number) => void;
-  onTopSizeChange: (value: GarmentSize) => void;
-  onBottomSizeChange: (value: GarmentSize) => void;
-  onStyleToggle: (value: StyleTag) => void;
   onSavePreferences?: (patch: StudioProfilePatch) => Promise<boolean>;
 }
 
@@ -52,7 +47,7 @@ export type StyleSheetSection =
   'all' | 'style' | 'body' | 'colors' | 'brands' | 'budget' | 'summary';
 const SECTIONS = {
   all: {
-    title: 'Beden & Stil Tercihlerim',
+    title: 'Tercihlerin',
     description: 'Beden ve stil bilgilerini tamamla.',
     Icon: Ruler,
   },
@@ -94,15 +89,11 @@ export default function SizeStudioSheet({
   profile,
   disabled,
   onClose,
-  onHeightChange,
-  onWeightChange,
-  onTopSizeChange,
-  onBottomSizeChange,
-  onStyleToggle,
   onSavePreferences,
 }: SizeStudioSheetProps) {
   const insets = useSafeAreaInsets();
   const [brandQuery, setBrandQuery] = useState('');
+  const [draftBody, setDraftBody] = useState(profile);
   const [draftStyles, setDraftStyles] = useState(profile.styleTags);
   const [draftBrands, setDraftBrands] = useState(profile.favoriteBrands ?? []);
   const [draftColors, setDraftColors] = useState(profile.preferredColors ?? []);
@@ -117,6 +108,7 @@ export default function SizeStudioSheet({
   const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => {
     if (!visible) return;
+    setDraftBody(profile);
     setDraftStyles(profile.styleTags);
     setDraftBrands(profile.favoriteBrands ?? []);
     setDraftColors(profile.preferredColors ?? []);
@@ -160,37 +152,18 @@ export default function SizeStudioSheet({
     Number.isFinite(Number(priceMax.replace(',', '.'))) &&
     Number(priceMin.replace(',', '.')) >= 0 &&
     Number(priceMax.replace(',', '.')) >= Number(priceMin.replace(',', '.'));
-  const hasSelection =
-    section === 'style'
-      ? draftStyles.length > 0
-      : section === 'brands'
-        ? draftBrands.length > 0
-        : section === 'colors'
-          ? draftColors.length > 0
-          : section === 'budget'
-            ? validRange
-            : true;
-  const saveDisabled = disabled || saving || !hasSelection;
+  const emptyRange = !priceMin.trim() && !priceMax.trim();
+  const saveDisabled = disabled || saving || ((section === 'all' || section === 'budget') && !emptyRange && !validRange);
   const save = async (): Promise<void> => {
-    if (saveDisabled || savingRef.current) return;
-    if (section === 'body' || section === 'all') {
-      close();
-      return;
-    }
-    if (!onSavePreferences) return;
-    const patch: StudioProfilePatch =
-      section === 'style'
-        ? { styleTags: draftStyles }
-        : section === 'brands'
-          ? { favoriteBrands: draftBrands }
-          : section === 'colors'
-            ? { preferredColors: draftColors }
-            : {
-                priceRange: {
-                  min: Number(priceMin.replace(',', '.')),
-                  max: Number(priceMax.replace(',', '.')),
-                },
-              };
+    if (saveDisabled || savingRef.current || !onSavePreferences) return;
+    const body = { heightCm: draftBody.heightCm, weightKg: draftBody.weightKg,
+      topSize: draftBody.topSize, bottomSize: draftBody.bottomSize };
+    const priceRange = emptyRange ? null : { min: Number(priceMin.replace(',', '.')), max: Number(priceMax.replace(',', '.')) };
+    const patch: StudioProfilePatch = section === 'all'
+      ? { ...body, styleTags: draftStyles, favoriteBrands: draftBrands, preferredColors: draftColors, priceRange }
+      : section === 'body' ? body : section === 'style' ? { styleTags: draftStyles }
+      : section === 'brands' ? { favoriteBrands: draftBrands }
+      : section === 'colors' ? { preferredColors: draftColors } : { priceRange };
     savingRef.current = true;
     setSaving(true);
     setSaveError(null);
@@ -213,7 +186,7 @@ export default function SizeStudioSheet({
       animationType="slide"
       onRequestClose={close}
     >
-      <View style={styles.root}>
+      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable
           style={styles.backdrop}
           onPress={close}
@@ -251,29 +224,16 @@ export default function SizeStudioSheet({
             {editable ? (
               <SizeStudioCard
                 section={section as 'all' | 'body' | 'style'}
-                profile={
-                  section === 'style'
-                    ? { ...profile, styleTags: draftStyles }
-                    : profile
-                }
+                profile={{ ...draftBody, styleTags: draftStyles }}
                 disabled={disabled || saving}
-                onHeightChange={onHeightChange}
-                onWeightChange={onWeightChange}
-                onTopSizeChange={onTopSizeChange}
-                onBottomSizeChange={onBottomSizeChange}
-                onStyleToggle={
-                  section === 'style'
-                    ? (tag) =>
-                        setDraftStyles((current) =>
-                          current.includes(tag)
-                            ? current.filter((value) => value !== tag)
-                            : [...current, tag],
-                        )
-                    : onStyleToggle
-                }
+                onHeightChange={value => setDraftBody(current => ({ ...current, heightCm: value }))}
+                onWeightChange={value => setDraftBody(current => ({ ...current, weightKg: value }))}
+                onTopSizeChange={value => setDraftBody(current => ({ ...current, topSize: current.topSize === value ? null : value }))}
+                onBottomSizeChange={value => setDraftBody(current => ({ ...current, bottomSize: current.bottomSize === value ? null : value }))}
+                onStyleToggle={tag => setDraftStyles(current => current.includes(tag) ? current.filter(value => value !== tag) : [...current, tag])}
               />
             ) : null}
-            {section === 'colors' ? (
+            {(section === 'all' || section === 'colors') ? (
               <View style={styles.colorGrid}>
                 {STUDIO_COLORS.map((color) => {
                   const selected = draftColors.includes(color.label);
@@ -324,7 +284,7 @@ export default function SizeStudioSheet({
                 })}
               </View>
             ) : null}
-            {section === 'brands' ? (
+            {(section === 'all' || section === 'brands') ? (
               <>
                 <View style={styles.search}>
                   <Search size={17} color={colors.textSecondary} />
@@ -379,7 +339,7 @@ export default function SizeStudioSheet({
                 ) : null}
               </>
             ) : null}
-            {section === 'budget' ? (
+            {(section === 'all' || section === 'budget') ? (
               <View style={styles.budgetPanel}>
                 <Text style={styles.rangeLabel}>Fiyat Aralığı</Text>
                 <View style={styles.rangeTrack} />
@@ -473,6 +433,14 @@ export default function SizeStudioSheet({
                 </View>
               </>
             ) : null}
+            <PressableScale accessibilityRole="button" accessibilityLabel="Tercihleri temizle" disabled={disabled || saving}
+              style={styles.saveButton} onPress={() => {
+                if (section === 'all' || section === 'body') setDraftBody(current => ({ ...current, heightCm: null, weightKg: null, topSize: null, bottomSize: null }));
+                if (section === 'all' || section === 'style') setDraftStyles([]);
+                if (section === 'all' || section === 'colors') setDraftColors([]);
+                if (section === 'all' || section === 'brands') setDraftBrands([]);
+                if (section === 'all' || section === 'budget') { setPriceMin(''); setPriceMax(''); }
+              }}><Text style={styles.saveText}>Temizle</Text></PressableScale>
             {saveError ? (
               <Text accessibilityRole="alert" style={styles.emptyText}>
                 {saveError}
@@ -494,7 +462,7 @@ export default function SizeStudioSheet({
             </PressableScale>
           ) : null}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -570,7 +538,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   description: { color: colors.textSecondary, fontSize: 12, lineHeight: 17 },
-  close: { alignSelf: 'flex-start', padding: 4 },
+  close: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   content: { gap: spacing.md, paddingBottom: spacing.sm },
   notice: {
     flexDirection: 'row',

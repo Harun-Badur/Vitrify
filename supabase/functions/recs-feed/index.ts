@@ -1,7 +1,9 @@
+import { catalogMetadataRepair, cleanDeclaredCatalogColors, declaredCatalogFit, declaredCatalogGender } from '../../../lib/catalogMetadata.ts';
+import { styleProfileFreshness } from '../_shared/styleProfileFreshness.ts';
 // VITRIVIA Recs V1 — feed ranking Edge Function.
 // JWT → profile + attributes + config (5 dk bellek cache) → AllActiveCatalogSource
 // → scoring → diversity rerank → reasons.
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import {
   assembleRecsConfig,
   isConfigRow,
@@ -49,7 +51,9 @@ const PRICE_BAND_HIGH_MAX = 2999.99;
 
 interface CachedConfig {
   config: RecsScoringConfig;
+  profileMode: unknown;
   fetchedAt: number;
+  warnings: string[];
 }
 
 interface ProductColorJson {
@@ -278,11 +282,13 @@ const parseIntent = (value: unknown): SessionIntent => {
 };
 
 const loadConfig = async (
-  admin: ReturnType<typeof createClient>,
-): Promise<RecsScoringConfig> => {
+  admin: SupabaseClient,
+  warnings: string[],
+): Promise<Pick<CachedConfig,'config'|'profileMode'>> => {
   const now = Date.now();
   if (configCache && now - configCache.fetchedAt < CONFIG_CACHE_MS) {
-    return configCache.config;
+    warnings.push(...configCache.warnings);
+    return configCache;
   }
 
   const [configResult, priorResult] = await Promise.all([
@@ -290,16 +296,24 @@ const loadConfig = async (
     admin.from('style_tag_priors').select('tag, subcategory_w, fit_w, color_w'),
   ]);
 
+  // Config/priors have built-in defaults. Preserve fallback, but make degraded
+  // reads visible, including when a degraded config is served from cache.
+  const configWarnings: string[] = [];
+  if (configResult.error) configWarnings.push('CONFIG_FALLBACK');
+  if (priorResult.error) configWarnings.push('PRIORS_FALLBACK');
+  warnings.push(...configWarnings);
   if (configResult.error) {
-    console.error('recs_config okunamadı', { detail: configResult.error.message });
-    return configCache?.config ?? DEFAULT_RECS_CONFIG;
+    warnings.push(...(configCache?.warnings ?? []));
+    return {config:configCache?.config ?? DEFAULT_RECS_CONFIG,
+      profileMode:{algorithm:'style-preference-v2'}}; // Unknown mode cannot validate old personal weights.
   }
 
   const rows = (configResult.data ?? []).filter(isConfigRow);
-  const priors = (priorResult.data ?? []).filter(isPriorRow);
+  const priors = (priorResult.error ? [] : priorResult.data ?? []).filter(isPriorRow);
   const config = assembleRecsConfig(rows, priors);
-  configCache = { config, fetchedAt: now };
-  return config;
+  configCache = { config, profileMode: rows.find(row=>row.key==='style_profile_v2')?.value,
+    fetchedAt: now, warnings: configWarnings };
+  return configCache;
 };
 
 Deno.serve(async (request: Request): Promise<Response> => {
@@ -363,17 +377,18 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   try {
+    const warnings: string[] = [];
     const impressionSince = new Date(
       Date.now() - IMPRESSION_WINDOW_DAYS * 86_400_000,
     ).toISOString();
 
-    const [config, profileResult, productsResult, initialAttributesResult, impressionsResult] =
+    const [loadedConfig, profileResult, productsResult, initialAttributesResult, impressionsResult] =
       await Promise.all([
-        loadConfig(admin),
+        loadConfig(admin, warnings),
         admin
           .from('user_style_profiles')
           .select(
-            'user_id, color_w, subcategory_w, brand_w, fit_w, price_band_w, style_tag_weights, negative_preferences',
+            'user_id, color_w, subcategory_w, brand_w, fit_w, price_band_w, style_tag_weights, negative_preferences, computed_at',
           )
           .eq('user_id', user.id)
           .maybeSingle(),
@@ -395,18 +410,36 @@ Deno.serve(async (request: Request): Promise<Response> => {
           .gte('created_at', impressionSince),
       ]);
 
+    // Catalog and personalized profile reads must not fail as normal empty data.
+    // A successful maybeSingle() with no profile remains a valid cold start.
+    const requiredReadFailure = (code: string): Response => {
+      console.error('recs-feed veri okuması başarısız', { code });
+      return jsonResponse({ code, detail: 'Öneri verileri okunamadı. Lütfen tekrar dene.' }, 503);
+    };
+    if (productsResult.error) return requiredReadFailure('FEED_CATALOG_READ_FAILED');
+    if (profileResult.error) return requiredReadFailure('FEED_PROFILE_READ_FAILED');
+
     let attributesResult = initialAttributesResult;
     if (
       attributesResult.error &&
       /column .*outfit_role.* does not exist/i.test(attributesResult.error.message)
     ) {
+      warnings.push('ATTRIBUTES_LEGACY_SCHEMA');
       attributesResult = await admin
         .from('product_attributes')
         .select('product_id, gender, colors, fit, subcategory, brand_slug, price_band');
     }
+    // Attributes drive hard gender filtering; a failed read is not equivalent
+    // to legitimately missing metadata. Keep only the existing legacy retry.
+    if (attributesResult.error) return requiredReadFailure('FEED_ATTRIBUTES_READ_FAILED');
+    if (impressionsResult.error) warnings.push('IMPRESSION_HISTORY_FALLBACK');
 
+    const config=loadedConfig.config;
+    const freshness=styleProfileFreshness(loadedConfig.profileMode,profileResult.data?.computed_at);
+    if(freshness==='stale')warnings.push('PROFILE_STALE');
+    if(freshness==='unverified')warnings.push('PROFILE_FRESHNESS_UNVERIFIED');
     const profile = mapStyleProfileRow(
-      profileResult.data && isProfileRow(profileResult.data)
+      (freshness==='v1'||freshness==='v2_fresh') && profileResult.data && isProfileRow(profileResult.data)
         ? profileResult.data
         : null,
       user.id,
@@ -415,7 +448,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const rankedConfig = applyFeedMode(config, mode);
 
     const impressionCounts = new Map<string, number>();
-    for (const row of impressionsResult.data ?? []) {
+    for (const row of impressionsResult.error ? [] : impressionsResult.data ?? []) {
       if (!isRecord(row) || typeof row.product_id !== 'string') {
         continue;
       }
@@ -462,12 +495,12 @@ Deno.serve(async (request: Request): Promise<Response> => {
           : 'Kabin';
       const createdAt =
         typeof row.created_at === 'string' ? row.created_at : undefined;
-      const colorSlugs = parseStringArray(attr?.colors);
-      const gender =
-        attr && typeof attr.gender === 'string' ? attr.gender : 'unisex';
-      const fit = attr && typeof attr.fit === 'string' ? attr.fit : 'regular';
+      const repair = catalogMetadataRepair(row.id);
+      const colorSlugs = cleanDeclaredCatalogColors(row.id, attr?.colors);
+      const gender = declaredCatalogGender(attr?.gender);
+      const fit = declaredCatalogFit(attr?.fit);
       const subcategory =
-        attr && typeof attr.subcategory === 'string'
+        repair?.subcategory ?? (attr && typeof attr.subcategory === 'string'
           ? attr.subcategory
           : row.category === 'dresses'
             ? 'elbise'
@@ -481,7 +514,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
                     ? 'sapka'
                     : row.category === 'accessories'
                       ? 'aksesuar'
-                      : 'tisort';
+                      : 'tisort');
       const brandSlug =
         attr && typeof attr.brand_slug === 'string'
           ? attr.brand_slug
@@ -513,7 +546,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         createdAt,
         brand,
         category: row.category,
-        outfitRole: isOutfitRole(attr?.outfit_role) ? attr.outfit_role : null,
+        outfitRole: repair?.outfitRole ?? (isOutfitRole(attr?.outfit_role) ? attr.outfit_role : null),
         garmentDescription,
         provider: row.provider,
         productUrl: row.product_url,
@@ -543,7 +576,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         gender:
           gender === 'women' || gender === 'men' || gender === 'unisex'
             ? gender
-            : 'unisex',
+            : '',
         createdAtMs: createdAt ? Date.parse(createdAt) : 0,
         impressionCount,
         deal:
@@ -632,6 +665,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
     });
 
     const elapsedMs = Date.now() - startedAt;
+    const warningCodes = [...new Set(warnings)].sort();
+    for (const code of warningCodes) console.warn('recs-feed fallback', { code });
     console.info(
       JSON.stringify({
         msg: 'recs-feed',
@@ -651,11 +686,12 @@ Deno.serve(async (request: Request): Promise<Response> => {
       has_more: maskedRows.length > items.length,
       fallback: feedFallback,
       relaxed,
-    });
-  } catch (error) {
-    console.error('recs-feed başarısız', {
-      message: error instanceof Error ? error.message : 'unknown',
-    });
-    return jsonResponse({ detail: 'Öneri üretilemedi. Lütfen tekrar dene.' }, 500);
+    }, 200, warningCodes.length ? {
+      'X-Recs-Warnings': warningCodes.join(','),
+      'Access-Control-Expose-Headers': 'X-Recs-Warnings',
+    } : {});
+  } catch {
+    console.error('recs-feed başarısız', { code: 'FEED_INTERNAL_FAILED' });
+    return jsonResponse({ code: 'FEED_INTERNAL_FAILED', detail: 'Öneri üretilemedi. Lütfen tekrar dene.' }, 500);
   }
 });

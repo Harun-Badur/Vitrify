@@ -1,6 +1,9 @@
+import { recordDiscoverStage } from '../../lib/discoverStageTiming';
 import { withRecommendationMemo, type RecommendationMemo } from '../../lib/recommendationMemo';
 
 export interface CooperativeWorkOptions {
+  /** Numeric diagnostics only; never changes scheduling or budgets. */
+  diagnosticStage?: 'catalog' | 'ranking' | 'selection';
   signal?: AbortSignal;
   /** Bound each JS work slice, rather than merely delaying a single large callback. */
   budgetMs?: number;
@@ -16,18 +19,44 @@ const checkAbort = (signal?: AbortSignal): void => {
   if (signal?.aborted) throw aborted();
 };
 
+interface NativeHostScheduler {
+  unstable_LowPriority: number;
+  unstable_scheduleCallback(priority: number, callback: () => void): unknown;
+  unstable_cancelCallback(task: unknown): void;
+}
+let reportedHost: string | undefined;
 const yieldToHost = (signal?: AbortSignal): Promise<void> => new Promise((resolve, reject) => {
   checkAbort(signal);
+  const candidate = (globalThis as typeof globalThis & { nativeRuntimeScheduler?: NativeHostScheduler }).nativeRuntimeScheduler;
+  const scheduler = candidate && typeof candidate.unstable_scheduleCallback === 'function'
+    && typeof candidate.unstable_cancelCallback === 'function' && typeof candidate.unstable_LowPriority === 'number'
+    ? candidate : undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let task: unknown;
   const onAbort = (): void => {
-    clearTimeout(timer);
+    if (timer !== undefined) clearTimeout(timer);
+    if (task !== undefined) scheduler?.unstable_cancelCallback(task);
     signal?.removeEventListener('abort', onAbort);
     reject(aborted());
   };
-  const timer = setTimeout(() => {
+  const finish = (): void => {
     signal?.removeEventListener('abort', onAbort);
-    resolve();
-  }, 0);
+    if (signal?.aborted) reject(aborted()); else resolve();
+  };
   signal?.addEventListener('abort', onAbort, { once: true });
+  try {
+    if (__DEV__) {
+      const kind = scheduler ? 'scheduler.native' : 'scheduler.timer';
+      if (reportedHost !== kind) { reportedHost = kind; recordDiscoverStage(kind, 0); }
+    }
+    // Native tasks return to the host queue at low priority instead of waiting for
+    // another frame's timer batch. Per-slice CPU budgets/priority gates stay intact.
+    if (scheduler) task = scheduler.unstable_scheduleCallback(scheduler.unstable_LowPriority, finish);
+    else timer = setTimeout(finish, 0);
+  } catch (error) {
+    signal?.removeEventListener('abort', onAbort);
+    reject(error);
+  }
 });
 
 export const runSynchronously = <T>(work: Generator<void, T, void>): T => {
@@ -40,20 +69,37 @@ export const runCooperatively = async <T>(
   work: Generator<void, T, void>, options: CooperativeWorkOptions = {},
 ): Promise<T> => {
   const { signal } = options;
-
-  await yieldToHost(signal);
-  for (;;) {
-    if (options.waitForTurn) await options.waitForTurn();
-    checkAbort(signal);
-    const budget = Math.max(1, options.sliceBudgetMs?.() ?? options.budgetMs ?? 4);
-    const started = performance.now();
-    for (;;) {
-      const step = withRecommendationMemo(options.recommendationMemo, () => work.next());
-      if (step.done) return step.value;
-      // Check frequently, including during candidate generation and merge sorting.
-      if (performance.now() - started >= budget) break;
-    }
+  const diagnostic = __DEV__ ? options.diagnosticStage : undefined;
+  const totalStarted = diagnostic ? performance.now() : 0;
+  let cpuMs = 0, maxSliceMs = 0, completed = false;
+  try {
     await yieldToHost(signal);
+    for (;;) {
+      if (options.waitForTurn) await options.waitForTurn();
+      checkAbort(signal);
+      const budget = Math.max(1, options.sliceBudgetMs?.() ?? options.budgetMs ?? 4);
+      const started = performance.now();
+      try {
+        for (;;) {
+          const step = withRecommendationMemo(options.recommendationMemo, () => work.next());
+          if (step.done) { completed = true; return step.value; }
+          if (performance.now() - started >= budget) break;
+        }
+      } finally {
+        if (diagnostic) {
+          const elapsed = performance.now() - started;
+          cpuMs += elapsed; maxSliceMs = Math.max(maxSliceMs, elapsed);
+        }
+      }
+      await yieldToHost(signal);
+    }
+  } finally {
+    if (diagnostic) {
+      const elapsed = performance.now() - totalStarted;
+      recordDiscoverStage(`cpu.${diagnostic}`, cpuMs, !completed);
+      recordDiscoverStage(`wait.${diagnostic}`, Math.max(0, elapsed - cpuMs), !completed);
+      recordDiscoverStage(`slice.${diagnostic}`, maxSliceMs, !completed);
+    }
   }
 };
 

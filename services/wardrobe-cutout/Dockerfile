@@ -5,6 +5,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 # Download the lightweight, local model once, while building the image.
 RUN python -c "from rembg import new_session; new_session('u2netp', providers=['CPUExecutionProvider'])"
-COPY processor.py server.py ./
+COPY processor.py server.py v2.py ./
 EXPOSE 7010
 CMD ["python", "server.py"]

@@ -1,14 +1,29 @@
 import type { Product } from '../types/product';
+import { logger } from '../lib/logger';
 import { getSupabaseClient } from '../lib/supabase';
+import type { ProductAttributeContext, ProductSemanticAttributeRow } from '../src/intelligence/product/productIntelligence';
 import { enrichProduct } from '../src/intelligence/style/productStyle';
 import { isAttributeRow, isFeedProductRow, mapFeedRow } from './catalogProductAdapter';
+
+export interface ProductRepositoryLoad {
+  products: readonly Product[];
+  attributeContexts: readonly ProductAttributeContext[];
+}
+
+type ProductLoader = (ids: readonly string[]) => Promise<readonly Product[] | ProductRepositoryLoad>;
 
 /** Identity map for products-table records. Recommendation metadata lives outside it. */
 export class ProductRepository {
   private readonly products = new Map<string, Product>();
+  private readonly attributeContexts = new Map<string, ProductAttributeContext>();
   private readonly pending = new Map<string, Promise<void>>();
 
-  constructor(private readonly load: (ids: readonly string[]) => Promise<readonly Product[]>) {}
+  constructor(private readonly load: ProductLoader) {}
+
+  /** Raw attribute evidence for products this repository loaded; reading never fetches. */
+  attributeContext(id: string): ProductAttributeContext | undefined {
+    return this.attributeContexts.get(id);
+  }
 
   /** Register only authoritative catalog records; refresh data without replacing identity. */
   register(products: readonly Product[]): Product[] {
@@ -33,8 +48,11 @@ export class ProductRepository {
     const unique = [...new Set(ids)];
     const missing = unique.filter(id => !this.products.has(id) && !this.pending.has(id));
     if (missing.length > 0) {
-      const request = Promise.resolve().then(() => this.load(missing)).then(products => {
-        this.register(products);
+      const request = Promise.resolve().then(() => this.load(missing)).then(result => {
+        if ('products' in result) {
+          this.register(result.products);
+          for (const context of result.attributeContexts) this.attributeContexts.set(context.productId, context);
+        } else this.register(result);
       }).finally(() => {
         for (const id of missing) if (this.pending.get(id) === request) this.pending.delete(id);
       });
@@ -66,9 +84,37 @@ export function getProductRepository(): ProductRepository {
 export const productsById = (ids: readonly string[]): Promise<ReadonlyMap<string, Product>> =>
   getProductRepository().productsById(ids);
 
-async function loadProductsById(client: Client, ids: readonly string[]): Promise<Product[]> {
+const ATTRIBUTE_COLUMNS = 'product_id, gender, colors, fit, subcategory, brand_slug, price_band';
+const SEMANTIC_ATTRIBUTE_COLUMNS = ', material, season, occasion, style_tags';
+const MISSING_SEMANTIC_COLUMN = /column .*(material|season|occasion|style_tags).* does not exist/i;
+const MISSING_OUTFIT_ROLE_COLUMN = /column .*outfit_role.* does not exist/i;
+
+interface AttributeRowsResult {
+  result: QueryResult;
+  semanticColumns: ProductAttributeContext['semanticColumns'];
+}
+
+/** Drops only a reported-missing optional column group; any other error is returned. */
+async function loadAttributeRows(client: NonNullable<Client>, ids: readonly string[]): Promise<AttributeRowsResult> {
+  let withOutfitRole = true;
+  let withSemantic = true;
+  const query = async (): Promise<QueryResult> => client.from('product_attributes')
+    .select(`${ATTRIBUTE_COLUMNS}${withOutfitRole ? ', outfit_role' : ''}${withSemantic ? SEMANTIC_ATTRIBUTE_COLUMNS : ''}`)
+    .in('product_id', ids);
+  let result = await query();
+  while (result.error) {
+    if (withSemantic && MISSING_SEMANTIC_COLUMN.test(result.error.message)) withSemantic = false;
+    else if (withOutfitRole && MISSING_OUTFIT_ROLE_COLUMN.test(result.error.message)) withOutfitRole = false;
+    else break;
+    result = await query();
+  }
+  return { result, semanticColumns: withSemantic ? 'loaded' : 'unavailable' };
+}
+
+async function loadProductsById(client: Client, ids: readonly string[]): Promise<ProductRepositoryLoad> {
   if (!client) throw new Error('Supabase bağlantısı yok');
   const products: Product[] = [];
+  const attributeContexts: ProductAttributeContext[] = [];
   // Bound query URLs without changing the Discover candidate pool or pagination.
   for (let offset = 0; offset < ids.length; offset += 80) {
     const batch = ids.slice(offset, offset + 80);
@@ -80,19 +126,28 @@ async function loadProductsById(client: Client, ids: readonly string[]): Promise
     if (result.error) throw new Error(result.error.message);
     const rows = (result.data ?? []).filter(isFeedProductRow);
     if (rows.length === 0) continue;
-    let attributes: QueryResult = await client.from('product_attributes')
-      .select('product_id, gender, colors, fit, subcategory, brand_slug, price_band, outfit_role')
-      .in('product_id', rows.map(row => row.id));
-    if (attributes.error && /column .*outfit_role.* does not exist/i.test(attributes.error.message)) {
-      attributes = await client.from('product_attributes')
-        .select('product_id, gender, colors, fit, subcategory, brand_slug, price_band')
-        .in('product_id', rows.map(row => row.id));
+    const { result: attributes, semanticColumns } = await loadAttributeRows(client, rows.map(row => row.id));
+    if (attributes.error) {
+      // Product resolution keeps its title-only fallback; the context records the failure.
+      logger.warn('product_attributes okunamadı; ürünler attribute olmadan hazırlanıyor', {
+        error: attributes.error.message, count: rows.length,
+      });
     }
-    const attributesById = new Map((attributes.data ?? []).filter(isAttributeRow).map(row => [row.product_id, row]));
+    const attributesById = new Map<string, ProductSemanticAttributeRow>(
+      (attributes.data ?? []).filter(isAttributeRow).map(row => [row.product_id, row]),
+    );
     for (const row of rows) {
       const product = mapFeedRow(row);
-      if (product) products.push(enrichProduct(product, attributesById.get(product.id)));
+      if (!product) continue;
+      const attribute = attributesById.get(product.id);
+      products.push(enrichProduct(product, attribute));
+      attributeContexts.push({
+        productId: product.id,
+        status: attributes.error ? 'error' : attribute ? 'loaded' : 'absent',
+        attributes: attribute ? Object.freeze({ ...attribute }) : null,
+        semanticColumns,
+      });
     }
   }
-  return products;
+  return { products, attributeContexts };
 }

@@ -1,3 +1,6 @@
+import { useOwnedState } from '../hooks/useOwnedState';
+import { captureOwnerPublication, trackOwnerWork } from '../lib/accountDeviceWork';
+import { withAccountWriteGuard } from '../lib/accountWriteFence';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -46,6 +49,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { track } from '../lib/analytics';
 import { grantVtonConsent, hasVtonConsent } from '../lib/consent';
+import { VTON_DISCLOSURE } from '../lib/vtonDisclosure';
 import { logger } from '../lib/logger';
 import { checkLowResolutionPersonPhoto } from '../lib/personPhotoPrepare';
 import { recordSessionProductAction } from '../lib/sessionIntent';
@@ -63,7 +67,7 @@ import { buildTryOnShareMessage } from '../lib/vtonShare';
 import { openProductPage } from '../services/deeplinkService';
 import { insertLikedProduct } from '../services/likeService';
 import { resolveSavedModelPhotoUri } from '../services/profileService';
-import { tryOnGarment, VtonServiceError } from '../services/vtonService';
+import { tryOnGarment, getVtonTrialStatus, type VtonTrialStatus, VtonServiceError } from '../services/vtonService';
 import { useAppStore } from '../store/useAppStore';
 import type { Product } from '../types/product';
 
@@ -147,18 +151,37 @@ export default function VirtualTryOnModal({
 }: VirtualTryOnModalProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuthContext();
+  const [trialStatus, setTrialStatus] = useOwnedState<VtonTrialStatus | null>(user?.id ?? null, null);
+  const [trialStatusError, setTrialStatusError] = useOwnedState(user?.id ?? null, false);
+  const trialSetters = useRef({ setTrialStatus, setTrialStatusError });
+  trialSetters.current = { setTrialStatus, setTrialStatusError };
+  useEffect(() => {
+    if (!visible || !user?.id) return;
+    const current = captureOwnerPublication(user.id);
+    let active = true;
+    trialSetters.current.setTrialStatus(null);
+    trialSetters.current.setTrialStatusError(false);
+    void getVtonTrialStatus(user.id).then(value => {
+      if (active && current()) trialSetters.current.setTrialStatus(value);
+    }).catch(() => { if (active && current()) trialSetters.current.setTrialStatusError(true); });
+    return () => { active = false; };
+  }, [visible, user?.id]);
+  const trialUnavailable = !trialStatus || (trialStatus.enabled && trialStatus.used);
   const likedProducts = useAppStore((state) => state.likedProducts);
-  const [status, setStatus] = useState<TryOnStatus>('idle');
-  const [errorMessage, setErrorMessage] = useState(resetMessage);
-  const [personImageUri, setPersonImageUri] = useState<string | null>(null);
-  const [isPersonPhotoLowRes, setIsPersonPhotoLowRes] = useState(false);
-  const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
-  const [consentStatus, setConsentStatus] = useState<ConsentStatus>('checking');
+  const [status, setStatus] = useOwnedState<TryOnStatus>(user?.id ?? null, 'idle');
+  const [errorMessage, setErrorMessage] = useOwnedState(user?.id ?? null, resetMessage);
+  const [personImageUri, setPersonImageUri] = useOwnedState<string | null>(user?.id ?? null, null);
+  const [isPersonPhotoLowRes, setIsPersonPhotoLowRes] = useOwnedState(user?.id ?? null, false);
+  const [resultImageUrl, setResultImageUrl] = useOwnedState<string | null>(user?.id ?? null, null);
+  const [consentSaving, setConsentSaving] = useOwnedState(user?.id ?? null, false);
+  const [consentError, setConsentError] = useOwnedState<string | null>(user?.id ?? null, null);
+  const consentSavingRef = useRef(false);
+  const [consentStatus, setConsentStatus] = useOwnedState<ConsentStatus>(user?.id ?? null, 'checking');
   const [isRendered, setIsRendered] = useState(visible);
-  const [showSlowHint, setShowSlowHint] = useState(false);
+  const [showSlowHint, setShowSlowHint] = useOwnedState(user?.id ?? null, false);
   const [isImmersive, setIsImmersive] = useState(false);
-  const [closetAdded, setClosetAdded] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [closetAdded, setClosetAdded] = useOwnedState(user?.id ?? null, false);
+  const [toastMessage, setToastMessage] = useOwnedState<string | null>(user?.id ?? null, null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lastProductRef = useRef(product);
@@ -190,7 +213,7 @@ export default function VirtualTryOnModal({
       setToastMessage(null);
       toastTimeoutRef.current = null;
     }, TOAST_DURATION_MS);
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     return () => {
@@ -206,7 +229,9 @@ export default function VirtualTryOnModal({
     }
 
     let isMounted = true;
-    void hasVtonConsent().then((granted) => {
+    setConsentStatus('checking');
+    setConsentError(null);
+    void hasVtonConsent(user?.id ?? '').then((granted) => {
       if (isMounted) {
         setConsentStatus(granted ? 'granted' : 'required');
       }
@@ -215,7 +240,7 @@ export default function VirtualTryOnModal({
     return () => {
       isMounted = false;
     };
-  }, [visible]);
+  }, [visible, user?.id]);
 
   useEffect(() => {
     if (!visible || consentStatus !== 'granted' || !user?.id) {
@@ -245,7 +270,7 @@ export default function VirtualTryOnModal({
       return;
     }
     let isMounted = true;
-    void checkLowResolutionPersonPhoto(personImageUri)
+    void checkLowResolutionPersonPhoto(personImageUri, user?.id)
       .then((lowRes) => {
         if (isMounted) {
           setIsPersonPhotoLowRes(lowRes);
@@ -442,7 +467,7 @@ export default function VirtualTryOnModal({
     setIsImmersive(false);
     setClosetAdded(false);
     setToastMessage(null);
-  }, []);
+  }, [user?.id]);
 
   const finishExit = useCallback((): void => {
     resetState();
@@ -550,9 +575,12 @@ export default function VirtualTryOnModal({
   }, [resetImmersiveView, status]);
 
   const handlePickPhoto = useCallback(async (): Promise<void> => {
+    const current = captureOwnerPublication(user?.id ?? null);
+    if (!user?.id || !current()) return;
     try {
       const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+        await trackOwnerWork(user.id, ImagePicker.requestMediaLibraryPermissionsAsync());
+      if (!current()) return;
 
       if (!permission.granted) {
         setStatus('error');
@@ -562,12 +590,12 @@ export default function VirtualTryOnModal({
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await trackOwnerWork(user.id, ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
-      });
+      }));
 
-      if (result.canceled || !result.assets[0]) {
+      if (!current() || result.canceled || !result.assets[0]) {
         return;
       }
 
@@ -580,9 +608,11 @@ export default function VirtualTryOnModal({
       setStatus('error');
       setErrorMessage('Fotoğraf seçilemedi. Lütfen tekrar dene.');
     }
-  }, []);
+  }, [user?.id]);
 
   const handleTryOn = useCallback(async (): Promise<void> => {
+    const current = captureOwnerPublication(user?.id ?? null);
+    if (trialUnavailable || status === 'loading') return;
     if (!product || !personImageUri) {
       setStatus('error');
       setErrorMessage('Önce tam boy bir fotoğrafını seç.');
@@ -604,6 +634,7 @@ export default function VirtualTryOnModal({
         productUrl: product.productUrl,
         affiliateUrl: product.affiliateUrl,
       });
+      if (!current()) return;
       setResultImageUrl(outputUrl);
       setStatus('success');
       track('try_on_success', product.id, {
@@ -614,6 +645,7 @@ export default function VirtualTryOnModal({
       });
       recordSessionProductAction('try_on_success', product);
     } catch (error) {
+      if (!current()) return;
       const message =
         error instanceof VtonServiceError
           ? error.message
@@ -625,15 +657,22 @@ export default function VirtualTryOnModal({
       track('try_on_failure', product.id, {
         error_reason: message.slice(0, 120),
       });
+    } finally {
+      if (current() && user?.id) {
+        // One read after the attempt, never polling or assuming success on timeout.
+        trialSetters.current.setTrialStatus(null);
+        try { const value = await getVtonTrialStatus(user.id); if (current()) trialSetters.current.setTrialStatus(value); }
+        catch { if (current()) trialSetters.current.setTrialStatusError(true); }
+      }
     }
-  }, [isInCloset, personImageUri, product]);
+  }, [isInCloset, personImageUri, product, user?.id, trialUnavailable, status]);
 
   const handleRetry = useCallback((): void => {
     setStatus('idle');
     setErrorMessage(resetMessage);
     setResultImageUrl(null);
     setIsImmersive(false);
-  }, []);
+  }, [user?.id]);
 
   const handleShare = useCallback(async (): Promise<void> => {
     if (!displayProduct) {
@@ -648,6 +687,7 @@ export default function VirtualTryOnModal({
   }, [displayProduct]);
 
   const handleAddToCloset = useCallback(async (): Promise<void> => {
+    const current = captureOwnerPublication(user?.id ?? null);
     if (!displayProduct) {
       return;
     }
@@ -662,7 +702,8 @@ export default function VirtualTryOnModal({
     }
 
     try {
-      await insertLikedProduct(user.id, displayProduct);
+      await trackOwnerWork(user.id, withAccountWriteGuard(user.id, () => insertLikedProduct(user.id, displayProduct)));
+      if (!current()) return;
       useAppStore.getState().addLikedProductLocally(displayProduct);
       setClosetAdded(true);
       showToast('Dolabına eklendi');
@@ -681,9 +722,21 @@ export default function VirtualTryOnModal({
   }, [displayProduct]);
 
   const handleAcceptConsent = useCallback((): void => {
-    setConsentStatus('granted');
-    void grantVtonConsent();
-  }, []);
+    if (!user?.id || consentSavingRef.current) return;
+    const current = captureOwnerPublication(user.id);
+    if (!current()) return;
+    consentSavingRef.current = true;
+    setConsentSaving(true);
+    setConsentError(null);
+    void grantVtonConsent(user.id).then(() => {
+      if (current()) setConsentStatus('granted');
+    }).catch(() => {
+      if (current()) setConsentError('İzin kaydedilemedi. Yeni deneme başlatılmadı; tekrar deneyebilirsin.');
+    }).finally(() => {
+      consentSavingRef.current = false;
+      if (current()) setConsentSaving(false);
+    });
+  }, [user?.id]);
 
   const handleOpenPrivacy = useCallback((): void => {
     void Linking.openURL(PRIVACY_URL).catch((error: unknown) => {
@@ -775,25 +828,9 @@ export default function VirtualTryOnModal({
                 <Text style={styles.consentTitle}>
                   Fotoğrafın nasıl işlenir?
                 </Text>
-                <Text style={styles.consentLead}>
-                  Fotoğrafın yalnızca bu deneme için işlenir ve saklanmaz.
-                </Text>
-                <Text style={styles.consentItem}>
-                  • Seçtiğin fotoğraf, giydirme işlemini yapan yapay zekâ
-                  servisimize şifreli bağlantı üzerinden gönderilir.
-                </Text>
-                <Text style={styles.consentItem}>
-                  • İşlem bittiğinde fotoğraf sunucuda tutulmaz; sonuç görseli
-                  yalnızca senin cihazında gösterilir.
-                </Text>
-                <Text style={styles.consentItem}>
-                  • Fotoğrafın reklam, model eğitimi veya üçüncü taraflarla
-                  paylaşım için kullanılmaz.
-                </Text>
-                <Text style={styles.consentItem}>
-                  • Bu izni istediğin zaman uygulamayı kaldırarak ya da
-                  hesabını silerek geri alabilirsin.
-                </Text>
+                <Text style={styles.consentLead}>{VTON_DISCLOSURE.lead}</Text>
+                {VTON_DISCLOSURE.items.map(item => <Text key={item} style={styles.consentItem}>• {item}</Text>)}
+                {consentError ? <Text accessibilityRole="alert" style={styles.consentItem}>{consentError}</Text> : null}
                 <PressableScale
                   onPress={handleOpenPrivacy}
                   accessibilityRole="link"
@@ -815,6 +852,8 @@ export default function VirtualTryOnModal({
                   </PressableScale>
                   <PressableScale
                     onPress={handleAcceptConsent}
+                    disabled={consentSaving || !user?.id}
+                    accessibilityState={{ disabled: consentSaving || !user?.id }}
                     style={styles.primaryButton}
                     accessibilityRole="button"
                     accessibilityLabel="Kabul Et"
@@ -832,6 +871,9 @@ export default function VirtualTryOnModal({
           pointerEvents={isImmersive ? 'none' : 'auto'}
         >
           <Text style={styles.studioTitle}>Deneme Kabini</Text>
+          {trialStatus?.enabled ? <Text accessibilityLiveRegion="polite" style={styles.kicker}>
+            {trialStatus.used ? 'Deneme hakkını kullandın' : '1 ücretsiz deneme'}
+          </Text> : trialStatus === null ? <Text style={styles.kicker}>{trialStatusError ? 'Deneme hakkı doğrulanamadı. Kabini yeniden açabilirsin.' : 'Deneme hakkı kontrol ediliyor'}</Text> : null}
         </Animated.View>
 
         <View style={styles.canvasSlot}>
@@ -1009,6 +1051,8 @@ export default function VirtualTryOnModal({
               </PressableScale>
               <PressableScale
                 onPress={handleTryOn}
+                disabled={trialUnavailable}
+                accessibilityState={{ disabled: trialUnavailable }}
                 style={styles.primaryButton}
                 accessibilityRole="button"
                 accessibilityLabel="Üzerimde dene"

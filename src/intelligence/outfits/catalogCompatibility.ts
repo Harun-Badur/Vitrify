@@ -1,16 +1,17 @@
-import { getDisplayPrice, type Product } from '../../../types/product';
+import type { Product } from '../../../types/product';
 import { recommendationMemoValue, normalizedRecommendationToken } from '../../../lib/recommendationMemo';
 
 export interface CatalogCompatibility {
   score: number;
   color: number;
+  /** Always 0. Price proximity is not outfit evidence; an explicit range is a hard filter. */
   price: number;
   brand: number;
   fit: number;
   style: number;
 }
 
-const WEIGHTS = { color: 0.3, price: 0.35, brand: 0.1, fit: 0.1, style: 0.15 };
+const WEIGHTS = { color: 0.3, brand: 0.1, fit: 0.1, style: 0.15 };
 const NEUTRAL_COLORS = new Set(['siyah', 'beyaz', 'gri', 'bej', 'krem', 'navy']);
 const STYLE_BY_SUBCATEGORY: Readonly<Record<string, string>> = {
   jean: 'casual', tisort: 'casual', polo: 'casual', hoodie: 'casual',
@@ -21,10 +22,10 @@ const token = (value: string | undefined): string =>
   value === undefined || value === null ? '' : normalizedRecommendationToken(value, true,
     () => value.trim().toLocaleLowerCase('tr-TR'));
 
-/** Soft evidence only; these weights are explicit heuristics, not learned style labels. */
+/** Soft evidence only. Remaining weights are not rescaled after price proximity was removed. */
 export const catalogCompatibility = (anchor: Product, product: Product): CatalogCompatibility => {
   const evidence = (entry: Product) => [entry.id, entry.outfitRole, entry.colorSlugs,
-    getDisplayPrice(entry), entry.brand, entry.fit, entry.subcategory];
+    entry.brand, entry.fit, entry.subcategory];
   return recommendationMemoValue('catalogCompatibilityMemo', JSON.stringify([
     'tr-TR', evidence(anchor), evidence(product),
   ]), () => {
@@ -34,9 +35,7 @@ export const catalogCompatibility = (anchor: Product, product: Product): Catalog
   const color = right.some((color) => left.has(color)) ? 1
     : left.size > 0 && right.length > 0 &&
       ([...left].some((color) => NEUTRAL_COLORS.has(color)) || right.some((color) => NEUTRAL_COLORS.has(color))) ? 0.5 : 0;
-  const anchorPrice = getDisplayPrice(anchor), productPrice = getDisplayPrice(product);
-  const price = Number.isFinite(anchorPrice) && Number.isFinite(productPrice) && anchorPrice > 0 && productPrice > 0
-    ? Math.min(anchorPrice, productPrice) / Math.max(anchorPrice, productPrice) : 0;
+  const price = 0;
   const anchorBrand = token(anchor.brand), productBrand = token(product.brand);
   const brand = anchorBrand !== '' && anchorBrand !== 'kabin' && anchorBrand === productBrand ? 1 : 0;
   const fit = anchor.fit && product.fit && anchor.fit === product.fit ? 1 : 0;
@@ -44,7 +43,7 @@ export const catalogCompatibility = (anchor: Product, product: Product): Catalog
   const productStyle = STYLE_BY_SUBCATEGORY[token(product.subcategory)];
   const style = anchorStyle && productStyle && anchorStyle === productStyle ? 1 : 0;
   return { color, price, brand, fit, style,
-    score: color * WEIGHTS.color + price * WEIGHTS.price + brand * WEIGHTS.brand + fit * WEIGHTS.fit + style * WEIGHTS.style };
+    score: color * WEIGHTS.color + brand * WEIGHTS.brand + fit * WEIGHTS.fit + style * WEIGHTS.style };
 
   });
 };
@@ -59,9 +58,8 @@ const semanticKeys = new WeakMap<Product, {
 
 /** Semantic ordering for genuinely equal evidence; identifiers are intentionally excluded. */
 export const catalogSemanticKey = (product: Product): string => {
-  const price = getDisplayPrice(product);
   const evidence = [product.id, product.outfitRole, product.category, product.gender,
-    product.subcategory, product.brand, product.title, price, product.fit,
+    product.subcategory, product.brand, product.title, product.fit,
     product.colorSlugs == null ? product.colorSlugs : true];
   const colors = product.colorSlugs ?? [];
   const cached = semanticKeys.get(product);
@@ -73,7 +71,7 @@ export const catalogSemanticKey = (product: Product): string => {
       sameColors) return cached.key;
   const key = JSON.stringify([
     product.outfitRole, product.category, product.gender, token(product.subcategory),
-    token(product.brand), token(product.title), price,
+    token(product.brand), token(product.title),
     [...colors].map(token).sort(), token(product.fit),
   ]);
   // Copy raw colors: the repository or caller can mutate the original array in place.
@@ -87,8 +85,10 @@ export const sameCatalogProduct = (left: Product, right: Product): boolean => {
   if (left.productUrl && right.productUrl) {
     try {
       const canonical = (raw: string): string => {
-        const url = new URL(raw);
-        return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
+        return recommendationMemoValue('canonicalProductUrl', raw, () => {
+          const url = new URL(raw);
+          return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
+        });
       };
       if (canonical(left.productUrl) === canonical(right.productUrl)) return true;
     } catch {

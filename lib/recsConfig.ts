@@ -1,4 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { CalculatedStyleProfile } from '../types/calculatedStyleProfile';
+import { styleProfileFreshness } from '../supabase/functions/_shared/styleProfileFreshness';
+import { isPreferenceV2Enabled } from './preferenceFeatureFlags';
 import type {
   DiversityMix,
   NegativePreference,
@@ -53,7 +56,24 @@ interface StyleProfileRow {
 }
 
 let memoryConfig: CachedConfig | null = null;
-const memoryProfiles = new Map<string, { profile: StyleProfileSnapshot; fetchedAt: number; ttl?: number }>();
+const memoryProfiles = new Map<string, { profile: StyleProfileSnapshot; fetchedAt: number; ttl?: number; calculated?: CalculatedStyleProfile; fallbackOnly?:boolean }>();
+const calculatedRequests = new Map<string, Promise<CalculatedStyleProfile>>();
+const profileRevisions = new Map<string, number>();
+const profileListeners = new Map<string, Set<() => void>>();
+export function subscribeStyleProfileChanges(owner: string, listener: () => void): () => void {
+  const listeners = profileListeners.get(owner) ?? new Set<() => void>();
+  listeners.add(listener); profileListeners.set(owner,listeners);
+  return () => { listeners.delete(listener); if (!listeners.size) profileListeners.delete(owner); };
+}
+export function invalidateStyleProfileSnapshot(owner: string): void {
+  profileRevisions.set(owner, (profileRevisions.get(owner) ?? 0) + 1);
+  memoryProfiles.delete(owner);
+  profileRequests.delete(owner);
+  calculatedRequests.delete(owner);
+  profileListeners.get(owner)?.forEach(listener => {
+    try { listener(); } catch { /* A UI subscriber cannot invalidate a committed RPC receipt. */ }
+  });
+}
 let cacheGeneration = 0;
 let configRequest: Promise<RecsScoringConfig> | null = null;
 const profileRequests = new Map<string, Promise<StyleProfileSnapshot>>();
@@ -318,7 +338,18 @@ const readRecsConfig = async (): Promise<RecsScoringConfig> => {
 const readStyleProfileSnapshot = async (
   userId: string,
 ): Promise<StyleProfileSnapshot> => {
+  if (isPreferenceV2Enabled()) {
+    const cached=memoryProfiles.get(userId), generation=cacheGeneration, revision=profileRevisions.get(userId);
+    if(cached?.fallbackOnly && Date.now()-cached.fetchedAt < (cached.ttl ?? 0))return emptyStyleProfile(userId);
+    try { return (await fetchCalculatedStyleProfile(userId)).snapshot; }
+    catch {
+      const profile=emptyStyleProfile(userId); // No stale V1 personal weights in V2 mode.
+      if(generation===cacheGeneration && revision===profileRevisions.get(userId))memoryProfiles.set(userId,{profile,fetchedAt:Date.now(),ttl:10_000,fallbackOnly:true});
+      return profile;
+    }
+  }
   const generation = cacheGeneration;
+  const revision = profileRevisions.get(userId);
   const now = Date.now();
   const cached = memoryProfiles.get(userId);
   if (cached && now - cached.fetchedAt < (cached.ttl ?? CONFIG_CACHE_MS)) {
@@ -343,18 +374,18 @@ const readStyleProfileSnapshot = async (
     if (error) {
       logger.debug('user_style_profiles okunamadı', { detail: error.message });
       const profile = cached?.profile ?? fallback;
-      if (generation === cacheGeneration) memoryProfiles.set(userId, { profile, fetchedAt: now, ttl: 10_000 });
+      if (generation === cacheGeneration && revision === profileRevisions.get(userId)) memoryProfiles.set(userId, { profile, fetchedAt: now, ttl: 10_000 });
       return profile;
     }
 
     if (data === null || !isProfileRow(data)) {
       const profile = cached?.profile ?? fallback;
-      if (generation === cacheGeneration) memoryProfiles.set(userId, { profile, fetchedAt: now, ttl: 60_000 });
+      if (generation === cacheGeneration && revision === profileRevisions.get(userId)) memoryProfiles.set(userId, { profile, fetchedAt: now, ttl: 60_000 });
       return profile;
     }
 
     const profile = mapStyleProfileRow(data);
-    if (generation === cacheGeneration) {
+    if (generation === cacheGeneration && revision === profileRevisions.get(userId)) {
       memoryProfiles.set(userId, { profile, fetchedAt: now });
       void persistJson(`${PROFILE_STORAGE_PREFIX}${userId}`, profile);
     }
@@ -362,7 +393,7 @@ const readStyleProfileSnapshot = async (
   } catch (error) {
     logger.debug('user_style_profiles beklenmeyen hata', { error });
     const profile = cached?.profile ?? fallback;
-    if (generation === cacheGeneration) memoryProfiles.set(userId, { profile, fetchedAt: now, ttl: 10_000 });
+    if (generation === cacheGeneration && revision === profileRevisions.get(userId)) memoryProfiles.set(userId, { profile, fetchedAt: now, ttl: 10_000 });
     return profile;
   }
 };
@@ -385,10 +416,55 @@ export const fetchStyleProfileSnapshot = (userId: string): Promise<StyleProfileS
   return request;
 };
 
+/** Fresh read of the same backend model used by scoring. No offline success
+ * fallback: Profile must not keep presenting revoked preferences as current.
+ */
+export async function fetchCalculatedStyleProfile(userId: string): Promise<CalculatedStyleProfile> {
+  const client = getSupabaseClient();
+  if (!client || !userId) throw new Error('Stil profili doğrulanamadı.');
+  const session = await client.auth.getSession();
+  if (session.error || session.data.session?.user.id !== userId) throw new Error('Stil profili oturumu değişti.');
+  const cached = memoryProfiles.get(userId);
+  if (cached?.calculated && Date.now()-cached.fetchedAt < 30_000) return cached.calculated;
+  const pending = calculatedRequests.get(userId);
+  if (pending) return pending;
+  const generation = cacheGeneration, revision = profileRevisions.get(userId);
+  const request = readCalculatedStyleProfile(userId).then(profile => {
+    if (generation !== cacheGeneration || revision !== profileRevisions.get(userId)) throw new Error('Stil profili okuma sırasında değişti.');
+    memoryProfiles.set(userId,{profile:profile.snapshot,calculated:profile,fetchedAt:Date.now(),ttl:30_000});
+    return profile;
+  }).finally(() => { if (calculatedRequests.get(userId)===request) calculatedRequests.delete(userId); });
+  calculatedRequests.set(userId,request);
+  return request;
+}
+async function readCalculatedStyleProfile(userId: string): Promise<CalculatedStyleProfile> {
+  const client = getSupabaseClient();
+  if (!client || !userId) throw new Error('Stil profili doğrulanamadı.');
+  const actor = await client.auth.getUser();
+  if (actor.error || actor.data.user?.id !== userId) throw new Error('Stil profili oturumu değişti.');
+  const [row, mode] = await Promise.all([
+    client.from('user_style_profiles').select('user_id, color_w, subcategory_w, brand_w, fit_w, price_band_w, style_tag_weights, negative_preferences, event_count, computed_at').eq('user_id', userId).maybeSingle(),
+    client.from('recs_config').select('value').eq('key', 'style_profile_v2').maybeSingle(),
+  ]);
+  const after = await client.auth.getSession();
+  if (after.error || after.data.session?.user.id !== userId || row.error || mode.error) throw new Error('Stil profili doğrulanamadı.');
+  const algorithm = isRecord(mode.data?.value) && mode.data.value.algorithm === 'style-preference-v2' ? 'v2' : 'v1';
+  if (algorithm==='v2' && styleProfileFreshness(mode.data?.value,row.data?.computed_at)!=='v2_fresh') {
+    throw new Error('Stil profili geçiş sürümü henüz doğrulanamadı.');
+  }
+  if (row.data === null) return { snapshot: emptyStyleProfile(userId), eventCount: 0, computedAt: null, algorithm };
+  if (!isProfileRow(row.data) || row.data.user_id !== userId || !Number.isInteger(row.data.event_count)
+    || row.data.event_count < 0 || (row.data.computed_at !== null && !Number.isFinite(Date.parse(row.data.computed_at)))) {
+    throw new Error('Stil profili sözleşmesi doğrulanamadı.');
+  }
+  return { snapshot: mapStyleProfileRow(row.data), eventCount: row.data.event_count, computedAt: row.data.computed_at, algorithm };
+}
+
 export const clearRecsCaches = async (): Promise<void> => {
   cacheGeneration++;
   configRequest = null;
   profileRequests.clear();
+  calculatedRequests.clear();
   memoryConfig = null;
   const userIds = [...memoryProfiles.keys()];
   memoryProfiles.clear();

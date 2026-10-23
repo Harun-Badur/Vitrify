@@ -1,7 +1,12 @@
+import { measureDiscoverStage, measureDiscoverStageSync } from '../lib/discoverStageTiming';
+import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '../lib/accountDeviceWork';
+import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
+import { logger } from '../lib/logger';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
 import { RECOMMENDATION_ENGINE_VERSION } from '../src/recommendationCache/fingerprint';
+import { recommendationCacheCutoff } from '../src/recommendationCache/retention';
 import { anchorContext, type FeedPacketRequest, type RecommendationFeedPacket } from '../src/recommendationCache/feedPacket';
 import { complementaryProductsForDisplay } from '../src/intelligence/recommendations/complementaryProductsForDisplay';
 import { getDiscoverRecommendationsAsync, prepareDiscoverRankingAsync, completeDiscoverRecommendationsAsync,
@@ -20,29 +25,42 @@ const preparationCaches = new WeakMap<DiscoverRecommendationCache, {
   memory: RecommendationMemoryCache;
   rankings: RankingPreparationCache<Product, PreparedDiscoverRanking>;
   stop?: () => void;
+  handoff?: () => RecommendationMemoryCache;
 }>();
 
 /** Optional cache reads cannot hold Discover behind an unavailable backend/worker. */
-async function readCachedFinals(request: FeedPacketRequest, ownerId: string | null,
-  signal: AbortSignal): Promise<CachedFinal[]> {
+export async function readCachedFinals(request: FeedPacketRequest, ownerId: string | null,
+  signal: AbortSignal, onCacheError?: () => void): Promise<CachedFinal[]> {
   const client = getSupabaseClient();
   if (!client || signal.aborted) return [];
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   let onAbort = () => {};
+  let reported = false;
+  const report = () => {
+    if (signal.aborted || reported) return;
+    reported = true;
+    logger.warn('Öneri önbelleği okunamadı', { code: 'RECOMMENDATION_CACHE_FAILED' });
+    onCacheError?.();
+  };
   const stopped = new Promise<CachedFinal[]>(resolve => {
     onAbort = () => { controller.abort(); resolve([]); };
-    timer = setTimeout(onAbort, CACHE_READ_TIMEOUT_MS);
+    timer = setTimeout(() => { report(); onAbort(); }, CACHE_READ_TIMEOUT_MS);
     signal.addEventListener('abort', onAbort, { once: true });
   });
   try {
     const query = client.from('discover_recommendation_cache')
       .select('payload,catalog_version,anchor_product_id').eq('kind', 'final').eq('engine_version', RECOMMENDATION_ENGINE_VERSION)
+      .gt('updated_at', recommendationCacheCutoff())
       .in('scope', ownerId ? ['public', ownerId] : ['public'])
       .in('anchor_product_id', request.anchors.map(anchor => anchor.id)).abortSignal(controller.signal).limit(1000);
-    return await Promise.race([stopped, Promise.resolve(query)
-      .then(({ data, error }) => error ? [] : data ?? []).catch(() => [])]);
+    const pending = Promise.resolve(query).then(({ data, error }) => {
+      if (error) { report(); return []; }
+      return data ?? [];
+    }).catch(() => { report(); return []; });
+    return await Promise.race([stopped, ownerId ? trackOwnerWork(ownerId, pending) : pending]);
   } catch {
+    report();
     return [];
   } finally {
     clearTimeout(timer);
@@ -67,20 +85,20 @@ async function resolveProducts(result: readonly OutfitDiscoverRecommendation[], 
 }
 
 /** Feed/context preparation only. Cache hits are reused; misses use the unchanged local engine. */
-export async function loadDiscoverRecommendationPacket(request: FeedPacketRequest, ownerId: string | null,
+async function loadDiscoverRecommendationPacketOwned(request: FeedPacketRequest, ownerId: string | null,
   signal: AbortSignal, onPacket: (packet: RecommendationFeedPacket) => void,
-  session?: DiscoverRecommendationCache): Promise<void> {
+  session?: DiscoverRecommendationCache, onCacheError?: () => void): Promise<void> {
   if (signal.aborted || request.anchors.length === 0) {
     if (__DEV__ && session) discoverPrefetchTrace(session).diagnostic('workerStartBlocked', {
       workerStartBlocked: true, blockedReason: signal.aborted ? 'ABORTED' : 'NO_ANCHORS' });
     return;
   }
-  if (session) return prepareWindow(request, ownerId, signal, onPacket, session);
+  if (session) return prepareWindow(request, ownerId, signal, onPacket, session, onCacheError);
   const repository = getProductRepository();
   // These records already came from the products repository, never recommendation payloads.
   const catalog = repository.register(request.candidatePool);
   const anchors = repository.register(request.anchors);
-  const records = await readCachedFinals(request, ownerId, signal);
+  const records = await readCachedFinals(request, ownerId, signal, onCacheError);
   const exposure = new Map(request.exposure), shown = new Set(request.shownAnchorIds);
   const reusable = new Set(request.reusableAnchorIds ?? request.shownAnchorIds);
   for (const anchor of anchors) {
@@ -116,13 +134,13 @@ export async function loadDiscoverRecommendationPacket(request: FeedPacketReques
 
 /** One cooperative CPU queue. Product resolution/publication never holds up the next ranking. */
 async function prepareWindow(request: FeedPacketRequest, ownerId: string | null, signal: AbortSignal,
-  onPacket: (packet: RecommendationFeedPacket) => void, session: DiscoverRecommendationCache): Promise<void> {
-  let caches = preparationCaches.get(session);
-  if (!caches) {
-    caches = { memory: new RecommendationMemoryCache(), rankings: new RankingPreparationCache() };
-    preparationCaches.set(session, caches);
-  }
-  caches.stop?.();
+  onPacket: (packet: RecommendationFeedPacket) => void, session: DiscoverRecommendationCache, onCacheError?: () => void): Promise<void> {
+  // The context belongs to the session, while cancellation belongs to the worker.
+  // Replacement keeps completed fingerprinted results, never pending work/publications.
+  const memoryForReplacement = preparationCaches.get(session)?.handoff?.();
+  const caches = { memory: memoryForReplacement ?? new RecommendationMemoryCache(), rankings: new RankingPreparationCache<Product, PreparedDiscoverRanking>(),
+    stop: undefined as (() => void) | undefined, handoff: undefined as (() => RecommendationMemoryCache) | undefined };
+  preparationCaches.set(session, caches);
   const { memory, rankings } = caches;
   const controller = new AbortController();
   const repository = getProductRepository();
@@ -132,8 +150,11 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
   let records: CachedFinal[] = [];
   const publications = new Map<string, number>();
   const resolutions = new Map<string, Promise<readonly OutfitDiscoverRecommendation[]>>();
-  const current = (version: number) => !controller.signal.aborted && revision === version;
-  const stop = () => { controller.abort(); rankings.cancelPending(); changed.forEach(wake => wake()); unsubscribe(); signal.removeEventListener('abort', stop);
+  const current = (version: number) => !controller.signal.aborted && !session.disposed && revision === version;
+  let handingOff = false;
+  const stop = () => {
+    if (controller.signal.aborted) return;
+    controller.abort(); rankings.dispose(); if (!handingOff) memory.dispose(); records = []; publications.clear(); resolutions.clear(); preparationCaches.delete(session); changed.forEach(wake => wake()); unsubscribe(); signal.removeEventListener('abort', stop);
     if (__DEV__) discoverPrefetchTrace(session).diagnostic('workerStopped', {
       reason: discoverPrefetchTrace(session).closeReason, signalAborted: controller.signal.aborted });
     if (__DEV__) discoverPrefetchTrace(session).close(session.sessionId, discoverPrefetchTrace(session).closeReason);
@@ -152,15 +173,19 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
     rankings.retainPending([]);
     changed.forEach(wake => wake());
     // Gesture-time notification only queues work; it never runs the engine synchronously.
-    if (ready && !running) void Promise.resolve().then(pump);
+    if (ready && !running) void track(Promise.resolve().then(pump));
   };
   const unsubscribe = session.subscribePreparation(schedule);
   if (__DEV__) discoverPrefetchTrace(session).diagnostic('listenerAttached', { listenerAttached: true });
   caches.stop = stop;
+  caches.handoff = () => { handingOff = true; stop(); return memory; };
   signal.addEventListener('abort', stop, { once: true });
   if (__DEV__) discoverPrefetchTrace(session).diagnostic('workerInstalled', {
     reason: 'subscription_and_abort_handler_attached', signalAborted: controller.signal.aborted });
 
+  const track = <T>(work: Promise<T>): Promise<T> => ownerId ? trackOwnerWork(ownerId, work) : work;
+  const removeDisposal = session.onDispose(stop);
+  controller.signal.addEventListener('abort', removeDisposal, { once: true });
   async function pump(): Promise<void> {
     if (running || controller.signal.aborted) return;
     running = true;
@@ -177,7 +202,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
           if (session.shown.has(product.id) && session.lookup(product) !== undefined) continue;
           const anchor = repository.register([product])[0];
           let context = anchorContext(catalog, anchor, request.wardrobeItems, exposure);
-          let finalKey = createFinalCacheKey(context);
+          let finalKey = measureDiscoverStageSync('cache.key', () => createFinalCacheKey(context));
           const finalHit = memory.getFinal(finalKey);
           if (__DEV__ && finalHit.status === 'hit') discoverPrefetchTrace(session).stage(product, 'finalReadyAt', 'final_memory_hit');
           let result = finalHit.status === 'hit' ? finalHit.value : undefined;
@@ -193,7 +218,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               break;
             }
             if (result === undefined) {
-              const rankingKey = createRankingCacheKey(context);
+              const rankingKey = measureDiscoverStageSync('cache.key', () => createRankingCacheKey(context));
               const rankingHit = memory.getRanking(rankingKey);
               if (__DEV__ && rankingHit.status === 'hit') discoverPrefetchTrace(session).stage(product, 'rankingReadyAt', 'ranking_memory_hit');
               rankings.retainPending([product]);
@@ -205,26 +230,26 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).stage(product, 'preparationStartedAt', 'ranking_miss');
                 let value: PreparedDiscoverRanking;
                 try {
-                  value = await prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
-                    waitForTurn: () => rankings.waitForTurn(product, rankingSignal) });
+                  value = await measureDiscoverStage('ranking.prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
+                    waitForTurn: () => rankings.waitForTurn(product, rankingSignal) }));
                 } catch (error) {
                   if (__DEV__ && !rankingSignal.aborted) trace?.cancel(product, attempt!, 'preparation_failed');
                   throw error;
                 } finally {
                   if (__DEV__) rankingSignal.removeEventListener('abort', aborted);
                 }
-                memory.setRanking(rankingKey, value);
+                if (!controller.signal.aborted && !rankingSignal.aborted && !session.disposed) memory.setRanking(rankingKey, value);
                 if (__DEV__) discoverPrefetchTrace(session).stage(product, 'rankingReadyAt');
                 if (__DEV__) trace?.finish(product, attempt!, 'ranking_preparation_completed');
                 return value;
               });
               let wake = () => {};
               const interrupted = new Promise<undefined>(resolve => { wake = () => resolve(undefined); changed.add(wake); });
-              const prepared = await Promise.race([preparation, interrupted]);
+              const prepared = await Promise.race([track(preparation), interrupted]);
               changed.delete(wake);
               if (prepared === undefined) break;
               if (!current(version)) break;
-              result = await completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal });
+              result = await measureDiscoverStage('ranking.select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal }));
               if (__DEV__) discoverPrefetchTrace(session).stage(product, 'finalReadyAt');
             }
             if (!current(version)) break;
@@ -232,13 +257,13 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
             memory.setFinal(finalKey, result);
             if (__DEV__) discoverPrefetchTrace(session).stage(product, 'memoryWrittenAt');
           }
-          finalKey = createFinalCacheKey(context);
+          finalKey = measureDiscoverStageSync('cache.key', () => createFinalCacheKey(context));
           const publicationKey = finalKey.fingerprint;
           if (publications.get(publicationKey) !== version) {
             publications.set(publicationKey, version);
             let resolved = resolutions.get(publicationKey);
             if (!resolved) {
-              resolved = resolveProducts(result, repository);
+              resolved = track(measureDiscoverStage('recommendation.resolve', () => resolveProducts(result!, repository)));
               resolutions.set(publicationKey, resolved);
               void resolved.then(() => { resolutions.delete(publicationKey); }, () => { resolutions.delete(publicationKey); });
             }
@@ -250,7 +275,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               }
               onPacket({ sessionId: request.sessionId, generation: request.generation,
                 contextFingerprint: request.contextFingerprint, entries: [{ anchorProductId: anchor.id,
-                  exposure: packetExposure, catalogVersion: context.catalogVersion, serialized: serializeFinal(value, context) }] });
+                  exposure: packetExposure, catalogVersion: context.catalogVersion, serialized: measureDiscoverStageSync('cache.serialize', () => serializeFinal(value, context)) }] });
             }).catch(error => {
               if (!controller.signal.aborted) { publications.delete(publicationKey); rejectCompletion(error); stop(); }
             });
@@ -275,9 +300,29 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
   });
   if (signal.aborted) stop();
   else {
-    records = await readCachedFinals(request, ownerId, controller.signal);
+    records = await measureDiscoverStage('cache.backend', () => readCachedFinals(request, ownerId, controller.signal, onCacheError));
     ready = true;
     if (!controller.signal.aborted) schedule();
   }
   return completion;
+}
+
+export async function loadDiscoverRecommendationPacket(request: FeedPacketRequest, ownerId: string | null,
+  signal: AbortSignal, onPacket: (packet: RecommendationFeedPacket) => void, session?: DiscoverRecommendationCache,
+  onCacheError?: () => void): Promise<void> {
+  const current = captureOwnerPublication(ownerId), controller = new AbortController();
+  const abort = () => controller.abort(); signal.addEventListener('abort', abort, { once: true });
+  if (signal.aborted) abort();
+  let settled = false;
+  const unregister = ownerId ? registerOwnerResource(ownerId, { stop: abort, empty: () => settled }) : () => {};
+  const work = (async () => {
+    try {
+      if (ownerId && await isAccountWriteFenced(ownerId)) return;
+      if (!current() || controller.signal.aborted || session?.disposed || (!ownerId && request.wardrobeItems.length > 0)) return;
+      await loadDiscoverRecommendationPacketOwned(request, ownerId, controller.signal, packet => {
+        if (current() && !controller.signal.aborted && !session?.disposed) onPacket(packet);
+      }, session, () => { if (current() && !controller.signal.aborted) onCacheError?.(); });
+    } finally { settled = true; signal.removeEventListener('abort', abort); unregister(); }
+  })();
+  return ownerId ? trackOwnerWork(ownerId, work) : work;
 }

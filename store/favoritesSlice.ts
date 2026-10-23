@@ -1,27 +1,28 @@
+import { captureOwnerPublication, trackOwnerWork } from '../lib/accountDeviceWork';
 import type { StateCreator } from 'zustand';
 import { track } from '../lib/analytics';
+import { createAnalyticsAction } from '../lib/analyticsAction';
+import {isPreferenceOutcomeUnknown} from '../services/preferenceTransactionAdapter';
 import { logger } from '../lib/logger';
 import { recordSessionProductAction } from '../lib/sessionIntent';
 import {
   deleteLikedProduct,
   fetchLikedProducts,
   insertLikedProduct,
-  updateLikedProductAlert,
+  type LikedProductsResult,
 } from '../services/likeService';
 import type { LikedProduct, Product } from '../types/product';
 import type { AppState } from './useAppStore';
 import { removeProduct, restoreProduct } from './productState';
 
-export interface LikeAlertPatch {
-  notifyOnPriceDrop: boolean;
-}
-
 export interface FavoritesSlice {
+  favoritesStatus: 'idle' | 'loading' | 'success' | 'error';
+  favoritesError: string | null;
+  favoritesOwner: string | null;
   likedProducts: LikedProduct[];
   addLikedProductLocally: (product: Product) => void;
   swipeRight: (product: Product) => void;
   unlikeProduct: (productId: string) => Promise<void>;
-  updateLikeAlert: (productId: string, patch: LikeAlertPatch) => Promise<void>;
   refreshLikedProducts: () => Promise<void>;
 }
 
@@ -49,23 +50,31 @@ const prependLikedUnique = (
   ];
 };
 
-const insertLikedAt = (
-  products: LikedProduct[],
-  index: number,
-  item: LikedProduct,
-): LikedProduct[] => {
-  if (products.some((existing) => existing.product.id === item.product.id)) {
-    return products;
-  }
-  const next = [...products];
-  next.splice(Math.min(Math.max(index, 0), next.length), 0, item);
-  return next;
-};
-
 export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice> =
-  (set, get) => ({
+  (set, get) => {
+    let refreshGeneration = 0;
+    const versions = new Map<string, number>();
+    const pending = new Set<{ owner: string; promise: Promise<unknown> }>();
+    const nextVersion = (owner: string | null, id: string) => {
+      refreshGeneration++;
+      const key = JSON.stringify([owner,id]); const version = (versions.get(key) ?? 0) + 1;
+      versions.set(key,version); return () => versions.get(key) === version;
+    };
+    const hold = <T,>(owner: string, promise: Promise<T>): Promise<T> => {
+      const entry = { owner, promise }; pending.add(entry);
+      void promise.then(() => pending.delete(entry), () => pending.delete(entry));return promise;
+    };
+    const status = (owner: string | null, value: 'loading' | 'success' | 'error', error: string | null = null) => {
+      // An unrelated successful write must not hide another concurrent operation's error.
+      if (value === 'success' && get().favoritesOwner === owner && get().favoritesStatus === 'error') return;
+      set({favoritesOwner:owner,favoritesStatus:value,favoritesError:error});
+    };
+    return ({
+    favoritesStatus: 'idle', favoritesError: null, favoritesOwner: null,
     likedProducts: [],
     addLikedProductLocally: (product): void => {
+      if (!captureOwnerPublication(get().sessionUserId)()) return;
+      nextVersion(get().sessionUserId,product.id);
       set((state) => {
         if (state.likedProducts.some((item) => item.product.id === product.id)) {
           return state;
@@ -77,6 +86,14 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
     },
     swipeRight: (product): void => {
       const userId = get().sessionUserId;
+      const current = captureOwnerPublication(userId);
+      if (!current()) return;
+      const latest = nextVersion(userId,product.id);
+      const previous = get().likedProducts.find(item => item.product.id === product.id);
+      const priorPass = get().passedProductIds.includes(product.id);
+      const priorStack = get().passedStack.find(item => item.id === product.id);
+      const valid = () => current() && get().sessionUserId === userId && latest();
+      status(userId,'loading');
 
       set((state) => ({
         currentProducts: removeProduct(state.currentProducts, product.id),
@@ -88,106 +105,83 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
       }));
 
       if (!userId) {
-        logger.warn('Beğeni için oturum yok; kayıt yazılmadı.', {
-          productId: product.id,
-        });
+        status(userId,'success');
         return;
       }
 
-      track('like', product.id, { source: 'feed' });
-      track('dolap_add', product.id, { source: 'feed' });
+      const action = createAnalyticsAction(userId, 'favorite');
+      const committed = () => {
+        track('like', product.id, { source: 'feed' }, action);
+        track('dolap_add', product.id, { source: 'feed' }, action);
+      };
       recordSessionProductAction('like', product);
       recordSessionProductAction('dolap_add', product);
 
-      void insertLikedProduct(userId, product).catch((error: unknown) => {
-        logger.error('Beğeni yazılamadı, geri alınıyor', {
-          error,
-          productId: product.id,
-        });
+      void hold(userId,trackOwnerWork(userId, insertLikedProduct(userId, product))).then((receipt) => {
+        if(!receipt?.serverEvents) committed();
+        if (valid()) status(userId,'success');
+      }).catch((error: unknown) => {
+        const likeCommitted = typeof error === 'object' && error !== null && 'likeCommitted' in error && error.likeCommitted === true;
+        if (likeCommitted) committed();
+        if (!valid()) return;
+        logger.error('Beğeni işlemi tamamlanamadı', {code:'FAVORITE_WRITE_FAILED'});
         set((state) => ({
-          currentProducts: restoreProduct(state.currentProducts, product),
-          likedProducts: removeLiked(state.likedProducts, product.id),
+          currentProducts: !likeCommitted && !previous && !priorPass ? restoreProduct(state.currentProducts, product) : state.currentProducts,
+          likedProducts: likeCommitted || previous ? state.likedProducts : removeLiked(state.likedProducts, product.id),
+          passedProductIds: priorPass && !state.passedProductIds.includes(product.id) ? [...state.passedProductIds,product.id] : state.passedProductIds,
+          passedStack: priorStack && !state.passedStack.some(item => item.id === product.id) ? [...state.passedStack,priorStack] : state.passedStack,
         }));
+        status(userId,'error',isPreferenceOutcomeUnknown(error) ? 'İşlem sonucu henüz doğrulanamadı. Aynı işlem yeniden doğrulanacak.' : likeCommitted ? 'Beğeni kaydedildi; geçme temizliği tamamlanamadı. Tekrar dene.' : 'Beğeni kaydedilemedi. Mevcut veriler korundu; tekrar dene.');
       });
     },
     unlikeProduct: async (productId): Promise<void> => {
       const { likedProducts, sessionUserId: userId } = get();
-      const removedIndex = likedProducts.findIndex(
-        (item) => item.product.id === productId,
-      );
-      const removed = likedProducts[removedIndex];
+      const current = captureOwnerPublication(userId);
+      if (!current()) return;
+      const removed = likedProducts.find(item => item.product.id === productId);
 
-      set((state) => ({
-        likedProducts: removeLiked(state.likedProducts, productId),
-      }));
-
-      if (!userId || !removed) {
-        return;
-      }
-
-      try {
-        await deleteLikedProduct(userId, productId);
-      } catch (error) {
-        logger.error('Beğeni silinemedi, geri alınıyor', { error, productId });
-        set((state) => ({
-          likedProducts: insertLikedAt(
-            state.likedProducts,
-            removedIndex,
-            removed,
-          ),
-        }));
-        throw error;
-      }
-    },
-    updateLikeAlert: async (
-      productId: string,
-      patch: LikeAlertPatch,
-    ): Promise<void> => {
-      const { likedProducts, sessionUserId: userId } = get();
-      const target = likedProducts.find((item) => item.product.id === productId);
-
-      if (!target) {
-        return;
-      }
-
-      const previousValue = target.notifyOnPriceDrop;
-      const applyNotify = (value: boolean) => (state: AppState) => ({
-        likedProducts: state.likedProducts.map((item) =>
-          item.product.id === productId
-            ? { ...item, notifyOnPriceDrop: value }
-            : item,
-        ),
-      });
-
-      set(applyNotify(patch.notifyOnPriceDrop));
-
+      if (!removed) return;
+      const latest = nextVersion(userId,productId);
+      const valid = () => current() && get().sessionUserId === userId && latest();
       if (!userId) {
+        set(state=>({likedProducts:removeLiked(state.likedProducts,productId)}));
         return;
       }
-
+      status(userId,'loading');
       try {
-        await updateLikedProductAlert({
-          userId,
-          productId,
-          notifyOnPriceDrop: patch.notifyOnPriceDrop,
-        });
+        await hold(userId,trackOwnerWork(userId, deleteLikedProduct(userId, productId)));
+        if (!valid()) return;
+        set(state=>({likedProducts:removeLiked(state.likedProducts,productId)}));
+        status(userId,'success');
       } catch (error) {
-        logger.error('Fiyat alarmı geri alındı', { error, productId });
-        set(applyNotify(previousValue));
-        throw error;
+        if (!valid()) return;
+        const message=isPreferenceOutcomeUnknown(error) ? 'İşlem sonucu henüz doğrulanamadı. Aynı işlem yeniden doğrulanacak.' : 'Favori kaldırılamadı. Kayıt korundu; tekrar dene.';
+        status(userId,'error',message);
+        throw new Error(message);
       }
     },
     refreshLikedProducts: async (): Promise<void> => {
       const userId = get().sessionUserId;
+      const current = captureOwnerPublication(userId);
+      if (!current()) return;
       if (!userId) {
         return;
       }
+      const request = ++refreshGeneration;
+      const valid = () => current() && get().sessionUserId === userId && request === refreshGeneration;
+      status(userId,'loading');
       try {
-        const likedProducts = await fetchLikedProducts(userId);
+        await Promise.allSettled([...pending].filter(entry=>entry.owner===userId).map(entry=>entry.promise));
+        if (!valid()) return;
+        const likedProducts: LikedProductsResult = await trackOwnerWork(userId, fetchLikedProducts(userId));
+        if (!valid()) return;
         set({ likedProducts, sessionSyncStatus: 'success' });
+        status(userId,'success',likedProducts.warning ? 'Bazı ürünlerin katalog bilgisi yok; kayıtlı bilgiler korunuyor.' : null);
       } catch (error) {
-        logger.error('Beğeniler yenilenemedi', { error });
-        throw error;
+        if (!valid()) return;
+        status(userId,'error','Favoriler yenilenemedi. Mevcut kayıtlar korundu; tekrar dene.');
+        throw new Error('Favoriler yenilenemedi.');
       }
     },
   });
+  };

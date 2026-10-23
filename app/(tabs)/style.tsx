@@ -2,10 +2,13 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
 } from 'react';
+import type { LikedProductsResult } from '../../services/likeService';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
@@ -88,6 +91,7 @@ function FavoriteCard({
   const { product } = item;
   const [imageFailed, setImageFailed] = useState(false);
   const translateX = useSharedValue(0);
+  const mounted = useRef(true);
   const livePrice = getDisplayPrice(product);
   const previousPrice = product.previousPrice;
   const hasDrop = hasCatalogPriceDrop(product);
@@ -96,10 +100,17 @@ function FavoriteCard({
       ? getDropPercent(previousPrice, livePrice)
       : 0;
 
-  useEffect(() => () => cancelAnimation(translateX), [translateX]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      cancelAnimation(translateX);
+    };
+  }, [translateX]);
 
   const swipeDelete = (): void => {
     void onRemove(product.id).then((removed) => {
+      if (!mounted.current) return;
       if (!removed) {
         translateX.value = withSpring(0, { damping: 18, stiffness: 180 });
       }
@@ -268,6 +279,31 @@ function FavoriteCard({
 export default function FavoritesScreen(): ReactElement {
   const insets = useSafeAreaInsets();
   const likedProducts = useAppStore((state) => state.likedProducts);
+  const sessionOwner = useAppStore((state) => state.sessionUserId);
+  const favoritesStatus = useAppStore((state) =>
+    state.favoritesOwner === state.sessionUserId
+      ? state.favoritesStatus
+      : 'idle',
+  );
+  const favoritesError = useAppStore((state) =>
+    state.favoritesOwner === state.sessionUserId &&
+    state.favoritesStatus === 'error'
+      ? state.favoritesError
+      : null,
+  );
+  const ownerRef = useRef(sessionOwner);
+  ownerRef.current = sessionOwner;
+  const metadataWarning = useAppStore((state) =>
+    (state.likedProducts as LikedProductsResult).warning
+      ? 'Bazı ürünlerin katalog bilgisi yok; kayıtlı bilgiler korunuyor.'
+      : state.favoritesOwner === state.sessionUserId &&
+          state.favoritesStatus === 'success'
+        ? state.favoritesError
+        : null,
+  );
+  useEffect(() => {
+    if (metadataWarning) Alert.alert('Favori ürün bilgisi', metadataWarning);
+  }, [metadataWarning]);
   const unlikeProduct = useAppStore((state) => state.unlikeProduct);
   const refreshLikedProducts = useAppStore(
     (state) => state.refreshLikedProducts,
@@ -318,27 +354,34 @@ export default function FavoritesScreen(): ReactElement {
     async (productId: string): Promise<boolean> => {
       try {
         await unlikeProduct(productId);
+        if (ownerRef.current !== sessionOwner) return false;
         return true;
       } catch {
+        if (ownerRef.current !== sessionOwner) return false;
         Alert.alert(
           'Favori kaldırılamadı',
-          'Ürün geri eklendi. Lütfen tekrar dene.',
+          'Kayıt korundu. Lütfen tekrar dene.',
         );
         return false;
       }
     },
-    [unlikeProduct],
+    [unlikeProduct, sessionOwner],
   );
   const refresh = useCallback(async (): Promise<void> => {
     setRefreshing(true);
     try {
       await refreshLikedProducts();
     } catch {
-      Alert.alert('Favoriler yüklenemedi', 'Lütfen tekrar dene.');
+      if (ownerRef.current === sessionOwner)
+        Alert.alert('Favoriler yüklenemedi', 'Lütfen tekrar dene.');
     } finally {
-      setRefreshing(false);
+      if (ownerRef.current === sessionOwner) setRefreshing(false);
     }
-  }, [refreshLikedProducts]);
+  }, [refreshLikedProducts, sessionOwner]);
+  useEffect(() => {
+    setRefreshing(false);
+    if (sessionOwner) void refresh();
+  }, [sessionOwner, refresh]);
   const renderItem = useCallback(
     ({ item }: { item: LikedProduct }): ReactElement => (
       <FavoriteCard item={item} onRemove={remove} onTryOn={setTryOnProduct} />
@@ -357,7 +400,11 @@ export default function FavoritesScreen(): ReactElement {
     <View
       style={[
         styles.root,
-        { paddingTop: Math.max(56, insets.top + spacing.lg) },
+        {
+          paddingTop: insets.top + spacing.md,
+          paddingLeft: Math.max(insets.left, spacing.lg),
+          paddingRight: Math.max(insets.right, spacing.lg),
+        },
       ]}
     >
       <View style={styles.header}>
@@ -369,6 +416,7 @@ export default function FavoritesScreen(): ReactElement {
           onPress={() => setSearchOpen((value) => !value)}
           accessibilityRole="button"
           accessibilityLabel="Favorilerde ara"
+          accessibilityState={{ expanded: searchOpen }}
         >
           <Search size={21} color={colors.text} />
         </PressableScale>
@@ -395,11 +443,13 @@ export default function FavoritesScreen(): ReactElement {
             style={styles.searchInput}
           />
           <PressableScale
+            style={styles.closeButton}
             onPress={() => {
               setQuery('');
               setSearchOpen(false);
             }}
             accessibilityLabel="Aramayı kapat"
+            accessibilityRole="button"
           >
             <X size={20} color={colors.text} />
           </PressableScale>
@@ -453,31 +503,69 @@ export default function FavoritesScreen(): ReactElement {
       <FlatList
         data={products}
         renderItem={renderItem}
-        keyExtractor={(item): string => item.product.id}
-        contentContainerStyle={styles.list}
+        keyExtractor={(item): string =>
+          `${sessionOwner ?? 'guest'}:${item.product.id}`
+        }
+        contentContainerStyle={[
+          styles.list,
+          products.length === 0 && styles.emptyList,
+        ]}
         refreshing={refreshing}
         onRefresh={() => {
           void refresh();
         }}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        ListHeaderComponent={
+          favoritesError ? (
+            <View style={styles.notice} accessibilityLiveRegion="polite">
+              <Text style={styles.muted}>
+                Favoriler yenilenemedi. Kayıtlı ürünlerin korunuyor.
+              </Text>
+              <PressableScale
+                style={styles.retryButton}
+                onPress={() => {
+                  void refresh();
+                }}
+                disabled={refreshing}
+                accessibilityRole="button"
+                accessibilityLabel="Favorileri yeniden yükle"
+                accessibilityState={{ disabled: refreshing, busy: refreshing }}
+              >
+                <Text style={styles.retryText}>Tekrar dene</Text>
+              </PressableScale>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Heart size={36} color={colors.textSecondary} />
-            <Text style={styles.emptyTitle}>
-              {tab === 'outfits'
-                ? 'Henüz favori kombin yok.'
-                : likedProducts.length === 0
-                  ? 'Henüz favori ürün yok.'
-                  : 'Eşleşen favori bulunamadı.'}
-            </Text>
-            <Text style={styles.muted}>
-              {tab === 'outfits'
-                ? 'Kaydedilmiş bir kombin bulunmuyor.'
-                : likedProducts.length === 0
-                  ? 'Beğendiğin ürünler burada görünecek.'
-                  : 'Arama veya filtreleri değiştirebilirsin.'}
-            </Text>
-          </View>
+          tab !== 'outfits' && (favoritesStatus === 'loading' || refreshing) ? (
+            <View
+              style={styles.empty}
+              accessibilityLabel="Favoriler yükleniyor"
+              accessibilityLiveRegion="polite"
+            >
+              <ActivityIndicator color={colors.accent} />
+              <Text style={styles.muted}>Favoriler yükleniyor…</Text>
+            </View>
+          ) : favoritesError && tab !== 'outfits' ? null : (
+            <View style={styles.empty}>
+              <Heart size={36} color={colors.textSecondary} />
+              <Text style={styles.emptyTitle}>
+                {tab === 'outfits'
+                  ? 'Henüz favori kombin yok.'
+                  : likedProducts.length === 0
+                    ? 'Henüz favori ürün yok.'
+                    : 'Eşleşen favori bulunamadı.'}
+              </Text>
+              <Text style={styles.muted}>
+                {tab === 'outfits'
+                  ? 'Kaydedilmiş bir kombin bulunmuyor.'
+                  : likedProducts.length === 0
+                    ? 'Beğendiğin ürünler burada görünecek.'
+                    : 'Arama veya filtreleri değiştirebilirsin.'}
+              </Text>
+            </View>
+          )
         }
       />
       <VirtualTryOnModal
@@ -501,6 +589,8 @@ export default function FavoritesScreen(): ReactElement {
             <View style={styles.header}>
               <Text style={styles.emptyTitle}>Favorileri filtrele</Text>
               <PressableScale
+                style={styles.closeButton}
+                accessibilityRole="button"
                 onPress={() => setFilterOpen(false)}
                 accessibilityLabel="Filtreyi kapat"
               >
@@ -587,8 +677,8 @@ const styles = StyleSheet.create({
   heading: { flex: 1, paddingLeft: spacing.sm },
   title: { fontSize: 28, fontWeight: '800', color: colors.text },
   iconButton: {
-    width: 38,
-    height: 38,
+    width: 48,
+    height: 48,
     borderRadius: radius.button,
     backgroundColor: colors.surface,
     alignItems: 'center',
@@ -610,6 +700,7 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 13, fontWeight: '700', color: colors.text },
   activeTabText: { color: colors.inverseText, fontSize: 13, fontWeight: '800' },
   sort: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -626,7 +717,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
-  searchInput: { flex: 1, height: 42, color: colors.text },
+  searchInput: { flex: 1, minWidth: 0, minHeight: 48, color: colors.text },
+  closeButton: {
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyList: { flexGrow: 1 },
+  notice: {
+    padding: spacing.md,
+    gap: spacing.sm,
+    borderRadius: radius.button,
+    backgroundColor: colors.surface,
+  },
+  retryButton: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  retryText: { color: colors.accentDark, fontWeight: '700' },
   list: { paddingBottom: spacing.xl, gap: spacing.md },
   swipeWrap: {
     borderRadius: radius.card,
@@ -731,9 +841,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: radius.button,
     paddingVertical: spacing.md,
+    minHeight: 48,
+    paddingHorizontal: spacing.sm,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   tryButtonText: {
+    textAlign: 'center',
     color: colors.inverseText,
     fontSize: 13,
     fontWeight: '800',
@@ -745,9 +859,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.button,
     paddingVertical: spacing.md,
+    minHeight: 48,
+    paddingHorizontal: spacing.sm,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   shopButtonText: {
+    textAlign: 'center',
     color: colors.text,
     fontSize: 13,
     fontWeight: '700',
@@ -782,7 +900,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   empty: { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
   muted: { fontSize: 12, color: colors.textSecondary, textAlign: 'center' },
   backdrop: {
     flex: 1,

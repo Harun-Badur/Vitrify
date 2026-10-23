@@ -1,23 +1,41 @@
 import type { GarmentCategory, Product } from './product';
-
+export interface WardrobeCutoutResult {
+  jobId: string; requestId: string; pngSha256: string; originalVersion: string;
+}
+export interface WardrobeItemConfirmation {
+  owner: string; cloudItemId: string; originalPath: string; originalVersion?: string; cutoutProtocol?: 2;
+}
 export interface WardrobeItem {
   id: string;
   title: string;
   imageUrl: string;
+  imageStoragePath?: string | null;
+  imageLocalUri?: string;
+  imageUrlExpiresAt?: number;
   // imageUrl always retains the original photo; cutouts are owned-clothes only.
   cutoutUrl?: string;
   cutoutLocalUri?: string;
   cutoutStoragePath?: string;
   cutoutUrlExpiresAt?: number;
-  cutoutStatus?: 'pending' | 'ready' | 'error';
+  cutoutStatus?: 'pending' | 'ready' | 'error' | 'blocked';
+  cutoutProtocol?: 2;
+  originalVersion?: string;
+  cutoutResult?: WardrobeCutoutResult;
   category: GarmentCategory;
   brand: string;
   createdAt: string;
 }
 
+export const validWardrobeOriginalPath = (owner: string, path: string): boolean => {
+  const parts = path.split('/');
+  const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+  return uuid.test(owner) && parts.length === 3 && parts[0] === owner && uuid.test(parts[1]) &&
+    /^original-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}[.]png$/i.test(parts[2]);
+};
+
 const wardrobeImages = (item: WardrobeItem): string[] => [
   ...new Set(
-    [item.cutoutUrl, item.cutoutLocalUri, item.imageUrl].filter(
+    [item.cutoutUrl, item.cutoutLocalUri, item.imageUrl, item.imageLocalUri].filter(
       (uri): uri is string => typeof uri === 'string' && uri.trim().length > 0,
     ),
   ),

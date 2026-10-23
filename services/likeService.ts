@@ -1,6 +1,12 @@
 import { logger } from '../lib/logger';
-import { parseNumeric, parseOptionalNumeric } from '../lib/price';
 import { getRequiredSupabaseClient } from '../lib/supabase';
+import { isPreferenceV2Enabled } from '../lib/preferenceFeatureFlags';
+import { createAnalyticsAction } from '../lib/analyticsAction';
+import { applyPreferenceTransaction } from './preferenceTransactionAdapter';
+import {listPreferenceRequests} from '../lib/preferenceRequestJournal';
+import type { AnalyticsActionContext } from '../types/analytics';
+import type { PreferenceWriteReceipt } from '../types/preferenceTransaction';
+import { isFeedProductRow, mapFeedRow } from './catalogProductAdapter';
 import type { AuthUser } from '../types/auth';
 import {
   isProductSnapshot,
@@ -20,18 +26,32 @@ interface PassedProductRow {
   product_id: string;
 }
 
-interface CatalogPriceRow {
-  id: string;
-  price: number | string;
-  current_price?: number | string | null;
-  previous_price?: number | string | null;
-  last_price_checked_at?: string | null;
+// Order pass/undo/like for the same owner's product. Different owners never share a queue.
+const productWrites = new Map<string, Promise<unknown>>();
+const ownerWriteVersions = new Map<string, number>();
+const pendingOwnerWrites = (owner: string) => [...productWrites]
+  .filter(([key]) => JSON.parse(key)[0] === owner).map(([,promise]) => promise);
+function orderedProductWrite<T>(userId: string, productId: string,
+  write: (client: ReturnType<typeof getRequiredSupabaseClient>) => Promise<T>): Promise<T> {
+  const key = JSON.stringify([userId, productId]);
+  const client = getRequiredSupabaseClient();
+  ownerWriteVersions.set(userId,(ownerWriteVersions.get(userId) ?? 0) + 1);
+  const request = (productWrites.get(key) ?? Promise.resolve()).catch(() => {}).then(async () => {
+    const auth = await client.auth.getUser();
+    if (auth.error || auth.data.user?.id !== userId) throw new Error('Ürün işlemi için oturum değişti.');
+    return write(client);
+  });
+  productWrites.set(key, request);
+  void request.then(() => { if (productWrites.get(key) === request) productWrites.delete(key); },
+    () => { if (productWrites.get(key) === request) productWrites.delete(key); });
+  return request;
 }
 
-export interface UpdateLikeAlertParams {
-  userId: string;
-  productId: string;
-  notifyOnPriceDrop: boolean;
+export type LikedProductsResult = LikedProduct[] & { warning?: 'METADATA_SNAPSHOT_ONLY' };
+export class LikeWriteError extends Error {
+  constructor(public readonly likeCommitted: boolean) {
+    super('Beğeni kaydedildi ancak geçme kaydı temizlenemedi. Tekrar dene.');
+  }
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -53,6 +73,16 @@ const toSnapshot = (product: Product): Product => ({
   productUrl: product.productUrl,
   affiliateUrl: product.affiliateUrl,
   externalId: product.externalId,
+  images: product.images,
+  colors: product.colors,
+  sizes: product.sizes,
+  createdAt: product.createdAt,
+  gender: product.gender,
+  colorSlugs: product.colorSlugs,
+  fit: product.fit,
+  subcategory: product.subcategory,
+  brandSlug: product.brandSlug,
+  priceBand: product.priceBand,
 });
 
 const isLikedProductRow = (value: unknown): value is LikedProductRow => {
@@ -71,36 +101,6 @@ const isPassedProductRow = (value: unknown): value is PassedProductRow => {
   return typeof value.product_id === 'string';
 };
 
-const isCatalogPriceRow = (value: unknown): value is CatalogPriceRow => {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return (
-    typeof value.id === 'string' &&
-    (typeof value.price === 'number' || typeof value.price === 'string')
-  );
-};
-
-const applyCatalogPrices = (
-  product: Product,
-  catalog: CatalogPriceRow | undefined,
-): Product => {
-  if (!catalog) {
-    return product;
-  }
-  const listPrice = parseNumeric(catalog.price) ?? product.price;
-  return {
-    ...product,
-    price: listPrice,
-    currentPrice: parseOptionalNumeric(catalog.current_price),
-    previousPrice: parseOptionalNumeric(catalog.previous_price),
-    lastPriceCheckedAt:
-      typeof catalog.last_price_checked_at === 'string'
-        ? catalog.last_price_checked_at
-        : product.lastPriceCheckedAt,
-  };
-};
-
 export const ensureUserProfile = async (user: AuthUser): Promise<void> => {
   const client = getRequiredSupabaseClient();
   const { error } = await client.from('users').upsert(
@@ -116,35 +116,50 @@ export const ensureUserProfile = async (user: AuthUser): Promise<void> => {
   }
 };
 
-const fetchCatalogPrices = async (
+const fetchFavoriteCatalog = async (
   productIds: string[],
-): Promise<Map<string, CatalogPriceRow>> => {
+): Promise<Map<string, Product>> => {
   if (productIds.length === 0) {
     return new Map();
   }
 
   const client = getRequiredSupabaseClient();
-  const { data, error } = await client
-    .from('products')
-    .select('id, price, current_price, previous_price, last_price_checked_at')
-    .in('id', productIds);
-
-  if (error) {
-    logger.error('Katalog fiyatları okunamadı', { detail: error.message });
-    return new Map();
+  const columns = 'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at';
+  const query = (selected: string) => client.from('products').select(selected).in('id',productIds);
+  let { data, error } = await query(columns);
+  if (error && /column .*images.* does not exist/i.test(error.message)) {
+    ({ data, error } = await query(columns.replace(', images','')));
   }
 
-  const map = new Map<string, CatalogPriceRow>();
-  (data ?? []).filter(isCatalogPriceRow).forEach((row) => {
-    map.set(row.id, row);
-  });
+  if (error) {
+    throw new Error('Favori katalog bilgileri alınamadı.');
+  }
+
+  const map = new Map<string, Product>();
+  for (const row of data ?? []) {
+    if (!isFeedProductRow(row)) continue;
+    const product = mapFeedRow(row);
+    if (product) map.set(product.id, product);
+  }
   return map;
 };
 
 export const fetchLikedProducts = async (
   userId: string,
-): Promise<LikedProduct[]> => {
+): Promise<LikedProductsResult> => {
+  await Promise.allSettled(pendingOwnerWrites(userId));
+  if (pendingOwnerWrites(userId).length) throw new Error('Favori işlemleri tamamlanmadı. Tekrar dene.');
   const client = getRequiredSupabaseClient();
+  const auth = await client.auth.getUser();
+  if (auth.error || auth.data.user?.id !== userId) throw new Error('Favoriler için oturum değişti.');
+  if(isPreferenceV2Enabled()) {
+    for(const request of await listPreferenceRequests(userId)) {
+      const action:AnalyticsActionContext={actionId:request.p_action,userId,
+        origin:['favorite','unlike'].includes(request.p_operation)?'favorite':'pass',occurredAt:new Date().toISOString()};
+      await orderedProductWrite(userId,request.p_product,writer=>applyPreferenceTransaction(writer,userId,request.p_product,request.p_operation,action,request.p_snapshot));
+    }
+  }
+  const readVersion = ownerWriteVersions.get(userId);
   const { data, error } = await client
     .from('liked_products')
     .select('product_id, product_snapshot, liked_at, notify_on_price_drop')
@@ -152,27 +167,29 @@ export const fetchLikedProducts = async (
     .order('liked_at', { ascending: false });
 
   if (error) {
-    throw new Error(`Beğeniler yüklenemedi: ${error.message}`);
+    throw new Error('Beğeniler yüklenemedi.');
   }
 
   const rows = (data ?? []).filter(isLikedProductRow);
-  const catalog = await fetchCatalogPrices(rows.map((row) => row.product_id));
+  if (rows.length !== (data ?? []).length) throw new Error('Favori kayıt bilgisi eksik.');
+  const catalog = await fetchFavoriteCatalog(rows.map((row) => row.product_id));
 
-  return rows.flatMap((row) => {
-    if (!isProductSnapshot(row.product_snapshot)) {
-      return [];
-    }
-    return [
-      {
-        product: applyCatalogPrices(
-          row.product_snapshot,
-          catalog.get(row.product_id),
-        ),
+  const result: LikedProductsResult = [];
+  for (const row of rows) {
+    const authoritative = catalog.get(row.product_id);
+    const snapshot = isProductSnapshot(row.product_snapshot) && row.product_snapshot.id === row.product_id ? row.product_snapshot : null;
+    if (!authoritative && !snapshot) throw new Error('Favori ürün bilgisi katalogdan veya kayıttan doğrulanamadı.');
+    if (!authoritative) result.warning = 'METADATA_SNAPSHOT_ONLY';
+    result.push({
+        product: authoritative ? { ...snapshot, ...authoritative } : snapshot!,
         notifyOnPriceDrop: row.notify_on_price_drop !== false,
         likedAt: row.liked_at,
-      },
-    ];
-  });
+      });
+  }
+  if (ownerWriteVersions.get(userId) !== readVersion || pendingOwnerWrites(userId).length) {
+    throw new Error('Favoriler okuma sırasında değişti. Tekrar dene.');
+  }
+  return result;
 };
 
 export const fetchPassedProductIds = async (
@@ -196,8 +213,13 @@ export const fetchPassedProductIds = async (
 export const insertLikedProduct = async (
   userId: string,
   product: Product,
-): Promise<void> => {
-  const client = getRequiredSupabaseClient();
+  action?: AnalyticsActionContext,
+): Promise<PreferenceWriteReceipt | void> => {
+  if(isPreferenceV2Enabled()) {
+    const context=action??createAnalyticsAction(userId,'favorite');
+    return orderedProductWrite(userId,product.id,client=>applyPreferenceTransaction(client,userId,product.id,'favorite',context,toSnapshot(product)));
+  }
+  return orderedProductWrite(userId, product.id, async client => {
   const { error: likeError } = await client.from('liked_products').upsert(
     {
       user_id: userId,
@@ -211,7 +233,7 @@ export const insertLikedProduct = async (
   );
 
   if (likeError) {
-    throw new Error(`Beğeni kaydedilemedi: ${likeError.message}`);
+    throw new Error('Beğeni kaydedilemedi.');
   }
 
   const { error: passError } = await client
@@ -221,20 +243,23 @@ export const insertLikedProduct = async (
     .eq('product_id', product.id);
 
   if (passError) {
-    logger.error('Geçilen ürün beğenide temizlenemedi', {
-      detail: passError.message,
-      productId: product.id,
-    });
+    throw new LikeWriteError(true);
   }
 
-  logger.debug('Beğeni Supabase\'e yazıldı', { productId: product.id });
+  logger.debug('Beğeni Supabase\'e yazıldı');
+  });
 };
 
 export const insertPassedProduct = async (
   userId: string,
   product: Product,
-): Promise<void> => {
-  const client = getRequiredSupabaseClient();
+  action?: AnalyticsActionContext,
+): Promise<PreferenceWriteReceipt | void> => {
+  if(isPreferenceV2Enabled()) {
+    const context=action??createAnalyticsAction(userId,'pass');
+    return orderedProductWrite(userId,product.id,client=>applyPreferenceTransaction(client,userId,product.id,'pass',context,null));
+  }
+  return orderedProductWrite(userId, product.id, async client => {
   const { error } = await client.from('passed_products').upsert(
     {
       user_id: userId,
@@ -244,15 +269,21 @@ export const insertPassedProduct = async (
   );
 
   if (error) {
-    throw new Error(`Geçme kaydedilemedi: ${error.message}`);
+    throw new Error('Geçme kaydedilemedi.');
   }
+  });
 };
 
 export const deletePassedProduct = async (
   userId: string,
   productId: string,
-): Promise<void> => {
-  const client = getRequiredSupabaseClient();
+  action?: AnalyticsActionContext,
+): Promise<PreferenceWriteReceipt | void> => {
+  if(isPreferenceV2Enabled()) {
+    const context=action??createAnalyticsAction(userId,'pass');
+    return orderedProductWrite(userId,productId,client=>applyPreferenceTransaction(client,userId,productId,'undo_pass',context,null));
+  }
+  return orderedProductWrite(userId, productId, async client => {
   const { error } = await client
     .from('passed_products')
     .delete()
@@ -260,15 +291,21 @@ export const deletePassedProduct = async (
     .eq('product_id', productId);
 
   if (error) {
-    throw new Error(`Geçme geri alınamadı: ${error.message}`);
+    throw new Error('Geçme geri alınamadı.');
   }
+  });
 };
 
 export const deleteLikedProduct = async (
   userId: string,
   productId: string,
-): Promise<void> => {
-  const client = getRequiredSupabaseClient();
+  action?: AnalyticsActionContext,
+): Promise<PreferenceWriteReceipt | void> => {
+  if(isPreferenceV2Enabled()) {
+    const context=action??createAnalyticsAction(userId,'favorite');
+    return orderedProductWrite(userId,productId,client=>applyPreferenceTransaction(client,userId,productId,'unlike',context,null));
+  }
+  return orderedProductWrite(userId, productId, async client => {
   const { error } = await client
     .from('liked_products')
     .delete()
@@ -276,23 +313,7 @@ export const deleteLikedProduct = async (
     .eq('product_id', productId);
 
   if (error) {
-    throw new Error(`Beğeni silinemedi: ${error.message}`);
+    throw new Error('Beğeni silinemedi.');
   }
-};
-
-export const updateLikedProductAlert = async ({
-  userId,
-  productId,
-  notifyOnPriceDrop,
-}: UpdateLikeAlertParams): Promise<void> => {
-  const client = getRequiredSupabaseClient();
-  const { error } = await client
-    .from('liked_products')
-    .update({ notify_on_price_drop: notifyOnPriceDrop })
-    .eq('user_id', userId)
-    .eq('product_id', productId);
-
-  if (error) {
-    throw new Error(`Fiyat alarmı güncellenemedi: ${error.message}`);
-  }
+  });
 };

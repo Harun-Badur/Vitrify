@@ -12,6 +12,7 @@ jest.mock('react-native', () => {
     ? Object.assign({}, ...style.map(flatten)) : typeof style === 'object' && style !== null ? style as Record<string, unknown> : {};
   return {
     ActivityIndicator: 'ActivityIndicator', Modal: 'Modal', Text: 'Text', View: 'View',
+    Platform: { OS: 'android', select: (options: Record<string, unknown>) => options.android ?? options.default },
     Dimensions: { get: () => ({ width: 390, height: 844 }) },
     useWindowDimensions: () => ({ width: 390, height: 844 }),
     StyleSheet: { create: (styles: unknown) => styles, flatten, hairlineWidth: 1, absoluteFill: {}, absoluteFillObject: {} },
@@ -159,6 +160,56 @@ describe('SwipeCard exit animation ownership', () => {
     expect(props.onPass).not.toHaveBeenCalled();
     await renderer.act(() => { newCallback(true); });
     expect(props.onUndoPass).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['empty', 'rejected'] as const)('recovers the current card when undo is %s without a rollover', async outcome => {
+    props.onUndoPass = jest.fn(() => outcome === 'empty' ? false : Promise.reject(new Error('offline')));
+    await renderer.act(() => { tree.update(createElement(SwipeCard, props)); });
+    await renderer.act(async () => { end('undo'); callback()(true); await Promise.resolve(); });
+    expect(withSpring).toHaveBeenLastCalledWith(0, expect.any(Object));
+    await renderer.act(() => { end('pass'); });
+    await renderer.act(() => { callback()(true); });
+    expect(props.onPass).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a late unsuccessful undo after rollover and a new exit', async () => {
+    let settle!: (value: boolean) => void;
+    props.onUndoPass = jest.fn(() => new Promise<boolean>(resolve => { settle = resolve; }));
+    await renderer.act(() => { tree.update(createElement(SwipeCard, props)); });
+    await renderer.act(() => { end('undo'); callback()(true); });
+    await renderer.act(() => { tree.update(createElement(SwipeCard, { ...props, pageIndex: 1 })); });
+    await renderer.act(() => { tree.update(createElement(SwipeCard, props)); });
+    await renderer.act(() => { end('pass'); });
+    const nextExit = callback();
+    await renderer.act(async () => { settle(false); await Promise.resolve(); });
+    await renderer.act(() => { end('pass'); });
+    expect(withSpring).toHaveBeenCalledTimes(2);
+    await renderer.act(() => { nextExit(true); });
+    expect(props.onPass).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps accepting gestures through 30 forward rollovers and explicit backward/forward visits', async () => {
+    const passed: string[] = [];
+    props.onPass = jest.fn(p => { passed.push(p.id); });
+    props.onUndoPass = jest.fn(() => true);
+    for (let step = 0; step < 30; step++) {
+      props = { ...props, product: product(`sequence-${step}`, 'top') };
+      await renderer.act(() => { tree.update(createElement(SwipeCard, props)); });
+      await renderer.act(() => { end('pass'); callback()(true); });
+      expect(passed[passed.length - 1]).toBe(`sequence-${step}`);
+      await renderer.act(() => { tree.update(createElement(SwipeCard, { ...props, pageIndex: -1 })); });
+      if (step % 4 === 0) {
+        const next = { ...props, product: product(`sequence-${step + 1}`, 'top') };
+        await renderer.act(() => { tree.update(createElement(SwipeCard, next)); });
+        await renderer.act(async () => { end('undo'); callback()(true); });
+        await renderer.act(() => { tree.update(createElement(SwipeCard, props)); });
+        await renderer.act(() => { end('pass'); callback()(true); });
+        expect(passed[passed.length - 1]).toBe(`sequence-${step}`);
+      }
+    }
+    expect(new Set(passed).size).toBe(30);
+    expect(passed).toHaveLength(38); // Eight deliberate revisits only.
+    expect(props.onUndoPass).toHaveBeenCalledTimes(8);
   });
 });
 

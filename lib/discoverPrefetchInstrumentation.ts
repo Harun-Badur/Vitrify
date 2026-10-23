@@ -333,6 +333,7 @@ export class DiscoverPrefetchInstrumentation {
 
 let traces: WeakMap<DiscoverRecommendationCache, DiscoverPrefetchInstrumentation> | undefined;
 let globalCounters: ReturnType<typeof createCounters> | undefined;
+export function forgetDiscoverPrefetchTrace(session: DiscoverRecommendationCache): void { traces?.delete(session); }
 export function discoverPrefetchTrace(session: DiscoverRecommendationCache): DiscoverPrefetchInstrumentation {
   traces ??= new WeakMap();
   let trace = traces.get(session);

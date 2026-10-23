@@ -2,7 +2,7 @@
 
 Yalnızca `addWardrobeItem` ile eklenen kullanıcı fotoğraflarını işler. Favori/katalog ürünleri bu servise gönderilmez; mevcut katalog veya Dolap kayıtları için toplu işlem yapmaz.
 
-AI, `rembg` + `u2netp` ile kendi bilgisayarınızda/sunucunuzda CPU üzerinde çalışır. Ücretli görsel API'si ve uygulamaya yeni native bağımlılık eklenmez. Bu çözüm telefonda model çalıştırmaz; telefonun erişebileceği yerel/self-hosted bir servis gerekir. [rembg kaynak ve kullanım belgesi](https://github.com/danielgatis/rembg).
+AI, `rembg` + `u2netp` ile kendi bilgisayarınızda/sunucunuzda CPU üzerinde çalışır. Ücretli görsel API'si bu servise eklenmez. Bu Python servisi telefonda model çalıştırmaz; telefonun erişebileceği yerel/self-hosted bir servis gerekir. Ayrı ve varsayılanı kapalı Android modülü `modules/vitrify-on-device-cutout` altındadır. [rembg kaynak ve kullanım belgesi](https://github.com/danielgatis/rembg).
 
 ## Kurulum
 

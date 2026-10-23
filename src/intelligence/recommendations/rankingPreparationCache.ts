@@ -1,10 +1,13 @@
 /** Owned by one catalog/wardrobe/user session; exposure deliberately is not a key. */
 export class RankingPreparationCache<K extends object, V> {
+  private closed = false;
+  dispose(): void { this.closed = true; for (const entry of this.entries.values()) entry.controller.abort(); this.entries.clear(); this.waiting.clear(); this.window = null; }
   private entries = new Map<K, { promise: Promise<V>; controller: AbortController; ready: boolean }>();
   private window: ReadonlySet<K> | null = null;
   private waiting = new Map<K, Set<() => void>>();
 
   get(key: K, prepare: (signal: AbortSignal) => Promise<V>): Promise<V> {
+    if (this.closed) return Promise.reject(new Error('Owner ranking cache disposed'));
     const existing = this.entries.get(key);
     if (existing) return existing.promise;
     const controller = new AbortController();

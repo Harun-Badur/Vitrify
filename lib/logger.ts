@@ -8,7 +8,7 @@ const TRUNCATED_SUFFIX = '…[kısaltıldı]';
 // Kullanıcı kimliği, e-posta, token ve base64 gövdeler loga hiç girmemeli;
 // Play Store veri güvenliği beyanında "log'a yazılmaz" taahhüdü buna dayanıyor.
 const SENSITIVE_KEY_PATTERN =
-  /(user_?id|e?mail|phone|token|password|secret|authorization|bearer|jwt|session|api_?key|base64|image_data_uri)/i;
+  /(user_?id|e?mail|phone|token|password|secret|authorization|bearer|jwt|session|api_?key|base64|image_data_uri|raw_?search|search_?text|search_?query|^query$)/i;
 
 const MAX_STRING_LENGTH = 240;
 const MAX_ARRAY_ITEMS = 10;

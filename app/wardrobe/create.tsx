@@ -1,3 +1,5 @@
+import { useOwnedState } from '../../hooks/useOwnedState';
+import { captureOwnerPublication } from '../../lib/accountDeviceWork';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,13 +32,14 @@ import {
   OUTFIT_SLOTS,
   canCreateOutfit,
   choiceSlot,
+  selectOutfitChoice,
   type OutfitChoice,
   type OutfitSelection,
   type OutfitSlot,
 } from '../../lib/outfitSelection';
 import { openWardrobeEditor } from '../../lib/dolapNavigation';
 import { useAppStore } from '../../store/useAppStore';
-import { getProductImages } from '../../types/product';
+import { getProductImages, type Product } from '../../types/product';
 import { wardrobeImage } from '../../types/wardrobe';
 import { openProductPage } from '../../services/deeplinkService';
 
@@ -62,6 +65,7 @@ export default function CreateOutfitRoute() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const compact = height < 740;
+  const owner = useAppStore(state => state.sessionUserId);
   const wardrobeItems = useAppStore((state) => state.wardrobeItems);
   const likedProducts = useAppStore((state) => state.likedProducts);
   const currentProducts = useAppStore((state) => state.currentProducts);
@@ -69,18 +73,18 @@ export default function CreateOutfitRoute() {
   const createOutfit = useAppStore((state) => state.createOutfit);
   const swipeRight = useAppStore((state) => state.swipeRight);
   const unlikeProduct = useAppStore((state) => state.unlikeProduct);
-  const initialCatalog = useRef([
-    ...currentProducts,
-    ...likedProducts.map(({ product }) => product),
-  ]);
+  const [initialCatalog, setInitialCatalog] = useOwnedState<Product[]>(owner, []);
+  useEffect(() => { setInitialCatalog([...currentProducts, ...likedProducts.map(({ product }) => product)]); }, [owner]);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('wardrobe');
   const [category, setCategory] = useState<OutfitSlot | null>(null);
-  const [selection, setSelection] = useState<OutfitSelection>({});
+  const [selection, setSelection] = useOwnedState<OutfitSelection>(owner, {});
+  const [coreMode, setCoreMode] = useOwnedState<'two_piece' | 'dress'>(owner, 'two_piece');
   const [activeIndex, setActiveIndex] = useState(0);
   const [carouselHeight, setCarouselHeight] = useState(height * 0.45);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useOwnedState(owner, false);
   const busyRef = useRef(false);
   const anchorHandled = useRef(false);
+  useEffect(() => { busyRef.current = false; anchorHandled.current = false; }, [owner]);
   const focusedKey = useRef<string | null>(null);
   const carouselRef = useRef<FlatList<OutfitChoice>>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -94,7 +98,7 @@ export default function CreateOutfitRoute() {
   const pool = useMemo(() => {
     const products = new Map(
       [
-        ...initialCatalog.current,
+        ...initialCatalog,
         ...currentProducts,
         ...likedProducts.map(({ product }) => product),
       ].map((product) => [product.id, product]),
@@ -111,7 +115,7 @@ export default function CreateOutfitRoute() {
         item,
       })),
     ];
-  }, [currentProducts, likedProducts, wardrobeItems]);
+  }, [initialCatalog, currentProducts, likedProducts, wardrobeItems]);
   const choices = useMemo(
     () =>
       pool.filter(
@@ -137,6 +141,7 @@ export default function CreateOutfitRoute() {
     anchorHandled.current = true;
     if (slot) {
       setSelection({ [slot]: anchor });
+      setCoreMode(slot === 'dresses' ? 'dress' : 'two_piece');
       focusedKey.current = anchor.key;
     }
   }, [pool, params.productId, params.wardrobeItemId]);
@@ -160,7 +165,9 @@ export default function CreateOutfitRoute() {
     focusedKey.current = choice.key;
     setActiveIndex(index);
     anchorHandled.current = true;
-    setSelection((current) => ({ ...current, [slot]: choice }));
+    setSelection((current) => selectOutfitChoice(current, choice));
+    if (slot === 'dresses') setCoreMode('dress');
+    if (slot === 'upper_body' || slot === 'lower_body') setCoreMode('two_piece');
   };
   const onSnap = ({
     nativeEvent,
@@ -191,6 +198,7 @@ export default function CreateOutfitRoute() {
     ]);
   };
   const toggleFavorite = (choice: OutfitChoice): void => {
+    if (busyRef.current) return;
     if (choice.source !== 'catalog') return;
     if (likedIds.has(choice.item.id))
       void unlikeProduct(choice.item.id).catch(() =>
@@ -199,6 +207,8 @@ export default function CreateOutfitRoute() {
     else swipeRight(choice.item);
   };
   const create = async (): Promise<void> => {
+    const current = captureOwnerPublication(owner);
+    if (!owner || !current()) return;
     if (
       busyRef.current ||
       !canCreateOutfit(selection) ||
@@ -370,7 +380,7 @@ export default function CreateOutfitRoute() {
                         source={{ uri: choiceImage(choice) }}
                         style={styles.image}
                         contentFit="contain"
-                        cachePolicy="memory-disk"
+                        cachePolicy="none"
                         recyclingKey={choice.key}
                       />
                     </View>
@@ -519,6 +529,22 @@ export default function CreateOutfitRoute() {
       </View>
       <View style={styles.selectedSection}>
         <View style={styles.selectedHeader}>
+          {(['two_piece', 'dress'] as const).map(mode => (
+            <PressableScale key={mode} disabled={busy} style={[styles.chip, coreMode === mode && styles.activeChip]}
+              accessibilityRole="button" accessibilityLabel={mode === 'dress' ? 'Elbise kombin modu' : 'İki parça kombin modu'}
+              accessibilityState={{ selected: coreMode === mode }}
+              onPress={() => {
+                setCoreMode(mode); setCategory(mode === 'dress' ? 'dresses' : 'upper_body');
+                anchorHandled.current = true;
+                setSelection(current => { const next = { ...current }; if (mode === 'dress') {
+                  delete next.upper_body; delete next.lower_body;
+                } else delete next.dresses; return next; });
+              }}>
+              <Text style={[styles.chipText, coreMode === mode && styles.activeChipText]}>{mode === 'dress' ? 'Elbise' : 'Üst + Alt'}</Text>
+            </PressableScale>
+          ))}
+        </View>
+        <View style={styles.selectedHeader}>
           <Text style={styles.selectedTitle}>Seçili Parçalar</Text>
           <PressableScale
             disabled={busy || !Object.values(selection).some(Boolean)}
@@ -535,7 +561,7 @@ export default function CreateOutfitRoute() {
           </PressableScale>
         </View>
         <View style={styles.slots}>
-          {OUTFIT_SLOTS.map(({ key, label }) => {
+          {OUTFIT_SLOTS.filter(slot => coreMode === 'dress' ? slot.key !== 'upper_body' && slot.key !== 'lower_body' : slot.key !== 'dresses').map(({ key, label }) => {
             const choice = selection[key];
             return (
               <View
@@ -609,7 +635,7 @@ export default function CreateOutfitRoute() {
         </PressableScale>
         {!canCreateOutfit(selection) ? (
           <Text style={styles.requirement}>
-            Başlamak için Üst ve Alt parçalarını seç.
+            Başlamak için Üst ve Alt veya bir Elbise seç.
           </Text>
         ) : wardrobeStatus !== 'ready' ? (
           <Text style={styles.requirement}>

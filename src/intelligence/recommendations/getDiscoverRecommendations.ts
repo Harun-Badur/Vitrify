@@ -7,6 +7,7 @@ import { generateWardrobeCatalogOutfits } from '../outfits/generateWardrobeCatal
 import { rankOutfitCandidates, rankOutfitCandidatesAsync, rankDiversityCandidatesAsync } from '../outfits/rankOutfitCandidates';
 import type { OutfitDiscoverRecommendation } from './discoverRecommendation';
 import { selectDiverseComplements, selectDiverseComplementsAsync } from './selectDiverseComplements';
+import { isVerifiedHumanIncompatibility } from './verifiedHumanIncompatibilities';
 import type { CooperativeWorkOptions } from '../cooperativeWork';
 import { createRecommendationMemo } from '../../../lib/recommendationMemo';
 
@@ -30,11 +31,15 @@ const prepareInput = <T extends WardrobeItemForCandidate>(
   const requiredProduct = input.requiredCatalogProductId
     ? catalogProducts.find((product) => product.id === input.requiredCatalogProductId)
     : undefined;
-  const compatibleProducts = requiredProduct?.gender === 'women'
+  const genderCompatible = requiredProduct?.gender === 'women'
     ? catalogProducts.filter((product) => product.gender !== 'men')
     : requiredProduct?.gender === 'men'
       ? catalogProducts.filter((product) => product.gender !== 'women')
       : catalogProducts;
+  const compatibleProducts = requiredProduct
+    ? genderCompatible.filter((product) => product.id === requiredProduct.id
+      || !isVerifiedHumanIncompatibility(requiredProduct.id, product.id))
+    : genderCompatible;
 
   const outfitInput = {
     wardrobeItems: input.wardrobeItems,
@@ -70,6 +75,7 @@ export const prepareDiscoverRankingAsync = async <T extends WardrobeItemForCandi
   const workOptions: CooperativeWorkOptions = {
     ...options,
     recommendationMemo: createRecommendationMemo(),
+    diagnosticStage: 'ranking',
   };
   const { outfitInput, requiredProduct } = prepareInput(input);
   const diverse = !!(input.firstOnly && requiredProduct);
@@ -91,7 +97,7 @@ export const completeDiscoverRecommendationsAsync = async <T extends WardrobeIte
   const { ranked, requiredProduct } = prepared;
   if (prepared.diverse && requiredProduct) {
     const selection = await selectDiverseComplementsAsync(ranked, requiredProduct, exposure,
-      { ...options, recommendationMemo: prepared.recommendationMemo });
+      { ...options, recommendationMemo: prepared.recommendationMemo, diagnosticStage: 'selection' });
     return selection ? [{ type: 'outfit', ...selection.outfit, rank: 1,
       sources: selection.outfit.candidate.sources, displayProducts: selection.products }] : [];
   }

@@ -12,8 +12,11 @@ import {
 } from '../types/product';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 
+export type RecommendationStatus = 'loading' | 'ready' | 'error';
+
 interface DiscoverRecommendationsProps {
   currentProductId: string | null;
+  status?: RecommendationStatus;
   recommendations?: readonly DiscoverRecommendation[];
   selectedProductIds?: readonly string[];
   onSelectProduct?: (product: Product) => void;
@@ -30,6 +33,7 @@ import { complementaryProductsForDisplay } from '../src/intelligence/recommendat
 
 function DiscoverRecommendations({
   currentProductId,
+  status = 'ready',
   recommendations = [],
   selectedProductIds = [],
   onSelectProduct,
@@ -58,7 +62,9 @@ function DiscoverRecommendations({
       {products.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>
-            Bu ürün için henüz tamamlayıcı parça önerisi yok.
+            {status === 'loading' ? 'Tamamlayıcı parçalar hazırlanıyor.'
+              : status === 'error' ? 'Tamamlayıcı parçalar yüklenemedi. Daha sonra tekrar dene.'
+                : 'Bu ürün için henüz tamamlayıcı parça önerisi yok.'}
           </Text>
         </View>
       ) : (

@@ -1,14 +1,29 @@
 # Proje referansı Supabase URL'sinin alt alanıdır; gizli bilgi değildir.
 project_id = "hnujkabyyrlsxohjhxlg"
 
-# Platform katmanı da JWT arar (savunma derinliği). Fonksiyonlar ayrıca
-# supabase.auth.getUser ile kullanıcıyı kendisi doğrular; anon key tek başına
-# yeterli değildir.
+# vton-proxy/recs-feed platform JWT kontrolü de kullanır. delete-account
+# initial JWT / post-Auth recovery capability kontrolünü handler içinde yapar.
 [functions.vton-proxy]
 verify_jwt = true
 
 [functions.delete-account]
-verify_jwt = true
+# Initial requests validate JWT in the handler. Recovery authenticates a hashed
+# capability after Auth deletion; the gateway must not require the deleted JWT.
+verify_jwt = false
 
 [functions.recs-feed]
 verify_jwt = true
+
+[functions.account-storage-janitor]
+# Scheduled requests use a dedicated server token, verified by the handler.
+# Missing token/target or mismatched credentials fail before privileged adapters.
+verify_jwt = false
+
+[functions.wardrobe-cutout-control]
+# V2 remains OFF. Handler authenticates owner JWT or single-stage scoped capability.
+verify_jwt = false
+
+[functions.account-storage-upload]
+# V1 validates the session JWT in handler; V2 OFF, future completion uses a
+# locked job capability. Neither route allows unauthenticated Storage writes.
+verify_jwt = false

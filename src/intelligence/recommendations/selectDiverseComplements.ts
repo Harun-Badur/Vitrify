@@ -1,8 +1,10 @@
+import { normalizedRecommendationToken } from '../../../lib/recommendationMemo';
 import type { Product, OutfitRole } from '../../../types/product';
 import type { WardrobeItemForCandidate } from '../outfits/outfitCandidate';
 import { hasCoreFootwear } from '../outfits/outfitCandidate';
 import type { RankedOutfitCandidate } from '../outfits/outfitRanking';
 import { catalogCompatibility, catalogSemanticKey, sameCatalogProduct } from '../outfits/catalogCompatibility';
+import { isVerifiedHumanIncompatibility } from './verifiedHumanIncompatibilities';
 import { runCooperatively, runSynchronously, type CooperativeWorkOptions } from '../cooperativeWork';
 
 export interface ComplementSelection<T extends WardrobeItemForCandidate> {
@@ -15,6 +17,8 @@ const EXPOSURE_PENALTY = 0.07;
 const CATEGORY_REPEAT_PENALTY = 0.12;
 const BRAND_REPEAT_PENALTY = 0.04;
 const MAX_COMPLEMENTS = 3;
+const normalizedBrand = (brand: string) => normalizedRecommendationToken(brand, true,
+  () => brand.trim().toLocaleLowerCase('tr-TR'));
 
 /** Retains an actual valid outfit containing every selected product, never a synthetic mix. */
 function* selectionWork<T extends WardrobeItemForCandidate>(
@@ -39,7 +43,8 @@ function* selectionWork<T extends WardrobeItemForCandidate>(
     const choices = new Map<string, Product>();
     for (const entry of compatible) for (const item of entry.candidate.items) {
 
-        if (item.sourceType === 'catalog' && !choices.has(item.sourceId) && !roles.has(item.role)) choices.set(item.sourceId, item.product);
+        if (item.sourceType === 'catalog' && !choices.has(item.sourceId) && !roles.has(item.role)
+          && !isVerifiedHumanIncompatibility(anchor.id, item.product.id)) choices.set(item.sourceId, item.product);
 
       yield;
     }
@@ -62,7 +67,7 @@ function* selectionWork<T extends WardrobeItemForCandidate>(
       const count = exposure.get(product.id) ?? 0;
       const previous = Number.isFinite(count) ? Math.max(0, count) : 0;
       const repeatCategory = selected.some((p) => p.category === product.category);
-      const repeatBrand = selected.some((p) => p.brand.trim().toLocaleLowerCase('tr-TR') === product.brand.trim().toLocaleLowerCase('tr-TR'));
+      const repeatBrand = selected.some((p) => normalizedBrand(p.brand) === normalizedBrand(product.brand));
       const score = base - EXPOSURE_PENALTY * Math.log2(1 + previous)
         - Number(repeatCategory) * CATEGORY_REPEAT_PENALTY - Number(repeatBrand) * BRAND_REPEAT_PENALTY;
       if (score > highest || (score === highest && choice !== null && catalogSemanticKey(product) < catalogSemanticKey(choice))) { choice = product; highest = score; }

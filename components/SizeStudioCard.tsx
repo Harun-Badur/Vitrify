@@ -31,7 +31,7 @@ interface SizeStudioCardProps {
 interface StepperProps {
   label: string;
   unit: string;
-  value: number;
+  value: number | null;
   min: number;
   max: number;
   disabled: boolean;
@@ -60,18 +60,18 @@ function Stepper({
       <Text style={styles.groupLabel}>{label}</Text>
       <View style={styles.stepperRow}>
         <PressableScale
-          onPress={() => onChange(value - 1)}
-          disabled={disabled || value <= min}
+          onPress={() => onChange(value === null ? (unit === 'cm' ? HEIGHT_CM_DEFAULT : WEIGHT_KG_DEFAULT) : value - 1)}
+          disabled={disabled || (value !== null && value <= min)}
           style={styles.stepperButton}
           accessibilityRole="button"
           accessibilityLabel={`${label} azalt`}
         >
           <Text style={styles.stepperButtonText}>−</Text>
         </PressableScale>
-        <Text style={styles.stepperValue}>{`${value} ${unit}`}</Text>
+        <Text style={styles.stepperValue}>{value === null ? 'Belirlenmedi' : `${value} ${unit}`}</Text>
         <PressableScale
-          onPress={() => onChange(value + 1)}
-          disabled={disabled || value >= max}
+          onPress={() => onChange(value === null ? (unit === 'cm' ? HEIGHT_CM_DEFAULT : WEIGHT_KG_DEFAULT) : value + 1)}
+          disabled={disabled || (value !== null && value >= max)}
           style={styles.stepperButton}
           accessibilityRole="button"
           accessibilityLabel={`${label} artır`}
@@ -136,8 +136,8 @@ export default function SizeStudioCard({
   onBottomSizeChange,
   onStyleToggle,
 }: SizeStudioCardProps) {
-  const height = profile.heightCm ?? HEIGHT_CM_DEFAULT;
-  const weight = profile.weightKg ?? WEIGHT_KG_DEFAULT;
+  const height = profile.heightCm;
+  const weight = profile.weightKg;
   const sizeOptions = GARMENT_SIZES.map((size) => ({
     value: size,
     label: size,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   stepperPair: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: spacing.md,
     marginBottom: spacing.lg,
   },
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
   },
   stepperButton: {
-    width: 32,
+    width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
@@ -274,11 +274,13 @@ const styles = StyleSheet.create({
   },
   chipRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
   },
   chip: {
     flex: 1,
-    minWidth: 0,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: 'center',
     backgroundColor: colors.hairline,
     borderRadius: radius.chip,

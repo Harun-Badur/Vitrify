@@ -1,6 +1,9 @@
+import { useOwnedState } from '../../hooks/useOwnedState';
+import { captureOwnerPublication, trackOwnerWork } from '../../lib/accountDeviceWork';
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -9,17 +12,18 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Platform,
   ScrollView,
   Share,
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import Svg, { Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as StoreReview from 'expo-store-review';
 import {
@@ -43,6 +47,11 @@ import {
 import InviteCodeModal from '../../components/InviteCodeModal';
 import PressableScale from '../../components/PressableScale';
 import ProfileSheet from '../../components/ProfileSheet';
+import PrivacyCenter from '../../components/PrivacyCenter';
+import PremiumMembership from '../../components/PremiumMembership';
+import {premiumClient} from '../../services/revenueCatMobile';
+import {buildPremiumDeletionNotice,subscriptionManagementUrl} from '../../lib/premiumDeletionNotice';
+import ProfileStyleJourney from '../../components/ProfileStyleJourney';
 import SizeStudioSheet, {
   type StyleSheetSection,
 } from '../../components/SizeStudioSheet';
@@ -53,14 +62,18 @@ import { logger } from '../../lib/logger';
 import { checkLowResolutionPersonPhoto } from '../../lib/personPhotoPrepare';
 import { PRIVACY_URL, SUPPORT_EMAIL } from '../../lib/privacy';
 import { colors, radius, shadows, spacing } from '../../lib/theme';
+import { buildStyleJourney, type JourneyTarget } from '../../lib/profileStyleJourney';
+import { fetchCalculatedStyleProfile, subscribeStyleProfileChanges } from '../../lib/recsConfig';
+import type { CalculatedStyleProfileState } from '../../types/calculatedStyleProfile';
 import { LOW_RES_MODEL_PHOTO_HINT } from '../../lib/vtonPersonImage';
-import { deleteAccount } from '../../services/accountService';
+import { completeAccountDeletion, AccountDeletionPendingError } from '../../services/accountService';
 import {
   fetchAccountDetails,
   saveAccountDetails,
   type AccountDetails,
 } from '../../services/accountDetailsService';
 import { useAppStore } from '../../store/useAppStore';
+import { createAccountDeletionRuntime } from '../../services/accountDeletionRuntime';
 import {
   createModelPhotoSignedUrl,
   fetchStudioProfile,
@@ -70,8 +83,6 @@ import {
 } from '../../services/profileService';
 import {
   STYLE_TAGS,
-  type GarmentSize,
-  type StyleTag,
   type StudioProfilePatch,
   type UserStudioProfile,
 } from '../../types/profile';
@@ -136,18 +147,29 @@ function MenuRow({
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuthContext();
+  const userId = user?.id ?? null;
+  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width, fontScale } = useWindowDimensions();
+  const compactProfile = width < 380 || fontScale > 1.3;
   const wardrobeCount = useAppStore((state) => state.wardrobeItems.length);
   const favoriteCount = useAppStore((state) => state.likedProducts.length);
   const outfitCount = useAppStore((state) => state.savedOutfits.length);
-  const [account, setAccount] = useState<AccountDetails | null>(null);
+  const sessionUserId = useAppStore((state) => state.sessionUserId);
+  const sessionSyncStatus = useAppStore((state) => state.sessionSyncStatus);
+  const wardrobeStatus = useAppStore((state) => state.wardrobeStatus);
+  const likedProducts = useAppStore((state) => state.likedProducts);
+  const passedProductIds = useAppStore((state) => state.passedProductIds);
+  const wardrobeItems = useAppStore((state) => state.wardrobeItems);
+  const savedOutfits = useAppStore((state) => state.savedOutfits);
+  const [account, setAccount] = useOwnedState<AccountDetails | null>(userId, null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
   const [accountSaving, setAccountSaving] = useState(false);
-  const [accountName, setAccountName] = useState('');
-  const [accountEmailInput, setAccountEmailInput] = useState('');
-  const [accountError, setAccountError] = useState<string | null>(null);
-  const [accountNotice, setAccountNotice] = useState<string | null>(null);
+  const [accountName, setAccountName] = useOwnedState(userId, '');
+  const [accountEmailInput, setAccountEmailInput] = useOwnedState(userId, '');
+  const [accountError, setAccountError] = useOwnedState<string | null>(userId, null);
+  const [accountNotice, setAccountNotice] = useOwnedState<string | null>(userId, null);
   const currentAccount = account?.id === user?.id ? account : null;
   const displayName =
     currentAccount?.username || user?.email?.split('@')[0] || 'Kullanıcı';
@@ -155,22 +177,24 @@ export default function ProfileScreen() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [studio, setStudio] = useState<UserStudioProfile | null>(null);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [isModelPhotoLowRes, setIsModelPhotoLowRes] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useOwnedState<string | null>(userId, null);
+  const [studio, setStudio] = useOwnedState<UserStudioProfile | null>(userId, null);
+  const [photoUri, setPhotoUri] = useOwnedState<string | null>(userId, null);
+  const [isModelPhotoLowRes, setIsModelPhotoLowRes] = useOwnedState(userId, false);
+  const [uploadProgress, setUploadProgress] = useOwnedState<number | null>(userId, null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [sizeOpen, setSizeOpen] = useState(false);
   const [styleSheetSection, setStyleSheetSection] =
     useState<StyleSheetSection>('all');
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useOwnedState<string | null>(userId, null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const userId = user?.id ?? null;
+
   const isBusy =
     isSigningOut || isDeleting || isSaving || uploadProgress !== null;
+  const preferencesDisabled = isBusy || studio?.userId !== userId;
   const hasPhoto = photoUri !== null;
   const currentStudio = studio ?? (userId ? emptyStudio(userId) : null);
   const styleSummary =
@@ -188,16 +212,36 @@ export default function ProfileScreen() {
       .join(' · ') || 'Belirlenmedi';
   const favoriteBrands =
     currentStudio?.favoriteBrands?.join(', ') || 'Seçilmedi';
-  const profileFields = [
-    Boolean(currentStudio?.styleTags.length),
-    currentStudio?.heightCm != null,
-    currentStudio?.weightKg != null,
-    Boolean(currentStudio?.topSize),
-    Boolean(currentStudio?.bottomSize),
-  ];
-  const profileCompletion = Math.round(
-    (profileFields.filter(Boolean).length / profileFields.length) * 100,
-  );
+  const [calculatedProfile, setCalculatedProfile] = useOwnedState<CalculatedStyleProfileState>(userId, {state:'loading'});
+  const calculatedRef = useRef(calculatedProfile);
+  calculatedRef.current = calculatedProfile;
+  useFocusEffect(useCallback(() => {
+    let active = true, revision = 0;
+    if (!userId || userId !== sessionUserId || sessionSyncStatus !== 'success') return;
+    const current = captureOwnerPublication(userId);
+    const refresh = (changed: boolean) => {
+      const version=++revision;
+      if (changed) setCalculatedProfile({state:'loading'});
+      void trackOwnerWork(userId, fetchCalculatedStyleProfile(userId)).then(profile => {
+        if (active && current() && version===revision) {
+          const previous=calculatedRef.current;
+          if (previous.state!=='ready'||previous.profile!==profile) setCalculatedProfile({state:'ready',profile});
+        }
+      }).catch(() => { if (active && current() && version===revision) setCalculatedProfile({state:'error'}); });
+    };
+    const unsubscribe=subscribeStyleProfileChanges(userId,()=>refresh(true));
+    refresh(true);
+    return () => { active=false; unsubscribe(); };
+  }, [userId, sessionUserId, sessionSyncStatus, studio]));
+  const journey = useMemo(() => buildStyleJourney({ userId, sessionUserId, sessionSyncStatus,
+    wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, profile: studio, calculatedProfile }),
+  [userId, sessionUserId, sessionSyncStatus, wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, studio, calculatedProfile]);
+  const handleJourneyTask = (target: JourneyTarget): void => {
+    if (target === 'preferences') { setStyleSheetSection('style'); setSizeOpen(true); }
+    else if (target === 'outfit') router.push('/wardrobe/create');
+    else if (target === 'wardrobe') router.push('/(tabs)/liked');
+    else router.push('/(tabs)');
+  };
 
   const showToast = useCallback((message: string): void => {
     if (toastTimeoutRef.current !== null) {
@@ -208,7 +252,7 @@ export default function ProfileScreen() {
       setToastMessage(null);
       toastTimeoutRef.current = null;
     }, TOAST_DURATION_MS);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     return () => {
@@ -219,14 +263,16 @@ export default function ProfileScreen() {
   }, []);
 
   const loadStudio = useCallback(async (id: string): Promise<void> => {
+    const current = captureOwnerPublication(id);
     try {
       const profile = await fetchStudioProfile(id);
+      if (!current()) return;
       setStudio(profile);
       if (profile.modelPhotoPath) {
         const signed = await createModelPhotoSignedUrl(profile.modelPhotoPath);
         setPhotoUri(signed);
         if (signed) {
-          const lowRes = await checkLowResolutionPersonPhoto(signed);
+          const lowRes = await checkLowResolutionPersonPhoto(signed, id);
           setIsModelPhotoLowRes(lowRes);
         } else {
           setIsModelPhotoLowRes(false);
@@ -239,7 +285,7 @@ export default function ProfileScreen() {
       logger.error('Stüdyo profili yüklenemedi', { error });
       setErrorMessage('Profil bilgileri yüklenemedi. Lütfen tekrar dene.');
     }
-  }, []);
+  }, [userId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -328,34 +374,15 @@ export default function ProfileScreen() {
     }
   }, [userId]);
 
-  const persistPatch = async (patch: StudioProfilePatch): Promise<void> => {
-    if (!userId) {
-      return;
-    }
-    setIsSaving(true);
-    setErrorMessage(null);
-    try {
-      const next = await upsertStudioProfile(userId, patch);
-      setStudio((previous) => ({ ...previous, ...next }));
-    } catch (error) {
-      logger.error('Stüdyo kaydı başarısız', { error });
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Değişiklik kaydedilemedi. Lütfen tekrar dene.',
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handlePickModelPhoto = async (): Promise<void> => {
-    if (!userId) {
+    const current = captureOwnerPublication(userId);
+    if (!userId || !current()) {
       return;
     }
     try {
       const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+        await trackOwnerWork(userId, ImagePicker.requestMediaLibraryPermissionsAsync());
+      if (!current()) return;
       if (!permission.granted) {
         setErrorMessage(
           'Galerine erişim izni verilmedi. Ayarlardan izin verip tekrar dene.',
@@ -363,11 +390,11 @@ export default function ProfileScreen() {
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await trackOwnerWork(userId, ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
-      });
-      if (result.canceled || !result.assets[0]) {
+      }));
+      if (!current() || result.canceled || !result.assets[0]) {
         return;
       }
 
@@ -378,7 +405,7 @@ export default function ProfileScreen() {
       });
       setStudio((previous) => ({ ...previous, ...next }));
       setPhotoUri(result.assets[0].uri);
-      const lowRes = await checkLowResolutionPersonPhoto(result.assets[0].uri);
+      const lowRes = await checkLowResolutionPersonPhoto(result.assets[0].uri, userId);
       setIsModelPhotoLowRes(lowRes);
     } catch (error) {
       logger.error('Model fotoğrafı yüklenemedi', { error });
@@ -453,24 +480,43 @@ export default function ProfileScreen() {
     setIsDeleting(true);
     setErrorMessage(null);
     try {
-      await deleteAccount();
-      await signOut();
+      if (!userId) throw new Error('Hesap silmek için giriş yapmalısın.');
+      const runtime = await createAccountDeletionRuntime(userId, async () => {
+        const store = useAppStore.getState();
+        if (store.sessionUserId !== userId) return true; // owner A is gone; preserve B/anonymous state
+        store.resetSession();
+        setStudio(null); setPhotoUri(null); setAccount(null);
+        setAccountName(''); setAccountEmailInput('');
+        const cleared = useAppStore.getState();
+        // Runtime independently verifies actual owner-work settlement and React clear commits.
+        return cleared.sessionUserId === null && cleared.wardrobeItems.length === 0 &&
+          cleared.savedOutfits.length === 0 && cleared.likedProducts.length === 0;
+      });
+      await completeAccountDeletion(runtime);
+      // RootNavigator closes only the matching owner's session after verified
+      // completion, including startup recovery. Do not sign out account B here.
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Hesap silinemedi.';
       setErrorMessage(message);
-      Alert.alert('Hesap silinemedi', message);
+      Alert.alert(error instanceof AccountDeletionPendingError ? 'Hesap silme bekliyor' : 'Hesap silinemedi', message);
     } finally {
       setIsDeleting(false);
     }
   };
 
   const handleDeleteAccount = (): void => {
+    const premium=premiumClient.getSnapshot();
+    const own=premium.owner===userId?premium:null;
+    const fresh=own?.membership && Date.now()-own.membership.checkedAtMs<60000 && (own.membership.tier!=='premium'||(own.membership.expiresAtMs??0)>Date.now());
+    const state=own?.storeOperationPending||own?.awaitingVerification?'pending':!fresh?'unknown':own.membership?.tier==='premium'?'active':'inactive';
+    const management=subscriptionManagementUrl(Platform.OS);
     Alert.alert(
       'Hesabımı sil',
-      'Hesabın ve tüm verilerin (beğeniler, geçilen ürünler, bildirim kayıtları) kalıcı olarak silinecek. Bu işlem geri alınamaz.',
+      buildPremiumDeletionNotice(state),
       [
         { text: 'Vazgeç', style: 'cancel' },
+        ...(management?[{text:'Aboneliği yönet',onPress:()=>{void Linking.openURL(management).catch(()=>Alert.alert('Abonelik yönetimi','Satın aldığın mağazanın abonelik ayarlarını kullanabilirsin.'));}}]:[]),
         {
           text: 'Kalıcı olarak sil',
           style: 'destructive',
@@ -482,15 +528,7 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleOpenPrivacy = (): void => {
-    void Linking.openURL(PRIVACY_URL).catch((error: unknown) => {
-      logger.error('Gizlilik politikası açılamadı', { error });
-      Alert.alert(
-        'Bağlantı açılamadı',
-        'Gizlilik politikası bu cihazda açılamadı.',
-      );
-    });
-  };
+  const handleOpenPrivacy = (): void => { setPrivacyOpen(true); };
 
   const handleInvite = async (): Promise<void> => {
     try {
@@ -516,7 +554,7 @@ export default function ProfileScreen() {
       logger.warn('Mağaza değerlendirmesi açılamadı', { error });
     }
 
-    const mailUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Vitirify geri bildirim')}`;
+    const mailUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Vitrify geri bildirim')}`;
     void Linking.openURL(mailUrl).catch((error: unknown) => {
       logger.error('Destek e-postası açılamadı', { error });
       Alert.alert(
@@ -526,20 +564,10 @@ export default function ProfileScreen() {
     });
   };
 
-  const handleStyleToggle = (tag: StyleTag): void => {
-    if (!studio) {
-      return;
-    }
-    const nextTags = studio.styleTags.includes(tag)
-      ? studio.styleTags.filter((item) => item !== tag)
-      : [...studio.styleTags, tag];
-    void persistPatch({ styleTags: nextTags });
-  };
-
   const handleSavePreferences = async (
     patch: StudioProfilePatch,
   ): Promise<boolean> => {
-    if (!userId || isBusy) return false;
+    if (!userId || preferencesDisabled) return false;
     setIsSaving(true);
     setErrorMessage(null);
     try {
@@ -557,16 +585,20 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.md }]}>
+    <View style={[styles.root, { paddingTop: insets.top + spacing.md,
+      paddingLeft: Math.max(insets.left, spacing.lg),
+      paddingRight: Math.max(insets.right, spacing.lg) }]}>
       <Text style={styles.header}>Profil</Text>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
         <View style={styles.profileCard}>
-          <View style={styles.heroRow}>
+          <View style={[styles.heroRow, compactProfile && styles.compactHero]}>
             <View style={styles.avatarWrap}>
               <PressableScale
                 onLongPress={handleRemovePhoto}
@@ -606,8 +638,8 @@ export default function ProfileScreen() {
                 <Camera size={18} color={colors.accent} />
               </PressableScale>
             </View>
-            <View style={styles.heroCopy}>
-              <View style={styles.identityRow}>
+            <View style={[styles.heroCopy, compactProfile && styles.compactHeroCopy]}>
+              <View style={[styles.identityRow, compactProfile && styles.compactIdentity]}>
                 <View style={styles.identityCopy}>
                   <Text style={styles.userName} numberOfLines={1}>
                     {displayName}
@@ -653,58 +685,17 @@ export default function ProfileScreen() {
           <Text style={styles.lowResHint}>{LOW_RES_MODEL_PHOTO_HINT}</Text>
         ) : null}
 
-        <View style={styles.styleProgressCard}>
-          <Sparkles color={colors.accent} size={32} />
-          <View style={styles.progressCopy}>
-            <Text style={styles.progressTitle}>Stilin oluşuyor.</Text>
-            <Text style={styles.progressDescription}>
-              Profil bilgilerinle stilini tamamlıyoruz.
-            </Text>
-          </View>
-          <View
-            style={styles.progressCircle}
-            accessibilityRole="progressbar"
-            accessibilityLabel="Beden ve stil bilgilerinin tamamlanma oranı"
-            accessibilityValue={{ min: 0, max: 100, now: profileCompletion }}
-          >
-            <Svg width={64} height={64} viewBox="0 0 72 72">
-              <Circle
-                cx={36}
-                cy={36}
-                r={30}
-                fill="none"
-                stroke={colors.accentSoft}
-                strokeWidth={5}
-              />
-              <Circle
-                cx={36}
-                cy={36}
-                r={30}
-                fill="none"
-                stroke={colors.accent}
-                strokeWidth={5}
-                strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 30}`}
-                strokeDashoffset={
-                  2 * Math.PI * 30 * (1 - profileCompletion / 100)
-                }
-                rotation={-90}
-                origin="36, 36"
-              />
-            </Svg>
-            <Text style={styles.progressPercent}>{profileCompletion}%</Text>
-          </View>
-        </View>
+        <ProfileStyleJourney key={`style-journey:${userId ?? 'signed-out'}`} journey={journey} onTask={handleJourneyTask} />
 
         <View>
           <View style={styles.styleHeading}>
-            <Text style={styles.sectionTitle}>Stil Bilgilerim</Text>
+            <Text style={styles.sectionTitle}>Tercihlerin</Text>
             <PressableScale
               onPress={() => {
                 setStyleSheetSection('all');
                 setSizeOpen(true);
               }}
-              disabled={isBusy}
+              disabled={preferencesDisabled}
               style={styles.sectionEdit}
               accessibilityRole="button"
               accessibilityLabel="Stil bilgilerini düzenle"
@@ -713,6 +704,7 @@ export default function ProfileScreen() {
               <Text style={styles.sectionEditText}>Düzenle</Text>
             </PressableScale>
           </View>
+          <Text style={styles.progressDescription}>Senin belirttiğin tercihler · her zaman düzenlenebilir</Text>
           <View style={styles.styleGrid}>
             {[
               {
@@ -763,21 +755,12 @@ export default function ProfileScreen() {
                   setSizeOpen(true);
                 },
               },
-              {
-                title: 'Stil Profilini Gör',
-                value: 'Senin stil özetin',
-                Icon: Heart,
-                onPress: () => {
-                  setStyleSheetSection('summary');
-                  setSizeOpen(true);
-                },
-              },
             ].map(({ title, value, Icon, onPress }) => (
               <PressableScale
                 key={title}
-                style={styles.styleTile}
+                style={[styles.styleTile, (title === 'Fiyat Aralığım' || width < 350 || fontScale > 1.3) && { width: '100%' }]}
                 onPress={onPress}
-                disabled={isBusy}
+                disabled={preferencesDisabled}
                 accessibilityRole="button"
                 accessibilityLabel={title}
               >
@@ -798,6 +781,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        <PremiumMembership key={`membership:${userId ?? 'signed-out'}`} />
         <View style={styles.menuCard}>
           <MenuRow
             label="Denemelerim"
@@ -831,7 +815,7 @@ export default function ProfileScreen() {
             label="Gizlilik ve Güvenlik"
             icon={<ShieldCheck color={colors.text} size={22} />}
             onPress={handleOpenPrivacy}
-            accessibilityRole="link"
+            accessibilityRole="button"
             accessibilityLabel="Gizlilik ve Güvenlik"
           />
           <MenuRow
@@ -975,6 +959,14 @@ export default function ProfileScreen() {
           </PressableScale>
         </View>
       </ProfileSheet>
+      <PrivacyCenter
+        key={`privacy-center:${userId ?? 'signed-out'}`}
+        visible={privacyOpen}
+        onClose={() => setPrivacyOpen(false)}
+        disabled={isBusy}
+        onDeleteAccount={handleDeleteAccount}
+        onOpenPreferences={() => { setStyleSheetSection('all'); setSizeOpen(true); }}
+      />
       <TryOnHistorySheet
         visible={historyOpen}
         userId={userId}
@@ -982,24 +974,12 @@ export default function ProfileScreen() {
       />
       {currentStudio ? (
         <SizeStudioSheet
+          key={userId ?? 'signed-out'}
           visible={sizeOpen}
           section={styleSheetSection}
           profile={currentStudio}
-          disabled={isBusy}
+          disabled={preferencesDisabled}
           onClose={() => setSizeOpen(false)}
-          onHeightChange={(value) => {
-            void persistPatch({ heightCm: value });
-          }}
-          onWeightChange={(value) => {
-            void persistPatch({ weightKg: value });
-          }}
-          onTopSizeChange={(value: GarmentSize) => {
-            void persistPatch({ topSize: value });
-          }}
-          onBottomSizeChange={(value: GarmentSize) => {
-            void persistPatch({ bottomSize: value });
-          }}
-          onStyleToggle={handleStyleToggle}
           onSavePreferences={handleSavePreferences}
         />
       ) : null}
@@ -1045,7 +1025,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   header: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: colors.text,
     marginBottom: spacing.md,
@@ -1077,6 +1057,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.md,
   },
+  compactHero: { flexDirection: 'column' },
+  compactHeroCopy: { flex: 0, alignSelf: 'stretch' },
+  compactIdentity: { flexWrap: 'wrap' },
   avatarWrap: { width: AVATAR_SIZE, height: AVATAR_SIZE, marginTop: 4 },
   avatar: {
     width: AVATAR_SIZE,
@@ -1104,9 +1087,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: -3,
     bottom: -3,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.input,
@@ -1146,6 +1129,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   editButton: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
@@ -1197,6 +1181,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { color: colors.text, fontSize: 20, fontWeight: '800' },
   sectionEdit: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,

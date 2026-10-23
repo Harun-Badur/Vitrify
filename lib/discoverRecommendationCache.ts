@@ -1,5 +1,6 @@
+import { registerOwnerResource } from './accountDeviceWork';
 import type { Product } from '../types/product';
-import { discoverPrefetchTrace } from './discoverPrefetchInstrumentation';
+import { discoverPrefetchTrace, forgetDiscoverPrefetchTrace } from './discoverPrefetchInstrumentation';
 import type { WardrobeItemForCandidate } from '../src/intelligence/outfits/outfitCandidate';
 import type { OutfitDiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 import { complementaryProductsForDisplay } from '../src/intelligence/recommendations/complementaryProductsForDisplay';
@@ -20,10 +21,29 @@ export class DiscoverRecommendationCache {
   private window: readonly Product[] = [];
   private readonly preparationListeners = new Set<() => void>();
   readonly contextFingerprint: string;
-  constructor(readonly catalog: readonly Product[], readonly wardrobe: readonly WardrobeItemForCandidate[], owner: string | null) {
+  private closed = false;
+  private catalogValue: readonly Product[];
+  private wardrobeValue: readonly WardrobeItemForCandidate[];
+  private readonly disposalListeners = new Set<() => void>();
+  get catalog() { return this.catalogValue; }
+  get wardrobe() { return this.wardrobeValue; }
+  get disposed() { return this.closed; }
+  onDispose(stop: () => void): () => void { if (this.closed) stop(); else this.disposalListeners.add(stop); return () => this.disposalListeners.delete(stop); }
+  dispose(): void {
+    if (this.closed) return;
+    this.closed = true; this.generation++;
+    this.disposalListeners.forEach(stop => stop()); this.disposalListeners.clear();
+    this.preparationListeners.clear(); this.entries.clear(); this.pinned.clear();
+    this.exposure.clear(); this.shown.clear(); this.window = []; this.catalogValue = []; this.wardrobeValue = [];
+    forgetDiscoverPrefetchTrace(this);
+  }
+  constructor(catalog: readonly Product[], wardrobe: readonly WardrobeItemForCandidate[], owner: string | null) {
+    this.catalogValue = [...catalog]; this.wardrobeValue = [...wardrobe];
     this.contextFingerprint = fingerprint([owner, RECOMMENDATION_ENGINE_VERSION, catalog, wardrobe]);
+    if (owner) registerOwnerResource(owner, { stop: () => this.dispose(), empty: () => this.closed && this.wardrobeValue.length === 0 && this.entries.size === 0 });
   }
   request(anchors: readonly Product[], generation: number): FeedPacketRequest {
+    if (this.closed) throw new Error('Owner recommendation cache disposed');
     this.generation = generation;
     return { sessionId: this.sessionId, generation, contextFingerprint: this.contextFingerprint,
       candidatePool: this.catalog, wardrobeItems: this.wardrobe, anchors: [...anchors],
@@ -32,6 +52,7 @@ export class DiscoverRecommendationCache {
   }
   get preparationWindow(): readonly Product[] { return this.window; }
   setPreparationWindow(products: readonly Product[]): void {
+    if (this.closed) return;
     const window = products.slice(0, 3);
     if (window.length === this.window.length && window.every((product, index) => product === this.window[index])) return;
     this.window = window;
@@ -50,7 +71,7 @@ export class DiscoverRecommendationCache {
     return this.entries.get(product.id)?.slice().reverse().find(entry => entry.product === product)?.result;
   }
   accept(packet: RecommendationFeedPacket, anchors: readonly Product[]): boolean {
-    if (!packet || !Array.isArray(packet.entries) || packet.sessionId !== this.sessionId ||
+    if (this.closed || !packet || !Array.isArray(packet.entries) || packet.sessionId !== this.sessionId ||
       packet.generation !== this.generation || packet.contextFingerprint !== this.contextFingerprint) return false;
     const products = new Map(anchors.map(product => [product.id, product]));
     let accepted = false;
@@ -73,6 +94,7 @@ export class DiscoverRecommendationCache {
     return accepted;
   }
   private find(product: Product): Entry | undefined {
+    if (this.closed) return undefined;
     const pinned = this.pinned.get(product.id);
     if (pinned?.product === product) return pinned;
     return this.entries.get(product.id)?.find(entry => entry.product === product && (this.shown.has(product.id) ||

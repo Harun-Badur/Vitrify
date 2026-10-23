@@ -1,3 +1,5 @@
+import { setDeviceSessionOwner } from '../lib/accountDeviceWork';
+import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { useCallback, useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../lib/supabase';
@@ -5,6 +7,7 @@ import { logger } from '../lib/logger';
 import { toTurkishAuthMessage } from '../lib/authError';
 import { ensureUserProfile } from '../services/likeService';
 import type { AuthUser, SignInParams, SignUpParams, SignUpResult } from '../types/auth';
+import { signInWithSocial, type SocialAuthResult, type SocialProvider } from '../services/socialAuthService';
 
 interface UseAuthResult {
   user: AuthUser | null;
@@ -12,6 +15,7 @@ interface UseAuthResult {
   signIn: (params: SignInParams) => Promise<void>;
   signUp: (params: SignUpParams) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  signInSocial: (provider: SocialProvider) => Promise<SocialAuthResult>;
 }
 
 const mapAuthUser = (user: User | null | undefined): AuthUser | null => {
@@ -37,19 +41,25 @@ export const useAuth = (): UseAuthResult => {
     }
 
     let isMounted = true;
+    let authRevision = 0;
 
     const loadSession = async (): Promise<void> => {
+      const revision = authRevision;
       try {
         const { data, error } = await client.auth.getSession();
+        if (data.session?.user.id) await isAccountWriteFenced(data.session.user.id);
+        if (revision !== authRevision) return;
         if (error) {
           throw error;
         }
         if (isMounted) {
+          setDeviceSessionOwner(data.session?.user.id ?? null);
           setUser(mapAuthUser(data.session?.user));
         }
       } catch (error) {
         logger.error('Oturum okunamadı', { error });
-        if (isMounted) {
+        if (isMounted && revision === authRevision) {
+          setDeviceSessionOwner(null);
           setUser(null);
         }
       } finally {
@@ -66,6 +76,9 @@ export const useAuth = (): UseAuthResult => {
         if (!isMounted) {
           return;
         }
+        authRevision++;
+        setDeviceSessionOwner(session?.user.id ?? null);
+        if (session?.user.id) void isAccountWriteFenced(session.user.id).catch(() => {});
         setUser(mapAuthUser(session?.user));
         setLoading(false);
       },
@@ -148,5 +161,17 @@ export const useAuth = (): UseAuthResult => {
     }
   }, []);
 
-  return { user, loading, signIn, signUp, signOut };
+  const signInSocial = useCallback(async (provider: SocialProvider): Promise<SocialAuthResult> => {
+    const result = await signInWithSocial(provider);
+    if (result === 'signed_in') {
+      const session = await getSupabaseClient()?.auth.getSession();
+      const mapped = mapAuthUser(session?.data.session?.user);
+      if (mapped) {
+        try { await ensureUserProfile(mapped); }
+        catch { logger.warn('Sosyal giriş profil senkronu bekliyor', { code: 'SOCIAL_PROFILE_SYNC_FAILED' }); }
+      }
+    }
+    return result;
+  }, []);
+  return { user, loading, signIn, signUp, signOut, signInSocial };
 };

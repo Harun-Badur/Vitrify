@@ -155,7 +155,6 @@ export const CARD_SNAP_DURATION_MS = 200;
 export const CARD_EXIT_DURATION_MS = 300;
 export const CARD_EXIT_LIFT_PX = 200;
 
-export const ONBOARDING_PAGE_COUNT = 3;
 export const ONBOARDING_STAGGER_MS = 90;
 export const ONBOARDING_ENTER_SPRING = { damping: 14, stiffness: 170 } as const;
 export const ONBOARDING_DOT_SPRING = { damping: 16, stiffness: 220 } as const;
@@ -163,8 +162,6 @@ export const ONBOARDING_PARALLAX_FACTOR = 0.28;
 export const ONBOARDING_SWAY_DEG = 7;
 export const ONBOARDING_SWAY_DURATION_MS = 1400;
 export const ONBOARDING_SCAN_DURATION_MS = 1800;
-export const ONBOARDING_PULSE_DURATION_MS = 900;
-export const ONBOARDING_ARROW_DURATION_MS = 1100;
 
 export const MODAL_SLIDE_DURATION_MS = 280;
 export const MODAL_BACKDROP_MAX_OPACITY = 0.56;

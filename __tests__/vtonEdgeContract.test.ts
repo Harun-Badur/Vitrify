@@ -7,9 +7,17 @@ import {
   mapFashnRuntimeFailure,
   normalizePngDataUri,
   readVtonClientRequest,
+  resolveVtonProxyUrl,
 } from '../lib/vtonEdgeContract';
 
 describe('vtonEdgeContract', () => {
+  it('derives VTON from the configured Supabase project only when explicit endpoint is absent', () => {
+    expect(resolveVtonProxyUrl(undefined, 'https://hnujkabyyrlsxohjhxlg.supabase.co/')).toBe('https://hnujkabyyrlsxohjhxlg.supabase.co/functions/v1/vton-proxy');
+    expect(resolveVtonProxyUrl(' https://fixture.invalid/vton/ ', 'https://hnujkabyyrlsxohjhxlg.supabase.co')).toBe('https://fixture.invalid/vton');
+  });
+  it.each([undefined, 'http://hnujkabyyrlsxohjhxlg.supabase.co', 'https://other.invalid', 'https://hnujkabyyrlsxohjhxlg.supabase.co/extra', 'https://user:password@hnujkabyyrlsxohjhxlg.supabase.co', 'https://hnujkabyyrlsxohjhxlg.supabase.co?key=x'])('does not derive an endpoint from invalid project URL %s', url => {
+    expect(resolveVtonProxyUrl(undefined, url)).toBeNull();
+  });
   it('geçerli client body kabul eder', () => {
     expect(
       readVtonClientRequest({

@@ -1,3 +1,5 @@
+import { captureOwnerPublication, deviceSessionOwner, registerOwnerResource, setDeviceSessionOwner, trackOwnerWork } from '../lib/accountDeviceWork';
+import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import type { StateCreator } from 'zustand';
 import { logger } from '../lib/logger';
 import { setLastFeedMode } from '../lib/recsFeedState';
@@ -28,13 +30,19 @@ export const createProfileSlice: StateCreator<
   sessionUserId: null,
   sessionSyncStatus: 'idle',
   hydrateSession: async (userId): Promise<void> => {
+    if (await isAccountWriteFenced(userId)) return;
+    setDeviceSessionOwner(userId);
+    const current = captureOwnerPublication(userId);
+    if (!current()) return;
+    registerOwnerResource(userId, { stop: () => { if (get().sessionUserId === userId) get().resetSession(); }, empty: () => get().sessionUserId !== userId });
     set({ sessionUserId: userId, sessionSyncStatus: 'loading' });
     const wardrobeLoad = get().hydrateWardrobe(userId);
     try {
-      const [likedProducts, passedIds] = await Promise.all([
+      const [likedProducts, passedIds] = await trackOwnerWork(userId, Promise.all([
         fetchLikedProducts(userId),
         fetchPassedProductIds(userId),
-      ]);
+      ]));
+      if (!current() || get().sessionUserId !== userId) return;
       set((state) => ({
         likedProducts,
         passedProductIds: passedIds,
@@ -47,15 +55,19 @@ export const createProfileSlice: StateCreator<
       }));
     } catch (error) {
       logger.error('Oturum verisi yüklenemedi', { error });
-      set({ sessionSyncStatus: 'error' });
+      if (current() && get().sessionUserId === userId) set({ sessionSyncStatus: 'error' });
     }
     await wardrobeLoad;
   },
   resetSession: (): void => {
+    const previousOwner = get().sessionUserId;
+    get().invalidateDiscoveryWork();
+    get().invalidateWardrobeWork();
     setLastFeedMode(DEFAULT_FEED_MODE);
     set({
       sessionUserId: null,
       sessionSyncStatus: 'idle',
+      currentProducts: [], feedStatus: 'idle', feedSource: null, hasMore: false, isFetchingNext: false,
       wardrobeItems: [],
       savedOutfits: [],
       wardrobeStatus: 'idle',
@@ -67,6 +79,7 @@ export const createProfileSlice: StateCreator<
       feedFallback: false,
       feedRelaxed: [],
     });
+    if (deviceSessionOwner() === previousOwner) setDeviceSessionOwner(null);
     resetSessionIntent();
   },
 });

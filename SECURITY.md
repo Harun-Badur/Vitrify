@@ -19,6 +19,10 @@ Git geçmişindeki `eas.json` dosyasında gerçek Supabase proje URL'leri ve `ro
 
 Tüm erişilebilir Git blob'larına uygulanan pattern taramasında bu anon key dışında service-role JWT, FASHN anahtarı, tanınan private token veya private-key materyali tespit edilmedi. Pattern taraması mutlak güvence sağlamaz. Yerel `.env` dosyası yayın dışında tutulur.
 
+## Güvenlik bildirimi
+
+Gizli değer, token, parola veya kullanıcı verisi içeren bir bildirimi herkese açık issue ya da pull request içine yazmayın. Kodda tanımlı destek adresi `lib/privacy.ts` içindeki `SUPPORT_EMAIL` değeridir: `vitrifyapp@gmail.com`. Depo sahibi GitHub private vulnerability reporting özelliğini açtıysa Security advisories da kullanılabilir. Bildirimde etkilenen yüzey, sürüm ve yeniden üretme adımı yeterlidir; geçerli anahtar göndermeyin.
+
 ## Bir erişim bilgisi açığa çıkarsa
 
 İlgili serviste credential'ı iptal edin/yenileyin; etkilenmiş erişimleri ve RLS politikalarını inceleyin. Secretı mevcut dosyadan kaldırmak geçmişten silmez. Geçmiş temizliği depo sahibi tarafından açıkça onaylanmalı ve diğer kullanıcılarla koordine edilmelidir. Gerçek değerleri GitHub issue veya PR açıklamasında paylaşmayın.

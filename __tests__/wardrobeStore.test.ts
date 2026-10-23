@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useAppStore } from '../store/useAppStore';
 import { loadWardrobe } from '../services/wardrobeService';
+import * as wardrobeService from '../services/wardrobeService';
 import type { OutfitChoice } from '../lib/outfitSelection';
 
 jest.mock('expo-file-system/legacy', () => ({
@@ -20,6 +21,13 @@ const input = {
   imageUrl: 'file:///cache/photo.jpg',
 };
 describe('local wardrobe CRUD', () => {
+  it('saves a dress-based outfit through the existing ownership-checked chain', async () => {
+    await useAppStore.getState().addWardrobeItem({ ...input, category: 'dresses', title: 'Elbisem' });
+    const dress = useAppStore.getState().wardrobeItems[0];
+    await useAppStore.getState().createOutfit({ dresses: { key: `wardrobe:${dress.id}`, source: 'wardrobe', item: dress } });
+    expect(useAppStore.getState().savedOutfits[0].wardrobeItemIds).toEqual([dress.id]);
+    expect(useAppStore.getState().savedOutfits[0].imageUrl).toBe(dress.imageUrl);
+  });
   beforeEach(async () => {
     jest.clearAllMocks();
     await AsyncStorage.clear();
@@ -130,4 +138,32 @@ describe('local wardrobe CRUD', () => {
     ).rejects.toThrow('kaldırılmış');
     expect(useAppStore.getState().savedOutfits).toHaveLength(1);
   });
+
+  it('deduplicates retries with the same request id without another photo copy', async () => {
+    const options = { requestId: 'wardrobe-stable-retry' };
+    await Promise.all([
+      useAppStore.getState().addWardrobeItem(input, options),
+      useAppStore.getState().addWardrobeItem(input, options),
+    ]);
+    expect(useAppStore.getState().wardrobeItems).toHaveLength(1);
+    expect(FileSystem.copyAsync).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('keeps one durable item when a completion fails after the checkpoint and the same intent is retried', async () => {
+    const originalSave = wardrobeService.saveWardrobe;
+    const fault = jest.spyOn(wardrobeService, 'saveWardrobe').mockImplementationOnce(async (...args) => {
+      await originalSave(...args);
+      throw new Error('lost completion');
+    });
+    try {
+      const options = { requestId: 'wardrobe-checkpoint-retry' };
+      await expect(useAppStore.getState().addWardrobeItem(input, options)).rejects.toThrow('lost completion');
+      expect(useAppStore.getState().wardrobeItems).toHaveLength(0);
+      await useAppStore.getState().addWardrobeItem(input, options);
+      expect(useAppStore.getState().wardrobeItems).toHaveLength(1);
+      expect((await loadWardrobe('owner')).wardrobeItems).toHaveLength(1);
+    } finally { fault.mockRestore(); }
+  });
+
 });

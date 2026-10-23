@@ -2,6 +2,20 @@ export const FASHN_API_BASE_URL = 'https://api.fashn.ai/v1';
 export const FASHN_POLL_INTERVAL_MS = 2_000;
 export const FASHN_POLL_TIMEOUT_MS = 90_000;
 
+// Reuse the configured backend when no separate VTON endpoint was supplied.
+// No hard-coded project fallback and no network access during resolution.
+export function resolveVtonProxyUrl(explicit: string | undefined, supabaseUrl: string | undefined): string | null {
+  const configured = explicit?.trim().replace(/\/+$/, '');
+  if (configured) return configured;
+  if (!supabaseUrl) return null;
+  try {
+    const url = new URL(supabaseUrl.trim());
+    if (url.protocol !== 'https:' || !/^[a-z]{20}[.]supabase[.]co$/.test(url.hostname) ||
+      url.port || url.username || url.password || url.search || url.hash || url.pathname !== '/') return null;
+    return `${url.origin}/functions/v1/vton-proxy`;
+  } catch { return null; }
+}
+
 export const FASHN_POLL_CONTINUE_STATUSES = [
   'starting',
   'in_queue',

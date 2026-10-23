@@ -71,7 +71,8 @@ export interface Product {
   colors?: ProductColor[];
   sizes?: string[];
   /** Kanonik skorlama alanları; yoksa başlıktan türetilir. */
-  gender?: ProductGender;
+  /** Empty means prepared but unknown; avoids repeated title inference in filters. */
+  gender?: ProductGender | '';
   colorSlugs?: string[];
   fit?: string;
   subcategory?: string;
@@ -183,12 +184,13 @@ export const getDropPercent = (
 /** Prefer `images` gallery; fall back to single `imageUrl`. */
 export const getProductImages = (product: Product): string[] => {
   if (Array.isArray(product.images) && product.images.length > 0) {
-    return product.images.filter(
+    const gallery = [...new Set(product.images.filter(
       (url): url is string => typeof url === 'string' && url.trim().length > 0,
-    );
+    ).map(url => url.trim()))];
+    if (gallery.length > 0) return gallery;
   }
   if (typeof product.imageUrl === 'string' && product.imageUrl.trim().length > 0) {
-    return [product.imageUrl];
+    return [product.imageUrl.trim()];
   }
   return [];
 };

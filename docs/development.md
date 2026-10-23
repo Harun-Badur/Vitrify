@@ -1,6 +1,6 @@
 # Geliştirme
 
-`npm ci` ile lockfile'a bağlı kurulum yapın. `.env.example` dosyasını `.env` olarak kopyalayın; kullanmadığınız opsiyonel değişkenleri boş bırakın veya kaldırın. Python servisinde `HOST`, `PORT` ve model varsayılanlarını kullanmak için bu değişkenleri servis ortamına boş değerle aktarmayın. Sunucu değişkenleri istemci build ortamından ayrıdır.
+`npm ci` ile lockfile'a bağlı kurulum yapın. `.env.example` değişken adlarını içerir ve gerçek değer içermez. Onu `.env` olarak kopyalayın; kullanmadığınız opsiyonel değişkenleri boş bırakın veya kaldırın. `.env` ve `.env.local` Git tarafından ignore edilir. Python servisinde `HOST`, `PORT` ve model varsayılanlarını kullanmak için bu değişkenleri servis ortamına boş değerle aktarmayın. Sunucu değişkenleri istemci build ortamından ayrıdır.
 
 ```bash
 npm start

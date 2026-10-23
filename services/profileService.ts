@@ -1,6 +1,10 @@
+import { createOwnedFileUnderGuard } from './ownedDeviceFiles';
+import { captureOwnerPublication, trackOwnerWork } from '../lib/accountDeviceWork';
+import { withAccountWriteGuard } from '../lib/accountWriteFence';
 import { cacheDirectory, downloadAsync } from 'expo-file-system/legacy';
+import { invalidateStyleProfileSnapshot } from '../lib/recsConfig';
 import { logger } from '../lib/logger';
-import { preparePersonJpegUri } from '../lib/personPhotoPrepare';
+import { withPreparedPersonJpeg } from '../lib/personPhotoPrepare';
 import {
   clampHeightCm,
   clampWeightKg,
@@ -9,12 +13,12 @@ import {
   parseStudioPreferences,
 } from '../lib/profileStudio';
 import { getRequiredSupabaseClient } from '../lib/supabase';
+import { uploadAccountStorage } from './accountStorageUpload';
 import type { StudioProfilePatch, UserStudioProfile } from '../types/profile';
 
 export const MODEL_PHOTOS_BUCKET = 'model-photos';
 const MODEL_PHOTO_FILENAME = 'model.jpg';
 const SIGNED_URL_TTL_SEC = 60 * 60;
-const UPLOAD_TIMEOUT_MS = 60_000;
 
 interface ProfileRow {
   id: string;
@@ -70,56 +74,7 @@ const mapRow = (row: ProfileRow): UserStudioProfile => ({
   modelPhotoPath: row.model_photo_path,
 });
 
-const requireAccessToken = async (): Promise<string> => {
-  const client = getRequiredSupabaseClient();
-  const { data, error } = await client.auth.getSession();
-  if (error) {
-    logger.error('Oturum tokenı okunamadı', { detail: error.message });
-    throw new Error('Oturum doğrulanamadı. Çıkıp tekrar giriş yapmayı dene.');
-  }
-  const token = data.session?.access_token?.trim();
-  if (!token) {
-    throw new Error('Model fotoğrafı için giriş yapmalısın.');
-  }
-  return token;
-};
-
-const uploadBinaryWithProgress = (
-  url: string,
-  body: Blob,
-  headers: Record<string, string>,
-  onProgress: (progress: number) => void,
-): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', url);
-    Object.entries(headers).forEach(([key, value]) => {
-      xhr.setRequestHeader(key, value);
-    });
-    xhr.timeout = UPLOAD_TIMEOUT_MS;
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) {
-        onProgress(Math.min(1, event.loaded / event.total));
-      }
-    };
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve();
-        return;
-      }
-      logger.error('Model fotoğrafı yüklenemedi', { status: xhr.status });
-      reject(new Error('Fotoğraf yüklenemedi. Lütfen tekrar dene.'));
-    };
-    xhr.onerror = () => {
-      reject(new Error('Fotoğraf yüklenemedi. Bağlantını kontrol et.'));
-    };
-    xhr.ontimeout = () => {
-      reject(new Error('Yükleme zaman aşımına uğradı. Tekrar dene.'));
-    };
-    xhr.send(body);
-  });
-
-export const fetchStudioProfile = async (
+const fetchStudioProfileOwned = async (
   userId: string,
 ): Promise<UserStudioProfile> => {
   const client = getRequiredSupabaseClient();
@@ -146,19 +101,22 @@ export const fetchStudioProfile = async (
     return { ...emptyProfile(userId), ...preferences };
   }
 
-  if (!isProfileRow(data)) {
+  if (!isProfileRow(data) || data.id !== userId) {
     logger.error('Profil satırı beklenen biçimde değil');
-    return { ...emptyProfile(userId), ...preferences };
+    throw new Error('Profil bilgileri yüklenemedi. Lütfen tekrar dene.');
   }
 
   return { ...mapRow(data), ...preferences };
 };
 
-export const upsertStudioProfile = async (
+const upsertStudioProfileUnlocked = async (
   userId: string,
   patch: StudioProfilePatch,
 ): Promise<UserStudioProfile> => {
+  const current = captureOwnerPublication(userId);
   const client = getRequiredSupabaseClient();
+  const { data: actor, error: actorError } = await client.auth.getUser();
+  if (actorError || actor.user?.id !== userId) throw new Error('Profil için geçerli oturum gerekli.');
   const hasPreferences =
     patch.favoriteBrands !== undefined ||
     patch.preferredColors !== undefined ||
@@ -183,6 +141,7 @@ export const upsertStudioProfile = async (
       }),
       ...(patch.priceRange !== undefined && { priceRange: patch.priceRange }),
     });
+    if (!current()) throw new Error('Owner session changed');
     const { error } = await client.auth.updateUser({
       data: { studio_preferences: preferences },
     });
@@ -220,6 +179,7 @@ export const upsertStudioProfile = async (
     payload.model_photo_path = patch.modelPhotoPath;
   }
 
+  if (!current()) throw new Error('Owner session changed');
   const { data, error } = await client
     .from('profiles')
     .upsert(payload, { onConflict: 'id' })
@@ -234,92 +194,76 @@ export const upsertStudioProfile = async (
   }
 
   if (patch.styleTags !== undefined) {
-    void syncDeclaredStyleTags(patch.styleTags);
+    if (!current()) throw new Error('Owner session changed');
+    await syncDeclaredStyleTags(patch.styleTags, userId);
   }
 
-  return mapRow(data);
+  return fetchStudioProfile(userId);
 };
 
-export const syncDeclaredStyleTags = async (tags: string[]): Promise<void> => {
+export const syncDeclaredStyleTags = async (tags: string[], expectedOwner?: string): Promise<void> => {
+  const client = getRequiredSupabaseClient();
+  const { data: actor, error: authError } = await client.auth.getUser();
+  if (authError || !actor.user || (expectedOwner && actor.user.id !== expectedOwner)) throw new Error('Stil senkronizasyonu için geçerli oturum gerekli.');
   try {
-    const client = getRequiredSupabaseClient();
-    const { error } = await client.rpc('sync_declared_style_tags', {
-      p_tags: tags,
-    });
-    if (error) {
-      logger.debug('Declared style sync başarısız', { detail: error.message });
-    }
-  } catch (error) {
-    logger.debug('Declared style sync başarısız', { error });
+    const { error } = await client.rpc('sync_declared_style_tags', { p_tags: tags });
+    if (error) throw error;
+  } catch {
+    invalidateStyleProfileSnapshot(actor.user.id);
+    throw new Error('Tercihler kaydedilmiş olabilir; stil senkronizasyonu tamamlanamadı. Kaydet ile tekrar dene.');
   }
+  invalidateStyleProfileSnapshot(actor.user.id);
 };
 
-export const uploadModelPhoto = async (
+const uploadModelPhotoUnlocked = async (
   userId: string,
   localUri: string,
   { onProgress }: UploadProgressParams,
 ): Promise<UserStudioProfile> => {
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim().replace(
-    /\/+$/,
-    '',
-  );
-  const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim();
-  if (!supabaseUrl || !anonKey) {
-    throw new Error('Supabase yapılandırması eksik.');
-  }
-
   onProgress(0.08);
-  const jpegUri = await preparePersonJpegUri(localUri);
+  return withPreparedPersonJpeg(userId, localUri, async jpegUri => {
   onProgress(0.18);
   const fileResponse = await fetch(jpegUri);
   const blob = await fileResponse.blob();
   const path = modelPhotoPathFor(userId);
-  const token = await requireAccessToken();
-  const uploadUrl = `${supabaseUrl}/storage/v1/object/${MODEL_PHOTOS_BUCKET}/${path}`;
-
-  await uploadBinaryWithProgress(
-    uploadUrl,
-    blob,
-    {
-      Authorization: `Bearer ${token}`,
-      apikey: anonKey,
-      'Content-Type': 'image/jpeg',
-      'x-upsert': 'true',
-      'cache-control': '3600',
-    },
-    (progress) => {
-      onProgress(0.18 + progress * 0.8);
-    },
-  );
+  await uploadAccountStorage({ owner: userId, bucket: MODEL_PHOTOS_BUCKET,
+    path, body: blob, contentType: 'image/jpeg' });
   onProgress(1);
 
-  return upsertStudioProfile(userId, { modelPhotoPath: path });
+  return upsertStudioProfileUnlocked(userId, { modelPhotoPath: path });
+  });
 };
 
-export const removeModelPhoto = async (
+const removeModelPhotoUnlocked = async (
   userId: string,
 ): Promise<UserStudioProfile> => {
   const client = getRequiredSupabaseClient();
   const path = modelPhotoPathFor(userId);
-  const { error } = await client.storage
-    .from(MODEL_PHOTOS_BUCKET)
-    .remove([path]);
+  const { data, error } = await client.functions.invoke('account-storage-upload', {
+    method: 'DELETE',
+    headers: { 'x-upload-bucket': MODEL_PHOTOS_BUCKET, 'x-upload-path': path },
+  });
 
-  if (error) {
-    logger.error('Model fotoğrafı silinemedi', { detail: error.message });
+  if (error || data?.protocol !== 'vitrify.storage-remove.v1' || data.state !== 'REMOVED') {
+    logger.error('Model fotoğrafı silinemedi', { code: 'MODEL_PHOTO_REMOVE_FAILED' });
     throw new Error('Fotoğraf kaldırılamadı. Lütfen tekrar dene.');
   }
 
-  return upsertStudioProfile(userId, { modelPhotoPath: null });
+  return upsertStudioProfileUnlocked(userId, { modelPhotoPath: null });
 };
 
 export const createModelPhotoSignedUrl = async (
   path: string,
 ): Promise<string | null> => {
+  const owner = path.split('/')[0];
+  const current = captureOwnerPublication(owner);
+  if (!owner || !current()) return null;
   const client = getRequiredSupabaseClient();
-  const { data, error } = await client.storage
+  const { data, error } = await trackOwnerWork(owner, client.storage
     .from(MODEL_PHOTOS_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL_SEC);
+    .createSignedUrl(path, SIGNED_URL_TTL_SEC));
+
+  if (!current()) return null;
 
   if (error || !data?.signedUrl) {
     logger.error('Model fotoğrafı adresi alınamadı', {
@@ -335,7 +279,7 @@ export const createModelPhotoSignedUrl = async (
  * VTON yerel dosya bekler; imzalı HTTPS URI File API ile okunmaz.
  * Kayıtlı fotoğrafı cache'e indirip file:// döner.
  */
-export const resolveSavedModelPhotoUri = async (
+const resolveSavedModelPhotoUriUnlocked = async (
   userId: string,
 ): Promise<string | null> => {
   const profile = await fetchStudioProfile(userId);
@@ -350,6 +294,21 @@ export const resolveSavedModelPhotoUri = async (
   }
 
   const localUri = `${directory}kabin-model-${userId}.jpg`;
-  const result = await downloadAsync(signedUrl, localUri);
-  return result.uri;
+  await createOwnedFileUnderGuard(userId, 'model-cache', localUri, () => downloadAsync(signedUrl, localUri));
+  return localUri;
+};
+
+export const upsertStudioProfile = (userId: string, patch: StudioProfilePatch): Promise<UserStudioProfile> =>
+  withAccountWriteGuard(userId, () => upsertStudioProfileUnlocked(userId, patch));
+export const uploadModelPhoto = (userId: string, localUri: string, progress: UploadProgressParams): Promise<UserStudioProfile> =>
+  withAccountWriteGuard(userId, () => uploadModelPhotoUnlocked(userId, localUri, progress));
+export const removeModelPhoto = (userId: string): Promise<UserStudioProfile> =>
+  withAccountWriteGuard(userId, () => removeModelPhotoUnlocked(userId));
+export const resolveSavedModelPhotoUri = (userId: string): Promise<string | null> =>
+  withAccountWriteGuard(userId, () => resolveSavedModelPhotoUriUnlocked(userId));
+
+export const fetchStudioProfile = (userId: string): Promise<UserStudioProfile> => {
+  const current = captureOwnerPublication(userId);
+  if (!current()) return Promise.reject(new Error('Owner session changed'));
+  return trackOwnerWork(userId, fetchStudioProfileOwned(userId).then(value => { if (!current()) throw new Error('Owner session changed'); return value; }));
 };

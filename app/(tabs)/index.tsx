@@ -1,3 +1,4 @@
+import { useOwnedState } from '../../hooks/useOwnedState';
 import {
   useCallback,
   useEffect,
@@ -7,6 +8,8 @@ import {
   useState,
 } from 'react';
 import {
+  Alert,
+  Platform,
   StyleSheet,
   StatusBar,
   Text,
@@ -37,7 +40,6 @@ import SwipeHintOverlay from '../../components/SwipeHintOverlay';
 import VirtualTryOnModal from '../../components/VirtualTryOnModal';
 import { useAuthContext } from '../../hooks/useAuthContext';
 import { logger } from '../../lib/logger';
-import { getSupabaseClient } from '../../lib/supabase';
 import { track, trackFeedImpression } from '../../lib/analytics';
 import {
   countActiveFilters,
@@ -65,11 +67,11 @@ import {
 } from '../../services/deeplinkService';
 import { fetchRecommendationCatalog } from '../../services/productService';
 import { DiscoverRecommendationCache } from '../../lib/discoverRecommendationCache';
-import { discoverPrefetchTrace, instrumentationContextId } from '../../lib/discoverPrefetchInstrumentation';
+import { fingerprint } from '../../src/recommendationCache/fingerprint';
+import { discoverPrefetchTrace } from '../../lib/discoverPrefetchInstrumentation';
 import { loadDiscoverRecommendationPacket } from '../../services/discoverRecommendationCacheService';
 import { complementaryProductsForDisplay } from '../../src/intelligence/recommendations/complementaryProductsForDisplay';
 import { DEFAULT_SEARCH_BRANDS } from '../../lib/searchQueryParse';
-import type { WardrobeItemForCandidate } from '../../src/intelligence/outfits/outfitCandidate';
 import type { DiscoverRecommendation } from '../../src/intelligence/recommendations/discoverRecommendation';
 import { useAppStore } from '../../store/useAppStore';
 import { getProductImages, type Product } from '../../types/product';
@@ -99,7 +101,7 @@ function LoadingFeed() {
       />
       <Text style={styles.loadingTitle}>Ürünler yükleniyor...</Text>
       <Text style={styles.emptySubtitle}>
-        Vitirify feedi hazırlanıyor. Birazdan kaydırmaya başlayabilirsin.
+        Vitrify feedi hazırlanıyor. Birazdan kaydırmaya başlayabilirsin.
       </Text>
     </View>
   );
@@ -145,7 +147,9 @@ export default function FeedScreen() {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const discoverCardLiftPx = discoverCardLiftForHeight(windowHeight);
-  const { user } = useAuthContext();
+  const { user, loading: authLoading } = useAuthContext();
+  const sessionOwner = useAppStore(state => state.sessionUserId);
+  const sessionSyncStatus = useAppStore(state => state.sessionSyncStatus);
   useFocusEffect(
     useCallback(() => {
       const statusBar = StatusBar.pushStackEntry({
@@ -158,8 +162,19 @@ export default function FeedScreen() {
   );
   const currentProducts = useAppStore((state) => state.currentProducts);
   const feedStatus = useAppStore((state) => state.feedStatus);
+  const feedWarning = useAppStore((state) => state.feedWarning);
+  useEffect(() => {
+    if (feedWarning === 'LOCAL_RANK_FAILED') {
+      Alert.alert('Kişiselleştirme kullanılamıyor', 'Ürünler katalog sırasıyla gösteriliyor.');
+    }
+  }, [feedWarning]);
   const feedPreparationRevision = useAppStore((state) => state.feedPreparationRevision ?? 0);
   const likedProducts = useAppStore((state) => state.likedProducts);
+  const favoriteError = useAppStore(state => state.favoritesOwner === state.sessionUserId && state.favoritesStatus === 'error'
+    ? state.favoritesError : null);
+  useEffect(() => {
+    if (favoriteError) Alert.alert('Favori işlemi tamamlanamadı', favoriteError);
+  }, [favoriteError]);
   const seenCount = useAppStore(
     (state) => state.likedProducts.length + state.passedProductIds.length,
   );
@@ -213,10 +228,14 @@ export default function FeedScreen() {
 
   const userId = user?.id ?? null;
   const canLike = user !== null;
-  const preparationDiagnosticState = useRef({ catalogReady: false, wardrobeReady: false });
-  const [recommendationCatalog, setRecommendationCatalog] = useState<Product[]>(
-    [],
-  );
+  const preparationDiagnosticState = useRef({ catalogReady: false });
+  const [recommendationCatalogState, setRecommendationCatalogState] = useState(() => ({
+    products: [] as Product[],
+    fingerprint: fingerprint([]),
+    status: 'loading' as 'loading' | 'ready' | 'error',
+  }));
+  const recommendationCatalog = recommendationCatalogState.products;
+  const [failedRecommendationSession, setFailedRecommendationSession] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -228,14 +247,24 @@ export default function FeedScreen() {
         .then((products) => {
           if (active) {
             if (__DEV__) preparationDiagnosticState.current.catalogReady = true;
-            setRecommendationCatalog(products);
+            // Array identity is not a catalog change. Keep the session/pinned results
+            // for identical content, including newly allocated or canonicalized objects.
+            // Store the snapshot key separately: the repository can mutate products in place.
+            const key = fingerprint(products);
+            setRecommendationCatalogState(previous => {
+              if (previous.fingerprint === key) {
+                return previous.status === 'ready' ? previous : { ...previous, status: 'ready' };
+              }
+              return { products: [...products], fingerprint: key, status: 'ready' };
+            });
           }
         })
-        .catch((error) => {
-          logger.warn('Öneri kataloğu okunamadı', { error });
+        .catch(() => {
+          logger.warn('Öneri kataloğu okunamadı', { code: 'RECOMMENDATION_CATALOG_FAILED' });
           if (active) {
             if (__DEV__) preparationDiagnosticState.current.catalogReady = true;
-            setRecommendationCatalog([]);
+            setRecommendationCatalogState(previous => previous.status === 'error' ? previous : { ...previous, status: 'error' });
+            Alert.alert('Öneriler yüklenemedi', 'Mevcut öneriler korundu. Bağlantını kontrol edip tekrar dene.');
           }
         });
       return () => {
@@ -244,79 +273,10 @@ export default function FeedScreen() {
     }, [feedStatus]),
   );
 
-  const [wardrobeForRecommendations, setWardrobeForRecommendations] = useState<{
-    userId: string | null;
-    items: WardrobeItemForCandidate[];
-  }>({ userId: null, items: [] });
-  const missingWardrobeTable = useRef(false);
-  const clearWardrobeRecommendations = useCallback((owner: string | null) => {
-    setWardrobeForRecommendations(previous => previous.userId === owner && previous.items.length === 0
-      ? previous : { userId: owner, items: [] });
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      if (__DEV__) preparationDiagnosticState.current.wardrobeReady = false;
-      if (userId === null || missingWardrobeTable.current) {
-        if (__DEV__) preparationDiagnosticState.current.wardrobeReady = true;
-        clearWardrobeRecommendations(userId);
-        return () => {
-          active = false;
-        };
-      }
-
-      const client = getSupabaseClient();
-      if (client === null) {
-        if (__DEV__) preparationDiagnosticState.current.wardrobeReady = true;
-        clearWardrobeRecommendations(userId);
-        return () => {
-          active = false;
-        };
-      }
-
-      void (async () => {
-        try {
-          const { data, error } = await client
-            .from('wardrobe_items')
-            .select('*')
-            .eq('user_id', userId);
-          if (error) throw error;
-          const items = ((data ?? []) as unknown[]).filter(
-            (row): row is WardrobeItemForCandidate => {
-              if (typeof row !== 'object' || row === null) return false;
-              const item = row as Record<string, unknown>;
-              return (
-                typeof item.id === 'string' && typeof item.category === 'string'
-              );
-            },
-          );
-          if (active) {
-            if (__DEV__) preparationDiagnosticState.current.wardrobeReady = true;
-            setWardrobeForRecommendations({ userId, items });
-          }
-        } catch (error) {
-          if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'PGRST205') {
-            missingWardrobeTable.current = true;
-            logger.debug('Dolap backend tablosu API’de kullanılamıyor; öneriler katalogla devam ediyor');
-          } else {
-            logger.warn('Dolap parçaları öneriler için okunamadı', { error });
-          }
-          if (active) {
-            if (__DEV__) preparationDiagnosticState.current.wardrobeReady = true;
-            clearWardrobeRecommendations(userId);
-          }
-        }
-      })();
-      return () => {
-        active = false;
-      };
-    }, [userId, clearWardrobeRecommendations]),
-  );
-
+  // Discover complements are catalog-only; wardrobe loading and edits cannot
+  // delay preparation or invalidate its ranking/prefetch session.
   const recommendationSession = useMemo(() => new DiscoverRecommendationCache(recommendationCatalog,
-    wardrobeForRecommendations.userId === userId ? wardrobeForRecommendations.items : [], userId),
-    [recommendationCatalog, userId, wardrobeForRecommendations]);
+    [], userId), [recommendationCatalog, userId]);
   const [recommendationRevision, publishRecommendations] = useState(0);
   const recommendationFocused = useRef(false);
   const preparationInputs = useRef({ session: recommendationSession, products: currentProducts, feedStatus, feedPreparationRevision });
@@ -347,17 +307,15 @@ export default function FeedScreen() {
           catalogReady: preparationDiagnosticState.current.catalogReady,
           currentProductsLength: latest.products.length, anchorIds: latest.products.slice(0, 3).map(product => product.id),
           isFocused: recommendationFocused.current, userIdPresent: userId !== null,
-          wardrobeUserId: wardrobeForRecommendations.userId === null ? null : instrumentationContextId(wardrobeForRecommendations.userId),
-          wardrobeReady: preparationDiagnosticState.current.wardrobeReady,
-          wardrobeMatchesUser: wardrobeForRecommendations.userId === userId,
+          wardrobeUserId: null, wardrobeReady: true, wardrobeMatchesUser: true,
           signalAborted: controller.signal.aborted,
         });
       }
-      if (feedStatus === 'success' && recommendationSession.catalog.length > 0 &&
-        (userId === null || wardrobeForRecommendations.userId === userId)) {
+      if (feedStatus === 'success' && recommendationSession.catalog.length > 0) {
         const anchors = [...latest.products];
         if (anchors.length > 0) {
           workerRequested = true;
+          setFailedRecommendationSession(previous => previous === recommendationSession.sessionId ? null : previous);
           unsubscribeColdStart();
         }
         if (latest.products[0]) recommendationSession.activate(latest.products[0]);
@@ -370,6 +328,9 @@ export default function FeedScreen() {
           const active = preparationInputs.current.products[0];
           if (active) recommendationSession.activate(active);
           publishRecommendations(revision => revision + 1);
+          // Android expo-image prefetch decodes original-size Glide targets.
+          // Mounted active/next/warm cards already warm view-sized cached images.
+          if (Platform.OS === 'android') return;
           const imageUrls = [...new Set(preparationInputs.current.products.flatMap(product => complementaryProductsForDisplay(
             recommendationSession.peekPrepared(product) ?? EMPTY_RECOMMENDATIONS, product.id).flatMap(recommended => getProductImages(recommended).slice(0, 1))))]
             .filter(url => !prefetchedCovers.current.has(url));
@@ -379,10 +340,16 @@ export default function FeedScreen() {
               imageUrls.forEach(url => prefetchedCovers.current.delete(url));
             });
           }
-        }, recommendationSession).catch(error => {
+        }, recommendationSession, () => {
+          Alert.alert('Öneri servisine ulaşılamadı', 'Önbellek okunamadı; mevcut verilerle öneriler hazırlanıyor.');
+        }).catch(() => {
           if (__DEV__) discoverPrefetchTrace(recommendationSession).diagnostic('workerStartBlocked', {
             workerStartBlocked: true, blockedReason: controller.signal.aborted ? 'ABORTED' : 'WORKER_START_ERROR' });
-          if (!controller.signal.aborted) logger.warn('Recommendation cache paketi okunamadı', { error });
+          if (!controller.signal.aborted) {
+            setFailedRecommendationSession(recommendationSession.sessionId);
+            logger.warn('Recommendation cache paketi okunamadı', { code: 'RECOMMENDATION_PREPARATION_FAILED' });
+            Alert.alert('Öneriler hazırlanamadı', 'Mevcut ürünler korundu. Bağlantını kontrol edip tekrar dene.');
+          }
         });
       }
     };
@@ -405,7 +372,7 @@ export default function FeedScreen() {
     // Context/focus own the request. Appending feed anchors does not invalidate it.
     // Window promotion only reprioritizes
     // its existing preparation queue; exposure refresh reuses prepared ranking.
-  }, [recommendationSession, feedStatus, userId, wardrobeForRecommendations.userId]));
+  }, [recommendationSession, feedStatus, userId]));
   useEffect(() => {
     if (__DEV__) discoverPrefetchTrace(recommendationSession).productsObserved(currentProducts, feedPreparationRevision);
   }, [recommendationSession, currentProducts, feedPreparationRevision]);
@@ -479,11 +446,18 @@ export default function FeedScreen() {
     [feedMode, loadFeed, setFeedMode, userId],
   );
 
+  const initialFeedOwner = useRef<string | null | undefined>(undefined);
+  const feedSessionReady = !authLoading && (userId ? sessionOwner === userId &&
+    (sessionSyncStatus === 'success' || sessionSyncStatus === 'error') : sessionOwner === null);
   useEffect(() => {
+    if (!feedSessionReady) {
+      if (initialFeedOwner.current !== userId) initialFeedOwner.current = undefined;
+      return;
+    }
+    if (initialFeedOwner.current === userId) return;
+    initialFeedOwner.current = userId;
     reloadFeed();
-    // Initial personal load only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [feedSessionReady, userId, reloadFeed]);
 
   useFocusEffect(useCallback(() => {
     if (feedStatus === 'success' && hasMore && !isFetchingNext && currentProducts.length <= 5) {
@@ -493,6 +467,7 @@ export default function FeedScreen() {
 
   // The visible card mounts its current/neighbor images itself; only warm the next covers.
   useFocusEffect(useCallback(() => {
+    if (Platform.OS === 'android') return;
     const urls: string[] = [];
     const next = nextProduct;
     if (next) {
@@ -540,7 +515,8 @@ export default function FeedScreen() {
       try {
         swipeRight(product);
       } catch (error) {
-        logger.error('Beğeni işlenemedi', { error, productId: product.id });
+        logger.error('Beğeni işlenemedi', { code: 'FAVORITE_START_FAILED' });
+        Alert.alert('Beğeni kaydedilemedi', 'Bağlantını kontrol edip tekrar dene.');
       }
     },
     [canLike, handleRequireAuth, swipeRight],
@@ -563,7 +539,7 @@ export default function FeedScreen() {
     [swipeLeft],
   );
 
-  const [tryOnProduct, setTryOnProduct] = useState<Product | null>(null);
+  const [tryOnProduct, setTryOnProduct] = useOwnedState<Product | null>(userId, null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [hintStatus, setHintStatus] = useState<HintStatus>('checking');
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -700,8 +676,13 @@ export default function FeedScreen() {
     [showToast],
   );
 
-  const handleUndoPass = useCallback((): void => {
-    undoPass();
+  const handleUndoPass = useCallback(async (): Promise<boolean> => {
+    try {
+      return await undoPass();
+    } catch {
+      Alert.alert('Geri alınamadı', 'Geçme kaydı korundu. Bağlantını kontrol edip tekrar dene.');
+      return false;
+    }
   }, [undoPass]);
 
   /**
@@ -744,6 +725,7 @@ export default function FeedScreen() {
   useLayoutEffect(() => {
     const prev = prevTopIdRef.current;
     const isFirst = prev === null;
+    const reconcileDrag = isFirst || prev !== topProductId;
     prevTopIdRef.current = topProductId;
 
     const H = pageHeight.value > 0 ? pageHeight.value : estimatedH;
@@ -773,7 +755,9 @@ export default function FeedScreen() {
         const u = updates[i];
         u.sv.value = u.pageIndex;
       }
-      dragOffset.value = nextDrag;
+      // Assigning even the same value cancels an in-flight Reanimated spring.
+      // Pagination can append mid-throw without changing the active product.
+      if (reconcileDrag) dragOffset.value = nextDrag;
     })();
   }, [
     topProductId,
@@ -819,6 +803,8 @@ export default function FeedScreen() {
         style={[
           styles.header,
           {
+            paddingLeft: Math.max(insets.left, spacing.lg),
+            paddingRight: Math.max(insets.right, spacing.lg),
             paddingTop:
               (insets.top > 0 ? insets.top : layout.statusBarFallback) +
               layout.headerPaddingTop,
@@ -838,7 +824,7 @@ export default function FeedScreen() {
             }}
             style={styles.filterHit}
             accessibilityRole="button"
-            accessibilityLabel="Aramayı aç"
+            accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
             accessibilityState={{ expanded: isSearchInputOpen }}
           >
             <Search color={colors.inverseText} size={24} />
@@ -853,7 +839,10 @@ export default function FeedScreen() {
             {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
           </PressableScale>
         </View>
-        <View style={[styles.searchBar, !isSearchInputOpen && styles.searchClosed]} pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
+        <View style={[styles.searchBar, !isSearchInputOpen && styles.searchClosed]}
+          accessibilityElementsHidden={!isSearchInputOpen}
+          importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
+          pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
           <TextInput
             ref={searchInputRef}
             value={searchInput}
@@ -900,6 +889,12 @@ export default function FeedScreen() {
       >
         {isLoading ? (
           <LoadingFeed />
+        ) : !hasDeck && feedStatus === 'error' ? (
+          <DeckFinishedCard
+            subtitle="Ürünler yüklenemedi. Bağlantını kontrol edip tekrar dene."
+            onRefresh={reloadFeed}
+            onOpenLiked={handleOpenLiked}
+          />
         ) : isCatalogExhausted && !isSearchMode ? (
           <DeckFinishedCard
             subtitle="Katalogdaki her şeyi gördün. Yeni ürünler eklendikçe burada belirir."
@@ -923,8 +918,16 @@ export default function FeedScreen() {
             onLayout={handleDeckLayout}
           >
             <View style={styles.deck}>
-              {deckPages.map(({ product, pageIndex }) => (
-                <SwipeCard
+              {deckPages.map(({ product, pageIndex }) => {
+                const recommendations = recommendationSession.lookup(product);
+                const recommendationStatus = recommendations !== undefined
+                  ? 'ready'
+                  : recommendationCatalogState.status === 'error' || failedRecommendationSession === recommendationSession.sessionId
+                    ? 'error'
+                    : recommendationCatalogState.status === 'ready' && recommendationCatalog.length === 0
+                      ? 'ready'
+                      : 'loading';
+                return <SwipeCard
                   key={product.id}
                   product={product}
                   pageIndex={pageIndex}
@@ -941,11 +944,12 @@ export default function FeedScreen() {
                   onUndoPass={handleUndoPass}
                   onRequireAuth={handleRequireAuth}
                   onImpression={handleImpression}
-                  recommendations={recommendationSession.lookup(product) ?? EMPTY_RECOMMENDATIONS}
+                  recommendations={recommendations ?? EMPTY_RECOMMENDATIONS}
+                  recommendationStatus={recommendationStatus}
                   selectedRecommendationProductIds={selectedRecommendationProductIds}
                   onSelectRecommendation={canLike ? handleSwipeRight : handleRequireAuth}
                 />
-              ))}
+              })}
             </View>
           </View>
         )}

@@ -183,10 +183,10 @@ it('does not publish pending packets after focus cancellation', async () => {
 it('reuses a backend final hit without ranking or selection work', async () => {
   const context = anchorContext(catalog, top, [], new Map());
   const result = engine.getDiscoverRecommendations(context.input);
-  const query = { select: jest.fn(), eq: jest.fn(), in: jest.fn(), abortSignal: jest.fn(),
+  const query = { select: jest.fn(), eq: jest.fn(), gt: jest.fn(), in: jest.fn(), abortSignal: jest.fn(),
     limit: jest.fn().mockResolvedValue({ data: [{ anchor_product_id: top.id, catalog_version: null,
       payload: serializeFinal(result, context) }], error: null }) };
-  for (const method of [query.select, query.eq, query.in, query.abortSignal]) method.mockReturnValue(query);
+  for (const method of [query.select, query.eq, query.gt, query.in, query.abortSignal]) method.mockReturnValue(query);
   jest.mocked(getSupabaseClient).mockReturnValue({ from: () => query } as never);
   const products = getProductRepository().register(catalog.map(product => ({ ...product })));
   const session = new DiscoverRecommendationCache(products, [], null);
@@ -251,6 +251,9 @@ it('blocks an old generation publication and preserves completed ranking when th
     release();
     await until(() => state.session.lookup(state.products[0]) !== undefined);
     expect(state.packets).toHaveLength(previousPackets);
-    expect(prepare.mock.calls.filter(([input]) => input.requiredCatalogProductId === top.id)).toHaveLength(1);
+    // Both rankings completed before replacement; only product resolution was blocked.
+    for (const product of state.products.slice(0, 2)) {
+      expect(prepare.mock.calls.filter(([input]) => input.requiredCatalogProductId === product.id)).toHaveLength(1);
+    }
   } finally { release(); state.controller.abort(); replacementController.abort(); await state.done; await replacement; }
 });

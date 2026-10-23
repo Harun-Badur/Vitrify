@@ -102,6 +102,7 @@ describe('ready feed packet context and memory', () => {
         const query = {
           select: (_columns: string) => query,
           eq: (_column: string, _value: unknown) => query,
+          gt: (_column: string, _value: unknown) => query,
           single: async () => ({ data: { request_payload: encodeSnapshot(request) }, error: null }),
           maybeSingle: async () => ({ data: null, error: null }),
           upsert: async (value: Record<string, unknown>) => { records.push(value); return { error: null }; },
@@ -114,6 +115,7 @@ describe('ready feed packet context and memory', () => {
       },
     };
     expect(await processRecommendationJob(client as never)).toBe(true);
+    expect(updates.filter(update => update.value.status === 'error')).toEqual([]);
     expect(records.map(record => record.kind)).toEqual(['ranking', 'final']);
     expect(records.every(record => record.owner_id === 'owner' && record.scope === 'owner')).toBe(true);
     const result = updates.find(update => update.table === 'discover_recommendation_job_payloads')!;

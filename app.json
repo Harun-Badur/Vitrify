@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Vitirify",
+    "name": "Vitrify",
     "slug": "kabin",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,12 +12,13 @@
     "ios": {
       "bundleIdentifier": "app.kabin.mobile",
       "buildNumber": "1",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.kabin.app",
       "softwareKeyboardLayoutMode": "pan",
-      "versionCode": 1,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#FE382B",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -38,13 +39,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 180,
+          "imageWidth": 240,
           "resizeMode": "contain",
-          "backgroundColor": "#F7F4F0"
+          "backgroundColor": "#FE382B"
         }
       ],
       [
@@ -63,7 +65,8 @@
       ],
       "expo-router",
       "expo-image",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

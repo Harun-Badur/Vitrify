@@ -16,7 +16,9 @@ npx supabase functions deploy recs-feed
 npx supabase functions deploy delete-account
 ```
 
-FASHN anahtarını Supabase secret store üzerinden tanımlayın. `SUPABASE_URL` ve `SUPABASE_SERVICE_ROLE_KEY` fonksiyon ortamında mevcut olmalıdır; private değerleri kod/config içine kopyalamayın. JWT verification ve fonksiyon içi kullanıcı kontrolü korunur. Auth provider, doğrulama e-postaları, redirect adresleri ve RLS politikalarını gerçek kayıt/giriş akışıyla test edin.
+FASHN anahtarını Supabase secret store üzerinden tanımlayın. `SUPABASE_URL` ve `SUPABASE_SERVICE_ROLE_KEY` fonksiyon ortamında mevcut olmalıdır; private değerleri kod veya config içine kopyalamayın. JWT verification ve fonksiyon içi kullanıcı kontrolü korunur. Auth provider, doğrulama e-postaları, redirect adresleri ve RLS politikalarını gerçek kayıt/giriş akışıyla test edin.
+
+Depoda ayrıca `premium-membership`, `revenuecat-webhook`, `vton-reconcile`, `wardrobe-cutout-control`, `account-storage-upload`, `account-storage-status` ve `account-storage-janitor` fonksiyonları vardır. Bunları yukarıdaki üç komutun kapsamına eklemeyin. `supabase/config.toml` içindeki yorumlar, wardrobe cutout control ve hesap storage yazma yolunun üretimde körlemesine açılmaması gerektiğini belirtir. Bu senkronizasyon hiçbir Edge Function deploy etmez, production veritabanına bağlanmaz ve migration uygulamaz. EAS CLI bu deponun `package.json` script'lerinde yoktur; profiller `eas.json` içindedir.
 
 ## Öneri worker ve cutout
 

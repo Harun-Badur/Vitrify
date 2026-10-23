@@ -6,7 +6,8 @@ import { getRequiredSupabaseClient } from '../lib/supabase';
 import { colors } from '../lib/theme';
 
 const ANDROID_CHANNEL_ID = 'price-alerts';
-const ANDROID_CHANNEL_NAME = 'Fiyat alarmları';
+// Retain the existing routing ID for other push senders; the V1 channel is generic.
+const ANDROID_CHANNEL_NAME = 'Vitrify bildirimleri';
 
 type NotificationsModule = typeof import('expo-notifications');
 

@@ -1,6 +1,7 @@
 import { createElement, type ElementType, type ReactElement } from 'react';
 import {
   StyleSheet,
+  Text,
   View,
   type ImageStyle,
   type LayoutChangeEvent,
@@ -197,7 +198,17 @@ describe('DiscoverProductImage native image measurements', () => {
     await layout(390, 520);
     expect(imageStyle().width).toBeCloseTo(540.8);
     expect(tree.root.findByType('Image').props.contentFit).toBe('cover');
-    expect(tree.root.findByType('Image').props.onError).toBe(onError);
+    expect(tree.root.findByType('Image').props.onError).toEqual(expect.any(Function));
+  });
+
+  it('shows an accessible fallback on failure and clears it for the next product', async () => {
+    const staleError = tree.root.findByType('Image').props.onError as (event: { error: string }) => void;
+    await renderer.act(() => staleError({ error: 'network unavailable' }));
+    expect(tree.root.findByType(Text).props.children).toBe('Görsel yüklenemedi');
+    expect(onError).toHaveBeenCalledTimes(1);
+    await renderer.act(() => tree.update(createElement(DiscoverProductImage, { uri: 'b.jpg', slot: 'main' })));
+    await renderer.act(() => staleError({ error: 'late error' }));
+    expect(() => tree.root.findByType(Text)).toThrow();
   });
 
   it('does not apply the previous bitmap dimensions after the URI changes', async () => {

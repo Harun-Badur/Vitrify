@@ -5,7 +5,8 @@ import { parse } from 'csv-parse/sync';
 import { createClient } from '@supabase/supabase-js';
 import { isFeedProvider, isGarmentCategory, type FeedProvider, type FeedProductRow } from '../types/product';
 
-loadEnv();
+// Importing validation helpers must never start a CLI write or load credentials.
+if (require.main === module && !process.argv.includes('--staging-insert-only')) loadEnv({ quiet: true });
 
 interface ColumnMapping {
   provider: string;
@@ -162,9 +163,41 @@ const countByProvider = (rows: FeedProductRow[]): string => {
     .join(', ');
 };
 
-const importFeed = async (): Promise<void> => {
-  const firstArg = process.argv[2];
-  const secondArg = process.argv[3];
+const STAGING_URL = 'https://sdjxseqfkturkfohkfni.supabase.co';
+export function stagingImportTarget(env: Readonly<Record<string,string|undefined>>, dryRun: boolean) {
+  if (env.CATALOG_STAGING_URL !== STAGING_URL) throw new Error('STAGING_TARGET_REQUIRED');
+  if (!dryRun && (env.CATALOG_STAGING_ALLOW_INSERT !== 'yes' || !env.CATALOG_STAGING_ADMIN_KEY)) {
+    throw new Error('STAGING_INSERT_APPROVAL_REQUIRED');
+  }
+  return { url: STAGING_URL, key: env.CATALOG_STAGING_ADMIN_KEY ?? '' };
+}
+
+export function validateStagingCatalog(rows: FeedProductRow[]): void {
+  if (rows.length !== 20) throw new Error('EXACTLY_20_PRODUCTS_REQUIRED');
+  const ids = new Set<string>(), keys = new Set<string>(), urls = new Set<string>();
+  for (const p of rows) {
+    const key = JSON.stringify([p.provider,p.external_id]);
+    const product = new URL(p.product_url), image = new URL(p.image_url);
+    product.search='';product.hash='';
+    const url = product.href.replace(/\/+$/,'');
+    if (!isFeedProvider(p.provider) || p.provider==='mock' || !p.external_id || p.id!==`${p.provider}-${p.external_id}`
+      || !p.title.trim() || !p.brand?.trim() || !Number.isFinite(p.price) || Number(p.price)<=0 || p.currency!=='TRY'
+      || !['upper_body','lower_body','dresses'].includes(p.category)
+      || product.protocol!=='https:' || image.protocol!=='https:'
+      || /unsplash|example\.(com|invalid)|placeholder|picsum/i.test(image.hostname)
+      || !['www.flo.com.tr','flo.com.tr','www.lcw.com','lcw.com'].includes(product.hostname)
+      || ids.has(p.id) || keys.has(key) || urls.has(url)) throw new Error('STAGING_CATALOG_INVALID');
+    ids.add(p.id);keys.add(key);urls.add(url);
+  }
+}
+
+export const importFeed = async (): Promise<void> => {
+  const stagingInsertOnly = process.argv.includes('--staging-insert-only');
+  const dryRun = process.argv.includes('--dry-run');
+  const args = process.argv.slice(2).filter(arg=>!['--staging-insert-only','--dry-run'].includes(arg));
+  const firstArg = args[0];
+  const secondArg = args[1];
+  if (dryRun && !stagingInsertOnly) throw new Error('STAGING_MODE_REQUIRED');
 
   if (!firstArg) {
     throw new Error(
@@ -189,14 +222,16 @@ const importFeed = async (): Promise<void> => {
     );
   }
 
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const target = stagingInsertOnly ? stagingImportTarget(process.env,dryRun) : null;
+  const supabaseUrl = target?.url ?? process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
+  const serviceRoleKey = target ? target.key : process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl || (!dryRun && !serviceRoleKey)) {
     throw new Error(
       'EXPO_PUBLIC_SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY eksik.',
     );
   }
+  if (stagingInsertOnly && /^https?:\/\//i.test(sourceArg)) throw new Error('LOCAL_APPROVED_CSV_REQUIRED');
 
   const mapping = fallbackProvider
     ? PROVIDER_MAPPINGS[fallbackProvider]
@@ -216,23 +251,33 @@ const importFeed = async (): Promise<void> => {
   const rows = records.map((record) =>
     mapRow(record, fallbackProvider, mapping),
   );
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  if (stagingInsertOnly) validateStagingCatalog(rows);
+  if (dryRun) {console.log('PASS LOCAL_CATALOG_VALIDATION count=20 no_connection=true');return;}
+  const supabase = createClient(supabaseUrl, serviceRoleKey!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { error } = await supabase.from('products').upsert(rows, {
+  // Narrow contract for this existing CLI; no generated database schema is available here.
+  const writer = supabase as unknown as {from(table:'products'):{upsert(values:FeedProductRow[],options:{onConflict:string;ignoreDuplicates?:boolean}):{
+    select(columns:'id'):PromiseLike<{data:{id:string}[]|null;error:{message:string}|null}>}}};
+  const { data, error } = await writer.from('products').upsert(rows, {
     onConflict: 'provider,external_id',
-  });
+    ...(stagingInsertOnly ? {ignoreDuplicates:true} : {}),
+  }).select('id');
 
   if (error) {
+    if (stagingInsertOnly) throw new Error('STAGING_IMPORT_FAILED_NO_OVERWRITE');
     throw new Error(`Upsert başarısız: ${error.message}`);
   }
+
+  if (stagingInsertOnly) {console.log(`PASS STAGING_CATALOG_INSERT inserted=${data?.length ?? 0} skipped=${rows.length-(data?.length ?? 0)}`);return;}
 
   console.log(`${rows.length} ürün içe aktarıldı`);
   console.log(countByProvider(rows));
 };
 
-importFeed().catch((error: unknown) => {
+if (require.main === module) importFeed().catch((error: unknown) => {
+  if (process.argv.includes('--staging-insert-only')) {console.error('FAIL STAGING_CATALOG_IMPORT');process.exitCode=1;return;}
   const message = error instanceof Error ? error.message : 'Bilinmeyen hata';
   console.error(`Feed ithalatı başarısız: ${message}`);
   process.exit(1);

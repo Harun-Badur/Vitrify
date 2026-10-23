@@ -1,3 +1,4 @@
+import * as productStyle from '../src/intelligence/style/productStyle';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import { fetchFeedProducts, fetchRecommendationCatalog, getRecsFeedUrl } from '../services/productService';
 import { useAppStore } from '../store/useAppStore';
@@ -5,6 +6,7 @@ import { getSupabaseClient } from '../lib/supabase';
 import { emptySessionIntent } from '../lib/scoring';
 import { buildIntent } from '../lib/sessionIntent';
 import { productsById } from '../services/productRepository';
+import { fetchRecsConfig } from '../lib/recsConfig';
 
 jest.mock('../lib/supabase', () => ({ getSupabaseClient: jest.fn() }));
 jest.mock('../lib/analytics', () => ({ track: jest.fn() }));
@@ -29,6 +31,7 @@ const rows = Array.from({ length: 278 }, (_, index) => ({
 }));
 
 let mockFailQuery = false;
+let mockQueryDelay = 0;
 const mockRanges: [number, number][] = [];
 const mockAttributeIds: string[][] = [];
 const mockBackend = {
@@ -49,9 +52,10 @@ const mockBackend = {
       range: (start: number, end: number) => {
         expect(table).toBe('products');
         mockRanges.push([start, end]);
-        return Promise.resolve(mockFailQuery
+        const result = mockFailQuery
           ? { data: null, error: { message: 'network failure' } }
-          : { data: rows.filter(row => !excluded.has(row.id)).slice(start, end + 1), error: null });
+          : { data: rows.filter(row => !excluded.has(row.id)).slice(start, end + 1), error: null };
+        return mockQueryDelay ? new Promise(resolve => setTimeout(() => resolve(result), mockQueryDelay)) : Promise.resolve(result);
       },
     };
     return query;
@@ -61,6 +65,7 @@ const mockBackend = {
 describe('Discover pagination using the existing service and store', () => {
   beforeEach(() => {
     mockFailQuery = false;
+    mockQueryDelay = 0;
     mockRanges.length = 0;
     mockAttributeIds.length = 0;
     mockBackend.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
@@ -72,11 +77,57 @@ describe('Discover pagination using the existing service and store', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it('continues 20 → 20 → remaining batches until all 278 IDs are reachable exactly once', async () => {
+  it('reads later recommendation pages with at most two concurrent queries and preserves the selected pool', async () => {
+    jest.useFakeTimers();
+    const originalRows = [...rows];
+    try {
+      rows.splice(0, rows.length, ...Array.from({ length: 496 }, (_, index) => ({ ...originalRows[0], id: `product-${String(index).padStart(3, '0')}`, external_id: String(index) })));
+      mockQueryDelay = 50;
+      const startedAt = Date.now();
+      const pending = fetchRecommendationCatalog();
+      await jest.advanceTimersByTimeAsync(60);
+      expect(mockRanges).toEqual([[0, 80], [80, 160], [160, 240]]);
+      await jest.advanceTimersByTimeAsync(140);
+      // Catalog mapping deliberately yields to the host after network completion.
+      await jest.runAllTimersAsync();
+      const catalog = await pending;
+      expect(Date.now() - startedAt).toBeLessThanOrEqual(210);
+      expect(mockRanges).toHaveLength(7);
+      expect(catalog.map(product => product.id)).toEqual(rows.slice(0, 80).map(row => row.id));
+      expect(await fetchRecommendationCatalog()).toBe(catalog);
+      expect(mockRanges).toHaveLength(7);
+    } finally {
+      await jest.runAllTimersAsync();
+      rows.splice(0, rows.length, ...originalRows);
+      mockQueryDelay = 0;
+      jest.useRealTimers();
+    }
+  });
+
+  it('fully enriches only the identical selected 80-product pool after scanning 496 records', async () => {
+    const originalRows = [...rows];
+    const enrich = jest.spyOn(productStyle, 'enrichProduct');
+    try {
+      rows.splice(0, rows.length, ...Array.from({ length: 496 }, (_, index) => ({ ...originalRows[0], id: `product-${String(index).padStart(3, '0')}`, external_id: String(index) })));
+      const pool = await fetchRecommendationCatalog();
+      expect(pool.map(product => product.id)).toEqual(rows.slice(0, 80).map(row => row.id));
+      expect(pool.every(product => product.outfitRole === 'top' && product.gender === '' && product.fit === '')).toBe(true);
+      expect(enrich).toHaveBeenCalledTimes(80);
+      const calls = mockRanges.length;
+      expect(await fetchRecommendationCatalog()).toBe(pool);
+      expect(mockRanges).toHaveLength(calls);
+      expect(enrich).toHaveBeenCalledTimes(80);
+    } finally { rows.splice(0, rows.length, ...originalRows); enrich.mockRestore(); }
+  });
+
+  it.each([278, 496])('delivers all %i catalog IDs exactly once through 20-product feed pages', async (count) => {
+    const originalRows = [...rows];
+    rows.splice(0, rows.length, ...Array.from({ length: count }, (_, index) => ({ ...originalRows[0], id: `product-${String(index).padStart(3, '0')}`, external_id: String(index) })));
+    try {
     await useAppStore.getState().loadFeed(null);
     const delivered: string[] = [];
     const sizes: number[] = [];
-    for (let batch = 0; batch < 15; batch++) {
+    for (let batch = 0; batch < Math.ceil(count / 20) + 1; batch++) {
       const products = useAppStore.getState().currentProducts;
       sizes.push(products.length);
       delivered.push(...products.map(product => product.id));
@@ -85,12 +136,13 @@ describe('Discover pagination using the existing service and store', () => {
       if (!useAppStore.getState().hasMore) break;
       await useAppStore.getState().loadMoreFeed();
     }
-    expect(sizes).toEqual([...Array<number>(13).fill(20), 18]);
+    expect(sizes).toEqual([...Array<number>(Math.floor(count / 20)).fill(20), count % 20]);
     expect(delivered).toEqual(rows.map(row => row.id));
-    expect(new Set(delivered).size).toBe(278);
+    expect(new Set(delivered).size).toBe(count);
     expect(useAppStore.getState().hasMore).toBe(false);
     expect(mockRanges.every(([start, end]) => end - start + 1 <= 81)).toBe(true);
     expect(mockAttributeIds.every(ids => ids.length <= 80)).toBe(true);
+    } finally { rows.splice(0, rows.length, ...originalRows); }
   });
 
   it('excludes prior likes and passes before choosing a full first batch', async () => {
@@ -103,14 +155,15 @@ describe('Discover pagination using the existing service and store', () => {
     expect(useAppStore.getState().currentProducts.map(product => product.id)).toEqual(rows.slice(10, 30).map(row => row.id));
   });
 
-  it('shares the initial catalog request between feed and recommendation preparation', async () => {
+  it('keeps the first feed page while the recommendation pool reads later pages', async () => {
     const [feed, catalog] = await Promise.all([fetchFeedProducts(20, null), fetchRecommendationCatalog()]);
     expect(feed.products).toHaveLength(20);
+    expect(feed.products.map(product => product.id)).toEqual(rows.slice(0, 20).map(row => row.id));
     expect(catalog).toHaveLength(80);
-    expect(mockRanges).toHaveLength(1);
+    expect(mockRanges[0]).toEqual([0, 80]);
+    expect(mockRanges.length).toBeGreaterThan(1);
     const resolved = await productsById(feed.products.map(product => product.id));
     for (const product of feed.products) {
-      expect(product).toBe(catalog.find(candidate => candidate.id === product.id));
       expect(product).toBe(resolved.get(product.id));
     }
   });
@@ -140,6 +193,33 @@ describe('Discover pagination using the existing service and store', () => {
     expect(mockRanges).toHaveLength(2);
   });
 
+  it('advances 30 times with explicit backward/forward steps and appends near the end without repeats', async () => {
+    await useAppStore.getState().loadFeed(null);
+    const visited = new Set<string>();
+    for (let step = 0; step < 30; step++) {
+      const current = useAppStore.getState().currentProducts[0];
+      expect(current).toBeDefined();
+      expect(visited.has(current.id)).toBe(false);
+      visited.add(current.id);
+      useAppStore.getState().swipeLeft(current);
+      if (step % 4 === 0) {
+        expect(await useAppStore.getState().undoPass()).toBe(true);
+        expect(useAppStore.getState().currentProducts[0].id).toBe(current.id);
+        useAppStore.getState().swipeLeft(current);
+        expect(useAppStore.getState().currentProducts.some(p => p.id === current.id)).toBe(false);
+      }
+      if (useAppStore.getState().currentProducts.length <= 5) {
+        const active = useAppStore.getState().currentProducts[0];
+        await Promise.all([useAppStore.getState().loadMoreFeed(), useAppStore.getState().loadMoreFeed()]);
+        expect(useAppStore.getState().currentProducts[0]).toBe(active);
+      }
+      const ids = useAppStore.getState().currentProducts.map(p => p.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
+    expect(visited.size).toBe(30);
+    expect(useAppStore.getState().isFetchingNext).toBe(false);
+  });
+
   it('reuses catalog pages and attributes while still applying the full changing exclusion history', async () => {
     const first = await fetchFeedProducts(20, null, 'personal', {}, undefined, rows.slice(0, 100).map(row => row.id));
     const ranges = mockRanges.length;
@@ -159,6 +239,13 @@ describe('Discover pagination using the existing service and store', () => {
     await useAppStore.getState().loadMoreFeed();
     expect(useAppStore.getState().currentProducts).toBe(queue);
     expect(useAppStore.getState()).toMatchObject({ hasMore: true, isFetchingNext: false, feedStatus: 'error' });
+  });
+
+  it('reports local ranking failure while preserving the usable catalog fallback', async () => {
+    jest.mocked(fetchRecsConfig).mockRejectedValueOnce(new Error('private backend detail'));
+    const result = await fetchFeedProducts(20, 'user-1');
+    expect(result.products).toHaveLength(20);
+    expect(result).toMatchObject({ isPersonalized: false, warning: 'LOCAL_RANK_FAILED' });
   });
 
   it('passes exclusions to the Edge Function and accepts an explicit empty final page', async () => {

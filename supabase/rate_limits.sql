@@ -100,7 +100,8 @@ begin
 end;
 $$;
 
-revoke all on function public.consume_vton_quota(uuid, integer, integer)
-  from anon, authenticated;
+-- Function EXECUTE defaults to PUBLIC; revoking only named client roles is insufficient.
+revoke execute on function public.consume_vton_quota(uuid, integer, integer)
+  from public, anon, authenticated;
 grant execute on function public.consume_vton_quota(uuid, integer, integer)
   to service_role;
