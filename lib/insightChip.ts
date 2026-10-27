@@ -64,6 +64,12 @@ export interface InsightChipContext {
 export const isWardrobeEvidenceKind = (kind: InsightChipKind): boolean =>
   kind === 'wardrobe_match' || kind === 'completes_wardrobe';
 
+/** "Neden bu öneri?" sayfası: ürünün kendisi dışında kanıt yoksa dayanak gizli; dolap butonu yalnız dolap kanıtlı türlerde. */
+export const getInsightWhySheetVisibility = (chip: InsightChip) => ({
+  showEvidence: chip.evidence.some(item => item.source !== 'product'),
+  showWardrobeButton: isWardrobeEvidenceKind(chip.kind),
+});
+
 const STYLE_REASON_LABELS = new Set(['Sevdiğin marka', 'Bu kategoriyi sık beğeniyorsun', 'Minimal stiline yakın']);
 const COLOR_REASON_PREFIX = 'Sevdiğin renk:';
 const DISCOVERY_REASON_LABEL = 'Yeni bir şey dene';

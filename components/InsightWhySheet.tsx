@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import { InsightAiBadge } from './InsightChip';
-import type { InsightChip } from '../lib/insightChip';
+import { getInsightWhySheetVisibility, type InsightChip } from '../lib/insightChip';
 import { INSIGHT_CHIP_COPY } from '../lib/insightChipTemplates';
 import { colors, radius, spacing } from '../lib/theme';
 
@@ -19,6 +19,7 @@ interface InsightWhySheetProps {
 
 /** "Neden bu öneri?" alt sayfası: kanıt parçaları, AI notu ve iki eylem. */
 export default function InsightWhySheet({ chip, visible, onClose, onOpenWardrobe, onHideKind }: InsightWhySheetProps) {
+  const { showEvidence, showWardrobeButton } = getInsightWhySheetVisibility(chip);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button"
@@ -34,23 +35,29 @@ export default function InsightWhySheet({ chip, visible, onClose, onOpenWardrobe
           </PressableScale>
         </View>
         <Text style={styles.summary}>{chip.summary}</Text>
-        <Text style={styles.sectionTitle}>{INSIGHT_CHIP_COPY.evidenceTitle}</Text>
-        <View style={styles.evidenceList}>
-          {chip.evidence.map(item => (
-            <View key={`${item.source}:${item.id}`} style={styles.evidenceRow}>
-              {item.imageUrl ? (
-                <Image source={{ uri: item.imageUrl }} style={styles.evidenceImage}
-                  contentFit="cover" cachePolicy="memory-disk" accessibilityIgnoresInvertColors />
-              ) : <View style={styles.evidenceImage} />}
-              <Text style={styles.evidenceLabel} numberOfLines={2}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
+        {showEvidence ? (
+          <>
+          <Text style={styles.sectionTitle}>{INSIGHT_CHIP_COPY.evidenceTitle}</Text>
+          <View style={styles.evidenceList}>
+            {chip.evidence.map(item => (
+              <View key={`${item.source}:${item.id}`} style={styles.evidenceRow}>
+                {item.imageUrl ? (
+                  <Image source={{ uri: item.imageUrl }} style={styles.evidenceImage}
+                    contentFit="cover" cachePolicy="memory-disk" accessibilityIgnoresInvertColors />
+                ) : <View style={styles.evidenceImage} />}
+                <Text style={styles.evidenceLabel} numberOfLines={2}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+          </>
+        ) : null}
         <Text style={styles.disclaimer}>{INSIGHT_CHIP_COPY.disclaimer}</Text>
-        <PressableScale onPress={onOpenWardrobe} style={styles.primaryButton} accessibilityRole="button"
-          accessibilityLabel={INSIGHT_CHIP_COPY.openWardrobe}>
-          <Text style={styles.primaryButtonText}>{INSIGHT_CHIP_COPY.openWardrobe}</Text>
-        </PressableScale>
+        {showWardrobeButton ? (
+          <PressableScale onPress={onOpenWardrobe} style={styles.primaryButton} accessibilityRole="button"
+            accessibilityLabel={INSIGHT_CHIP_COPY.openWardrobe}>
+            <Text style={styles.primaryButtonText}>{INSIGHT_CHIP_COPY.openWardrobe}</Text>
+          </PressableScale>
+        ) : null}
         <PressableScale onPress={onHideKind} style={styles.secondaryButton} accessibilityRole="button"
           accessibilityLabel={INSIGHT_CHIP_COPY.hideKind}>
           <Text style={styles.secondaryButtonText}>{INSIGHT_CHIP_COPY.hideKind}</Text>
