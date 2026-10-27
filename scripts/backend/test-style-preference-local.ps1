@@ -145,6 +145,10 @@ try {
     $finalCheck=Get-Content (Join-Path $styleRepo 'reports/backend/proposals/20261014_a1_media_metadata_check.sql') -Raw
     $finalCheck=$finalCheck.Replace('select object,status,metadata from checks order by object;',"select style_test.ok(not exists(select 1 from checks where status in ('DIFF','MISSING')),'FINAL_FUNCTION_METADATA_MATCH');")
     $finalPath=Join-Path $styleRoot 'final-metadata.sql';[IO.File]::WriteAllText($finalPath,$finalCheck);Run-StyleSql $finalPath
+    # Dolap style-field sync runs after the A1 metadata check, matching live order (A1 installed first).
+    # Its guard replaces only the exact photo-contract RPC bodies, then the contract test runs.
+    Run-StyleSql (Join-Path $styleRepo 'supabase/migrations/202610270001_wardrobe_style_fields_sync.sql')
+    Run-StyleSql (Join-Path $styleRepo 'supabase/tests/wardrobe_style_fields_contract.sql')
     Write-Output 'LOCAL_BACKEND_MEDIA_COMPLETE'
     return
   }

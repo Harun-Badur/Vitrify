@@ -471,3 +471,83 @@ test('compares the previous full-sync cutout checkpoints with local-only checkpo
   }
   expect(results).toEqual({ before: [5, 5, 1], after: [2, 2, 1] });
 });
+
+describe('subcategory and color cloud sync', () => {
+  const styled = { ...item, subcategory: 'gomlek', color: 'siyah' };
+  // Simulates the live RPCs before the style-fields migration: unknown keys ignored, never returned.
+  function oldServer(cloud: ReturnType<typeof fakeCloud>, nulls = false): WardrobeCloudPort {
+    return { ...cloud.port,
+      apply: async (user, op) => {
+        const value = op.value && op.kind === 'item' ? (({ subcategory: _s, color: _c, ...rest }) => rest)(op.value as WardrobeItem) : op.value;
+        return cloud.port.apply(user, { ...op, value: value as WardrobeItem | null });
+      },
+      snapshot: async user => {
+        const remote = await cloud.port.snapshot(user);
+        return nulls ? { ...remote, items: remote.items.map(row => ({ ...row, subcategory: null, color: null }) as unknown as typeof row) } : remote;
+      } };
+  }
+
+  test('writes both fields and another device reads them back', async () => {
+    const cloud = fakeCloud(), a = device(cloud.port), b = device(cloud.port);
+    await a.service.save('alice', { wardrobeItems: [styled], savedOutfits: [] });
+    expect(cloud.snapshot('alice').items[0]).toMatchObject({ subcategory: 'gomlek', color: 'siyah' });
+    expect((await b.service.load('alice')).wardrobeItems[0]).toMatchObject({ subcategory: 'gomlek', color: 'siyah' });
+  });
+
+  test('a color-only or subtype-only edit is a change that reaches the cloud', async () => {
+    const cloud = fakeCloud(), d = device(cloud.port);
+    const first = await d.service.save('alice', { wardrobeItems: [styled], savedOutfits: [] });
+    await d.service.save('alice', { ...first, wardrobeItems: [{ ...first.wardrobeItems[0], color: 'mavi' }] });
+    expect(cloud.snapshot('alice').items[0].color).toBe('mavi');
+    const second = await d.service.load('alice');
+    await d.service.save('alice', { ...second, wardrobeItems: [{ ...second.wardrobeItems[0], subcategory: 'polo' }] });
+    expect(cloud.snapshot('alice').items[0].subcategory).toBe('polo');
+  });
+
+  test('off-palette color and wrong-category subtype are not sent, but stay local', async () => {
+    const cloud = fakeCloud(), d = device(cloud.port);
+    const result = await d.service.save('alice', { wardrobeItems: [{ ...item, subcategory: 'jean', color: 'neon' }], savedOutfits: [] });
+    expect(cloud.snapshot('alice').items[0]).not.toHaveProperty('color');
+    expect(cloud.snapshot('alice').items[0]).not.toHaveProperty('subcategory');
+    expect(result.wardrobeItems[0]).toMatchObject({ subcategory: 'jean', color: 'neon' });
+    expect(result.wardrobeSync?.state).toBe('synced');
+  });
+
+  test('old items without the fields still sync and load unchanged', async () => {
+    const cloud = fakeCloud(), a = device(cloud.port), b = device(cloud.port);
+    await a.service.save('alice', { wardrobeItems: [item], savedOutfits: [] });
+    const loaded = (await b.service.load('alice')).wardrobeItems[0];
+    const { id: _id, ...rest } = item; expect(loaded).toMatchObject(rest); expect(loaded).not.toHaveProperty('color'); expect(loaded).not.toHaveProperty('subcategory');
+  });
+
+  test.each([false, true])('pre-migration server (null fields: %s) never erases local values', async nulls => {
+    const cloud = fakeCloud(), d = device(oldServer(cloud, nulls));
+    await d.service.save('alice', { wardrobeItems: [styled], savedOutfits: [] });
+    const result = await d.service.load('alice');
+    expect(result.wardrobeItems[0]).toMatchObject({ subcategory: 'gomlek', color: 'siyah' });
+    expect(result.wardrobeSync?.state).toBe('synced');
+  });
+
+  test('malformed style fields in a snapshot are dropped instead of failing the sync', async () => {
+    const cloud = fakeCloud(), d = device(cloud.port);
+    await d.service.save('alice', { wardrobeItems: [styled], savedOutfits: [] });
+    cloud.records.get('alice')!.items[0] = { ...cloud.snapshot('alice').items[0], color: 42, subcategory: 'x'.repeat(41) } as never;
+    const result = await createWardrobePersistence(d.storage, cloud.port).load('alice');
+    expect(result.wardrobeSync?.state).toBe('synced');
+    expect(result.wardrobeItems[0]).toMatchObject({ subcategory: 'gomlek', color: 'siyah' });
+  });
+
+  test('migration keeps live bodies, adds key-preserving fields and checks its contracts', () => {
+    const sql = readFileSync('supabase/migrations/202610270001_wardrobe_style_fields_sync.sql', 'utf8');
+    expect(sql).toMatch(/^begin;/m); expect(sql).toMatch(/^commit;/m);
+    expect(sql.match(/create or replace function public\.wardrobe_apply_change\(/g)).toHaveLength(1);
+    expect(sql.match(/create or replace function public\.wardrobe_cloud_snapshot\(/g)).toHaveLength(1);
+    expect(sql).not.toMatch(/security\s+definer/i);
+    expect(sql).toContain("p_value ? 'subcategory'"); expect(sql).toContain("p_value ? 'color'");
+    expect(sql).toContain('^[a-z0-9_]{1,40}$');
+    for (const check of ['WARDROBE_STYLE_FIELDS_FENCE', 'WARDROBE_STYLE_FIELDS_ACL', 'WARDROBE_STYLE_FIELDS_V2_WRAPPER',
+      'WARDROBE_STYLE_FIELDS_SECURITY', 'WARDROBE_STYLE_FIELDS_COLUMNS', 'WARDROBE_STYLE_FIELDS_SOURCE']) expect(sql).toContain(check);
+    expect(sql).not.toMatch(/\b(drop|alter)\s+(table|function|trigger)\b/i);
+    expect(sql).not.toMatch(/^\s*(grant|revoke)\b/im);
+  });
+});

@@ -4,6 +4,7 @@ import { measureWardrobeStage, notifyWardrobeStage, recordWardrobeSyncDiagnostic
 import type { WardrobeItem, SavedOutfit, WardrobeItemConfirmation } from '../types/wardrobe';
 import { validWardrobeOriginalPath } from '../types/wardrobe';
 import { isGarmentCategory } from '../types/product';
+import { COLORS, isValidSubtype } from '../lib/styleVocabulary';
 export interface WardrobeSync { state: 'synced' | 'pending' | 'conflict'; pending: number; message?: string }
 export interface WardrobeData { wardrobeItems: WardrobeItem[]; savedOutfits: SavedOutfit[]; wardrobeSync?: WardrobeSync; wardrobeConfirmedItems?: Record<string, WardrobeItemConfirmation>; wardrobeCutoutV2Available?: boolean; wardrobeCutoutV2Ready?: boolean }
 export interface CloudItem extends WardrobeItem { updatedAt: string }
@@ -64,11 +65,26 @@ const remoteImage = (value?: string) => {
   try { const url = new URL(value ?? ''); return url.protocol === 'https:' && !url.username && !url.password && !url.pathname.includes('/object/sign/'); }
   catch { return false; }
 };
+const PALETTE_COLORS = new Set(COLORS.map(color => color.slug));
+// Optional style fields: only vocabulary values sync; anything else stays device-local.
+const styleFields = (item: WardrobeItem): { subcategory?: string; color?: string } => ({
+  ...(isValidSubtype(item.category, item.subcategory) ? { subcategory: item.subcategory } : {}),
+  ...(typeof item.color === 'string' && PALETTE_COLORS.has(item.color) ? { color: item.color } : {}),
+});
 const fields = (kind: Pending['kind'], value: Value) => kind === 'item'
-  ? { title: value.title, imageUrl: (value as WardrobeItem).imageStoragePath ?? (value as WardrobeItem).imageUrl, category: (value as WardrobeItem).category, brand: (value as WardrobeItem).brand }
+  ? { title: value.title, imageUrl: (value as WardrobeItem).imageStoragePath ?? (value as WardrobeItem).imageUrl, category: (value as WardrobeItem).category, brand: (value as WardrobeItem).brand,
+      ...styleFields(value as WardrobeItem) }
   : { title: value.title, wardrobeItemIds: (value as SavedOutfit).wardrobeItemIds, catalogProductIds: (value as SavedOutfit).catalogProductIds,
       imageUrl: remoteImage(value.imageUrl) ? value.imageUrl : undefined };
-const same = (kind: Pending['kind'], left: Value, right: Value) => JSON.stringify(fields(kind, left)) === JSON.stringify(fields(kind, right));
+/**
+ * `partial`: one side may come from an older writer (pre-migration RPC or v1 client) that never
+ * carries style fields; a field absent on either side is unknown, not a difference.
+ */
+const same = (kind: Pending['kind'], left: Value, right: Value, partial = false) => {
+  const a: Record<string, unknown> = fields(kind, left), b: Record<string, unknown> = fields(kind, right);
+  if (partial && kind === 'item') for (const name of ['subcategory', 'color']) if (a[name] === undefined || b[name] === undefined) { delete a[name]; delete b[name]; }
+  return JSON.stringify(a) === JSON.stringify(b);
+};
 const validateData = (data: WardrobeData) => {
   if (!data || !Array.isArray(data.wardrobeItems) || !Array.isArray(data.savedOutfits) ||
     data.wardrobeItems.some(item => !item || typeof item.id !== 'string' || !item.id || typeof item.title !== 'string' || typeof item.imageUrl !== 'string' || typeof item.brand !== 'string' || typeof item.createdAt !== 'string' || !isGarmentCategory(item.category)) ||
@@ -77,6 +93,11 @@ const validateData = (data: WardrobeData) => {
 const validateSnapshot = (snapshot: CloudSnapshot, owner: string) => {
   if (!snapshot || !Array.isArray(snapshot.items) || !Array.isArray(snapshot.outfits) || snapshot.items.length>1000 || snapshot.outfits.length>1000) throw new Error('Bulut envanteri okunamadı.');
   validateData({ wardrobeItems: snapshot.items, savedOutfits: snapshot.outfits });
+  // Null (pre-sync rows) or malformed style fields are dropped so they never overwrite local values.
+  for (const row of snapshot.items) {
+    const valid = styleFields(row);
+    for (const name of ['subcategory', 'color'] as const) if (valid[name] === undefined) delete row[name];
+  }
   for (const rows of [snapshot.items,snapshot.outfits]) {
     if (new Set(rows.map(row=>row.id)).size!==rows.length || rows.some(row=>!uuid.test(row.id)||typeof row.updatedAt!=='string'||!row.updatedAt)) throw new Error('Bulut sürümü doğrulanamadı.');
   }
@@ -115,7 +136,7 @@ export function createWardrobePersistence(storage: Storage, cloud: WardrobeCloud
             const previouslyMapped=!!j.ids[`${kind}:${value.id}`];
             rows.push(clone(value) as WardrobeItem & SavedOutfit);
             j.pending.push({kind,id:idFor(j,kind,value.id),localId:value.id,expected:null,value:clone(value),dispatched:false,...(previouslyMapped?{conflict:true}:{})});
-          } else if(!same(kind,old,value)) j.externalConflict=true;
+          } else if(!same(kind,old,value,true)) j.externalConflict=true;
           else Object.assign(old,{...value,...old});
         }
         await persist(owner,j);
@@ -140,7 +161,7 @@ export function createWardrobePersistence(storage: Storage, cloud: WardrobeCloud
       if (!value.imageStoragePath && !remoteImage(value.imageUrl)) return 'media';
       if (op.expected===null && value.cutoutProtocol===2 && snapshot.cutoutVersion!==2) return 'media';
       return { id: op.id, title: value.title, category: value.category, brand: value.brand,
-        imageUrl: value.imageStoragePath ? '' : value.imageUrl, createdAt: value.createdAt,
+        imageUrl: value.imageStoragePath ? '' : value.imageUrl, createdAt: value.createdAt, ...styleFields(value),
         ...(value.imageStoragePath ? { imageStoragePath: value.imageStoragePath } : {}),
         ...(op.expected===null && value.cutoutProtocol===2 ? {cutoutProtocol:2} : {}) };
     }
@@ -189,7 +210,7 @@ export function createWardrobePersistence(storage: Storage, cloud: WardrobeCloud
     if (snapshot) for (const item of j.cache.wardrobeItems) {
       const id = j.ids[`item:${item.id}`] ?? item.id;
       const row = snapshot.items.find(value => value.id === id);
-      if (!row || j.pending.some(op => op.kind === 'item' && (op.id === id || op.localId === item.id)) || !same('item', item, row)) continue;
+      if (!row || j.pending.some(op => op.kind === 'item' && (op.id === id || op.localId === item.id)) || !same('item', item, row, true)) continue;
       confirmed[item.id] = { owner, cloudItemId: id, originalPath: wardrobeOriginalIdentity(row),
         ...(snapshot.cutoutVersion === 2 && row.cutoutProtocol === 2 ? { cutoutProtocol: 2, originalVersion: row.originalVersion } : {}) };
     }
@@ -263,7 +284,7 @@ export function createWardrobePersistence(storage: Storage, cloud: WardrobeCloud
         }
         const row = (op.kind === 'item' ? remote.items : remote.outfits).find(row => row.id === op.id);
         const v2Create=op.kind==='item' && op.expected===null && (op.value as WardrobeItem | null)?.cutoutProtocol===2;
-        if ((value === null && !row) || (value !== null && row && same(op.kind, value, row) && (!v2Create || (row as WardrobeItem).cutoutProtocol===2))) {
+        if ((value === null && !row) || (value !== null && row && same(op.kind, value, row, true) && (!v2Create || (row as WardrobeItem).cutoutProtocol===2))) {
           j.pending = j.pending.filter(p => p !== op); await persist(owner, j, onStage); continue;
         }
         if ((op.expected === null && (row || op.dispatched)) || (op.expected !== null && (!row || row.updatedAt !== op.expected))) {
