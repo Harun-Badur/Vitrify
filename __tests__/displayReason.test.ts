@@ -24,3 +24,14 @@ describe('pickDisplayReason', () => {
     expect(pickDisplayReason([PRICE_BAND_REASON_LABEL], false)).toBe(PRICE_BAND_REASON_LABEL);
   });
 });
+
+describe('price-band label stays in sync with the reason producers', () => {
+  const { readFileSync } = require('fs') as typeof import('fs');
+  const { join } = require('path') as typeof import('path');
+  const sources = ['lib/reasons.ts', 'supabase/functions/_shared/reasons.ts'];
+
+  it.each(sources)('%s emits exactly the filtered label', (file) => {
+    const source = readFileSync(join(__dirname, '..', file), 'utf8');
+    expect(source).toContain(`label: '${PRICE_BAND_REASON_LABEL}'`);
+  });
+});
