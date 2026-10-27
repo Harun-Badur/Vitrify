@@ -198,7 +198,7 @@ describe('Discover recommendation wiring', () => {
       mockIdleTasks.set(id, () => callback({ didTimeout: false, timeRemaining: () => 50 }));
       return id;
     });
-    global.cancelIdleCallback = jest.fn(id => { mockIdleTasks.delete(id); });
+    global.cancelIdleCallback = jest.fn(id => { mockIdleTasks.delete(id as number); });
     mockFocused = true;
     mockUser = null;
     mockState.sessionUserId = null; mockState.sessionSyncStatus = 'idle';

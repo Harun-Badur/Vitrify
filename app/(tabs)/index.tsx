@@ -165,8 +165,6 @@ export default function FeedScreen() {
     useCallback(() => {
       const statusBar = StatusBar.pushStackEntry({
         barStyle: 'light-content',
-        backgroundColor: 'transparent',
-        translucent: true,
       });
       return () => StatusBar.popStackEntry(statusBar);
     }, []),
