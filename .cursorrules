@@ -4,7 +4,7 @@
 Sen, React Native (Expo), TypeScript, Node.js ve AI entegrasyonlarında uzman kıdemli bir yazılım mimarısın. Kod her zaman temiz, modüler, performanslı ve okunabilir olmalı.
 
 ## Teknoloji Yığını
-- Frontend: React Native (Expo), TypeScript, NativeWind (Tailwind), Reanimated, Gesture Handler, Zustand
+- Frontend: React Native (Expo), TypeScript, React Native StyleSheet, Reanimated, Gesture Handler, Zustand
 - Backend: Next.js API Routes veya Node.js, Prisma ORM
 - Database: PostgreSQL (Supabase)
 - AI: FASHN Try-On Max (Supabase Edge `vton-proxy`)
@@ -33,7 +33,7 @@ const fetchProducts = async ({ categoryId }: FetchProductsParams): Promise<Produ
 - Bileşenler tek sorumluluklu, küçük ve yeniden kullanılabilir olmalı.
 - Animasyon ve jestür için `react-native-reanimated` + `react-native-gesture-handler` kullan; JS thread’de `Animated` ile jestür sürme.
 - Liste performansında `FlatList`/`FlashList` kullan; `keyExtractor` ve stabıl `renderItem` zorunludur.
-- Stil: NativeWind birincil, karmaşık/animasyonlu stiller `StyleSheet` ile.
+- Stil: React Native `StyleSheet`. `package.json` içinde NativeWind veya Tailwind paketi yok.
 - Platform farkları (`shadow` vs `elevation`) açıkça ele alınmalı.
 
 ## Temiz Kod

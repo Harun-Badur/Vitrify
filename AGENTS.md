@@ -21,7 +21,7 @@ I1. DB: tüm kullanıcı tabloları auth.users'a (doğrudan veya public.users ü
 I2. Storage: tek yazıcı Edge Function (service-role). İstemci rolleri (anon/authenticated) için storage.objects
     üzerinde INSERT/UPDATE/DELETE politikası YOK; bucket'lar private. İmzalı yükleme URL'si ve TUS kullanılmaz
     (imzalı yükleme URL'si 2 saat geçerli ve RLS gerektirmez).
-I3. Silme sırası: fence -> drain -> sweep -> doğrula -> auth kullanıcısını sil -> tamamlandı kaydı.
+I3. Silme sırası: fence -> drain -> sweep -> doğrula -> operasyon tablosu temizliği (storage_resolutions -> storage_operations -> provider_operations) -> auth kullanıcısını sil -> tamamlandı kaydı.
     Her adım hatasında: status='failed', auth kullanıcısı SİLİNMEZ, fence açık kalır, yeniden denenebilir.
 I4. Edge yükleme fonksiyonu: yazmadan ÖNCE fence kontrolü, yazdıktan SONRA tekrar kontrol; fence görürse
     kendi yazdığı nesneyi siler ve hata döner. Ek olarak günlük janitor: sahibi olmayan veya silinmekte olan
