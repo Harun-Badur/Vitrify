@@ -7,6 +7,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_WARDROBE_ON_DEVICE_CUTOUT": "true"
+      },
       "android": {
         "buildType": "apk"
       },
