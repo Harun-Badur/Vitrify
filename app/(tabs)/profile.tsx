@@ -73,6 +73,7 @@ import {
   type AccountDetails,
 } from '../../services/accountDetailsService';
 import { useAppStore } from '../../store/useAppStore';
+import { logPerfSummary, perfTraceEnabled } from '../../lib/perfTrace';
 import { cancelScheduledFeedRefreshOnOwnerChange, profileChangeAffectsFeed, scheduleFeedRefreshAfterProfileSave } from '../../lib/profileSaveFeedRefresh';
 import { createAccountDeletionRuntime } from '../../services/accountDeletionRuntime';
 import {
@@ -596,7 +597,12 @@ export default function ProfileScreen() {
     <View style={[styles.root, { paddingTop: insets.top + spacing.md,
       paddingLeft: Math.max(insets.left, spacing.lg),
       paddingRight: Math.max(insets.right, spacing.lg) }]}>
-      <Text style={styles.header}>Profil</Text>
+      <Text
+        style={styles.header}
+        onLongPress={perfTraceEnabled() ? () => Alert.alert('Performans özeti', logPerfSummary() || 'Henüz ölçüm yok.') : undefined}
+      >
+        Profil
+      </Text>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}

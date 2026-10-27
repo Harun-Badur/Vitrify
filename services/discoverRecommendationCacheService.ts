@@ -1,4 +1,5 @@
 import { measureDiscoverStage, measureDiscoverStageSync } from '../lib/discoverStageTiming';
+import { begin, mark, span } from '../lib/perfTrace';
 import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '../lib/accountDeviceWork';
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
@@ -45,7 +46,7 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
   };
   const stopped = new Promise<CachedFinal[]>(resolve => {
     onAbort = () => { controller.abort(); resolve([]); };
-    timer = setTimeout(() => { report(); onAbort(); }, CACHE_READ_TIMEOUT_MS);
+    timer = setTimeout(() => { mark('cache_read_timeout'); report(); onAbort(); }, CACHE_READ_TIMEOUT_MS);
     signal.addEventListener('abort', onAbort, { once: true });
   });
   try {
@@ -207,6 +208,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
           if (__DEV__ && finalHit.status === 'hit') discoverPrefetchTrace(session).stage(product, 'finalReadyAt', 'final_memory_hit');
           let result = finalHit.status === 'hit' ? finalHit.value : undefined;
           if (result === undefined) {
+            const endComboCompute = begin('combo_compute');
             for (const row of records) {
               if (row.anchor_product_id !== anchor.id) continue;
               const cachedContext = anchorContext(catalog, anchor, request.wardrobeItems, exposure, row.catalog_version || undefined);
@@ -255,6 +257,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
             if (!current(version)) break;
             // Cache under the local context too, so a backend catalog version does not cause repeated reads.
             memory.setFinal(finalKey, result);
+            endComboCompute();
             if (__DEV__) discoverPrefetchTrace(session).stage(product, 'memoryWrittenAt');
           }
           finalKey = measureDiscoverStageSync('cache.key', () => createFinalCacheKey(context));
@@ -300,7 +303,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
   });
   if (signal.aborted) stop();
   else {
-    records = await measureDiscoverStage('cache.backend', () => readCachedFinals(request, ownerId, controller.signal, onCacheError));
+    records = await measureDiscoverStage('cache.backend', () => span('cache_read', () => readCachedFinals(request, ownerId, controller.signal, onCacheError)));
     ready = true;
     if (!controller.signal.aborted) schedule();
   }

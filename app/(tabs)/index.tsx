@@ -1,4 +1,5 @@
 import { useOwnedState } from '../../hooks/useOwnedState';
+import { useDiscoverPerfTrace } from '../../hooks/useDiscoverPerfTrace';
 import {
   useCallback,
   useEffect,
@@ -506,6 +507,8 @@ export default function FeedScreen() {
     router.push('/liked');
   }, [router]);
 
+  const noteSwipe = useDiscoverPerfTrace(recommendationSession, currentProduct, recommendationRevision);
+
   const handleSwipeRight = useCallback(
     (product: Product): void => {
       if (!canLike) {
@@ -513,13 +516,14 @@ export default function FeedScreen() {
         return;
       }
       try {
+        noteSwipe();
         swipeRight(product);
       } catch (error) {
         logger.error('Beğeni işlenemedi', { code: 'FAVORITE_START_FAILED' });
         Alert.alert('Beğeni kaydedilemedi', 'Bağlantını kontrol edip tekrar dene.');
       }
     },
-    [canLike, handleRequireAuth, swipeRight],
+    [canLike, handleRequireAuth, noteSwipe, swipeRight],
   );
 
   /** Store commit yalnız gesture settle sonrası (SwipeCard onPass). */
@@ -531,12 +535,13 @@ export default function FeedScreen() {
           discoverPrefetchTrace(preparationInputs.current.session).recordSwipe(
             preparationInputs.current.session, product, products[1]);
         }
+        noteSwipe();
         swipeLeft(product);
       } catch (error) {
         logger.error('Geçme işlenemedi', { error, productId: product.id });
       }
     },
-    [swipeLeft],
+    [noteSwipe, swipeLeft],
   );
 
   const [tryOnProduct, setTryOnProduct] = useOwnedState<Product | null>(userId, null);

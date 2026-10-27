@@ -36,6 +36,7 @@ import type {
   SessionIntent,
 } from '../types/recommendation';
 import { DEFAULT_FEED_MODE } from '../types/recommendation';
+import { span } from '../lib/perfTrace';
 
 export { filterProducts } from '../src/intelligence/filters/productFilters';
 export type { ProductFilters } from '../src/intelligence/filters/productFilters';
@@ -502,7 +503,7 @@ const fetchEdgeFeed = async (
   }
 };
 
-export const fetchFeedProducts = async (
+const fetchFeedProductsUntraced = async (
   limit = DEFAULT_FEED_LIMIT,
   userId: string | null = null,
   mode: FeedMode = DEFAULT_FEED_MODE,
@@ -519,7 +520,7 @@ export const fetchFeedProducts = async (
   setLastFeedMode(telemetryMode ?? mode);
 
   if (userId) {
-    const edge = await fetchEdgeFeed(userId, intent, limit, mode, filters, excludeIds);
+    const edge = await span('feed_edge_rank', () => fetchEdgeFeed(userId, intent, limit, mode, filters, excludeIds));
     const excluded = new Set(excludeIds);
     if (edge && edge.has_more === true && !edge.items.some(item => !excluded.has(item.product.id))) {
       throw new FeedServiceError('FEED_RESPONSE');
@@ -579,7 +580,7 @@ export const fetchFeedProducts = async (
   }
 
   try {
-    const ranked = await rankLocally(catalog, userId, intent, limit * 3, mode);
+    const ranked = await span('feed_local_rank', () => rankLocally(catalog, userId, intent, limit * 3, mode));
     const selected = selectLocalFeed(ranked, filters, limit);
     logger.debug('recs-feed timing', {
       ms: Date.now() - startedAt,
@@ -611,3 +612,9 @@ export const fetchFeedProducts = async (
     };
   }
 };
+
+/** Same behavior as before; only the total duration is timed (opt-in, see lib/perfTrace). */
+export const fetchFeedProducts = (
+  ...args: Parameters<typeof fetchFeedProductsUntraced>
+): ReturnType<typeof fetchFeedProductsUntraced> =>
+  span('feed_fetch_total', () => fetchFeedProductsUntraced(...args));
