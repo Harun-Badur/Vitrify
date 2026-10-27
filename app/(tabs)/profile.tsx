@@ -73,7 +73,7 @@ import {
   type AccountDetails,
 } from '../../services/accountDetailsService';
 import { useAppStore } from '../../store/useAppStore';
-import { profileChangeAffectsFeed, scheduleFeedRefreshAfterProfileSave } from '../../lib/profileSaveFeedRefresh';
+import { cancelScheduledFeedRefreshOnOwnerChange, profileChangeAffectsFeed, scheduleFeedRefreshAfterProfileSave } from '../../lib/profileSaveFeedRefresh';
 import { createAccountDeletionRuntime } from '../../services/accountDeletionRuntime';
 import {
   createModelPhotoSignedUrl,
@@ -234,6 +234,7 @@ export default function ProfileScreen() {
     refresh(true);
     return () => { active=false; unsubscribe(); };
   }, [userId, sessionUserId, sessionSyncStatus, studio]));
+  useEffect(() => cancelScheduledFeedRefreshOnOwnerChange(sessionUserId), [sessionUserId]);
   const journey = useMemo(() => buildStyleJourney({ userId, sessionUserId, sessionSyncStatus,
     wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, profile: studio, calculatedProfile }),
   [userId, sessionUserId, sessionSyncStatus, wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, studio, calculatedProfile]);
@@ -575,7 +576,10 @@ export default function ProfileScreen() {
       const next = await upsertStudioProfile(userId, patch);
       setStudio((previous) => ({ ...previous, ...next }));
       if (profileChangeAffectsFeed(studio, next)) {
-        scheduleFeedRefreshAfterProfileSave(() => useAppStore.getState().refreshFeedPreservingCurrent());
+        scheduleFeedRefreshAfterProfileSave(
+          () => useAppStore.getState().refreshFeedPreservingCurrent(),
+          { owner: userId, activeOwner: () => useAppStore.getState().sessionUserId },
+        );
       }
       return true;
     } catch (error) {

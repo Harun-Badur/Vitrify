@@ -1,6 +1,7 @@
 import {
   FEED_REFRESH_DEBOUNCE_MS,
   cancelScheduledFeedRefresh,
+  cancelScheduledFeedRefreshOnOwnerChange,
   profileChangeAffectsFeed,
   scheduleFeedRefreshAfterProfileSave,
 } from '../lib/profileSaveFeedRefresh';
@@ -67,6 +68,46 @@ describe('scheduleFeedRefreshAfterProfileSave', () => {
     scheduleFeedRefreshAfterProfileSave(refresh);
     jest.advanceTimersByTime(FEED_REFRESH_DEBOUNCE_MS);
     await Promise.resolve();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('account change', () => {
+  beforeEach(() => { jest.useFakeTimers(); });
+  afterEach(() => { cancelScheduledFeedRefresh(); jest.useRealTimers(); });
+
+  it('does not refresh when the user who saved is no longer active at fire time', () => {
+    const refresh = jest.fn().mockResolvedValue(undefined);
+    let active: string | null = 'A';
+    scheduleFeedRefreshAfterProfileSave(refresh, { owner: 'A', activeOwner: () => active });
+    jest.advanceTimersByTime(FEED_REFRESH_DEBOUNCE_MS - 1);
+    active = 'B';
+    jest.advanceTimersByTime(1);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('refreshes as before when the same user is still active', () => {
+    const refresh = jest.fn().mockResolvedValue(undefined);
+    scheduleFeedRefreshAfterProfileSave(refresh, { owner: 'A', activeOwner: () => 'A' });
+    jest.advanceTimersByTime(FEED_REFRESH_DEBOUNCE_MS);
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the pending refresh when the owner changes or signs out', () => {
+    for (const next of ['B', null]) {
+      const refresh = jest.fn().mockResolvedValue(undefined);
+      scheduleFeedRefreshAfterProfileSave(refresh, { owner: 'A', activeOwner: () => 'A' });
+      cancelScheduledFeedRefreshOnOwnerChange(next);
+      jest.advanceTimersByTime(FEED_REFRESH_DEBOUNCE_MS);
+      expect(refresh).not.toHaveBeenCalled();
+    }
+  });
+
+  it('keeps the pending refresh while the owner is unchanged', () => {
+    const refresh = jest.fn().mockResolvedValue(undefined);
+    scheduleFeedRefreshAfterProfileSave(refresh, { owner: 'A', activeOwner: () => 'A' });
+    cancelScheduledFeedRefreshOnOwnerChange('A');
+    jest.advanceTimersByTime(FEED_REFRESH_DEBOUNCE_MS);
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

@@ -18,20 +18,39 @@ export const profileChangeAffectsFeed = (
 ): boolean => feedSignature(previous) !== feedSignature(next);
 
 let timer: ReturnType<typeof setTimeout> | null = null;
+let scheduledOwner: string | null = null;
 
 export const cancelScheduledFeedRefresh = (): void => {
   if (timer !== null) clearTimeout(timer);
   timer = null;
+  scheduledOwner = null;
 };
 
-/** Consecutive saves collapse into a single refresh; a failed refresh is dropped silently. */
+/** Sign-out or a different user id drops a refresh that the previous user queued. */
+export const cancelScheduledFeedRefreshOnOwnerChange = (activeOwner: string | null): void => {
+  if (timer !== null && scheduledOwner !== null && scheduledOwner !== activeOwner) cancelScheduledFeedRefresh();
+};
+
+interface ScheduleOwner {
+  owner: string;
+  activeOwner: () => string | null;
+}
+
+/**
+ * Consecutive saves collapse into a single refresh; a failed refresh is dropped silently.
+ * With an owner, the refresh also does not run unless that user is still the active one.
+ */
 export const scheduleFeedRefreshAfterProfileSave = (
   refresh: () => Promise<void>,
+  guard?: ScheduleOwner,
   delayMs: number = FEED_REFRESH_DEBOUNCE_MS,
 ): void => {
   cancelScheduledFeedRefresh();
+  scheduledOwner = guard?.owner ?? null;
   timer = setTimeout(() => {
     timer = null;
+    scheduledOwner = null;
+    if (guard && guard.activeOwner() !== guard.owner) return;
     void refresh().catch(() => undefined);
   }, delayMs);
 };
