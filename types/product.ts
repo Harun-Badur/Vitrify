@@ -79,8 +79,10 @@ export interface Product {
   brandSlug?: string;
   priceBand?: string;
   impressionCount?: number;
-  /** recs-feed reasons[0]; yoksa chip gösterilmez. UI üretmez. */
+  /** recs-feed reasons[0]; geriye uyumluluk için tutulur, kart artık insight chip çizer. */
   reason?: string;
+  /** recs-feed reasons dizisi; insight chip seçicisinin girdisi. Eski kayıtlarda olmayabilir. */
+  reasons?: string[];
 }
 
 export interface LikedProduct {

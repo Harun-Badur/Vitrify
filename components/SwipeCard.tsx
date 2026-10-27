@@ -41,6 +41,9 @@ import {
 import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
+import InsightChip from './InsightChip';
+import InsightWhySheet from './InsightWhySheet';
+import type { InsightChip as InsightChipModel } from '../lib/insightChip';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 import { logger } from '../lib/logger';
 import {
@@ -78,7 +81,6 @@ const HEART_BURST_PEAK_SCALE = 1.18;
 /** Soft crossfade when bitmap arrives; pairs with surface placeholder (no white flash). */
 const IMAGE_CROSSFADE_MS = 0;
 const ACTION_ICON_SIZE = 16;
-const REASON_ICON_SIZE = 12;
 /** Horizontal gallery: activate after 6px X; fail if 12px Y first (card vertical wins). */
 const IMAGE_SWIPE_ACTIVE_OFFSET_X_PX = 6;
 const IMAGE_SWIPE_FAIL_OFFSET_Y_PX = 12;
@@ -134,6 +136,10 @@ export interface SwipeCardProps {
   recommendationStatus?: RecommendationStatus;
   selectedRecommendationProductIds?: readonly string[];
   onSelectRecommendation?: (product: Product) => void;
+  /** Seçicinin bu karta atadığı tek chip; null/undefined ise chip çizilmez. */
+  insightChip?: InsightChipModel | null;
+  onOpenInsightWardrobe?: () => void;
+  onHideInsightKind?: (chip: InsightChipModel) => void;
 }
 
 const formatPrice = (product: Product): string =>
@@ -181,6 +187,9 @@ function SwipeCard({
   recommendationStatus,
   selectedRecommendationProductIds,
   onSelectRecommendation,
+  insightChip,
+  onOpenInsightWardrobe,
+  onHideInsightKind,
 }: SwipeCardProps) {
   const isCurrent = pageIndex === 0;
   /** Pose slot index — parent atomically writes on deck remap; do not sync from React. */
@@ -627,8 +636,8 @@ function SwipeCard({
     setIsImageLoading(false);
   }, []);
 
-  const reasonLabel = product.reason?.trim() ?? '';
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isInsightOpen, setIsInsightOpen] = useState(false);
 
   return (
     <Animated.View
@@ -747,13 +756,12 @@ function SwipeCard({
                 <Heart color={colors.accent} fill={colors.accent} size={64} />
               </Animated.View>
 
-              {reasonLabel.length > 0 ? (
-                <View style={styles.reasonChip} pointerEvents="none">
-                  <Sparkles color={colors.accent} size={REASON_ICON_SIZE} />
-                  <Text style={styles.reasonChipText} numberOfLines={1}>
-                    {reasonLabel}
-                  </Text>
-                </View>
+              {insightChip ? (
+                <InsightChip
+                  chip={insightChip}
+                  active={isCurrent}
+                  onPress={() => setIsInsightOpen(true)}
+                />
               ) : null}
 
               <PressableScale
@@ -852,6 +860,21 @@ function SwipeCard({
           status={recommendationStatus}
           selectedProductIds={selectedRecommendationProductIds}
           onSelectProduct={onSelectRecommendation}
+        />
+      ) : null}
+      {insightChip ? (
+        <InsightWhySheet
+          chip={insightChip}
+          visible={isCurrent && isInsightOpen}
+          onClose={() => setIsInsightOpen(false)}
+          onOpenWardrobe={() => {
+            setIsInsightOpen(false);
+            onOpenInsightWardrobe?.();
+          }}
+          onHideKind={() => {
+            setIsInsightOpen(false);
+            onHideInsightKind?.(insightChip);
+          }}
         />
       ) : null}
       <Modal
@@ -1002,27 +1025,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  reasonChip: {
-    position: 'absolute',
-    left: spacing.lg,
-    bottom: 30,
-    maxWidth: '82%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.chip,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  reasonChipText: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: '700',
-    flexShrink: 1,
   },
   authButton: {
     position: 'absolute',

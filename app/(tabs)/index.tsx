@@ -73,6 +73,13 @@ import { discoverPrefetchTrace } from '../../lib/discoverPrefetchInstrumentation
 import { loadDiscoverRecommendationPacket } from '../../services/discoverRecommendationCacheService';
 import { complementaryProductsForDisplay } from '../../src/intelligence/recommendations/complementaryProductsForDisplay';
 import { DEFAULT_SEARCH_BRANDS } from '../../lib/searchQueryParse';
+import {
+  assignInsightChips,
+  createInsightChipSequence,
+  type InsightChip,
+  type InsightChipKind,
+  type InsightWardrobeItem,
+} from '../../lib/insightChip';
 import type { DiscoverRecommendation } from '../../src/intelligence/recommendations/discoverRecommendation';
 import { useAppStore } from '../../store/useAppStore';
 import { getProductImages, type Product } from '../../types/product';
@@ -84,6 +91,9 @@ const SEARCH_TRACK_DEBOUNCE_MS = 500;
 /** Header, clip sınırında kesilen kartın üstünde kalır. */
 const HEADER_Z_INDEX = 7;
 const EMPTY_RECOMMENDATIONS: readonly DiscoverRecommendation[] = [];
+// Discover dolap girdisi bilerek boş; dolap kanıtlı chip'ler şimdilik üretilmez.
+const EMPTY_INSIGHT_WARDROBE: readonly InsightWardrobeItem[] = [];
+const NO_HIDDEN_INSIGHT_KINDS: ReadonlySet<InsightChipKind> = new Set();
 
 type HintStatus = 'checking' | 'visible' | 'hidden';
 
@@ -721,6 +731,19 @@ export default function FeedScreen() {
     return pages;
   }, [currentProducts, lastPassed]);
 
+  // Chip'ler desteye giriş sırasıyla bir kez atanır; frekans sınırı bu sırayı izler.
+  const insightSequenceRef = useRef(createInsightChipSequence());
+  const [hiddenInsightKinds, setHiddenInsightKinds] = useState(NO_HIDDEN_INSIGHT_KINDS);
+  const likeCount = likedProducts.length;
+  const insightChips = useMemo(() => {
+    insightSequenceRef.current = assignInsightChips(deckPages.map(page => page.product),
+      { wardrobe: EMPTY_INSIGHT_WARDROBE, likeCount }, insightSequenceRef.current);
+    return insightSequenceRef.current.chips;
+  }, [deckPages, likeCount]);
+  const handleHideInsightKind = useCallback((chip: InsightChip): void => {
+    setHiddenInsightKinds(previous => new Set(previous).add(chip.kind));
+  }, []);
+
   const deckPoseKey = deckPages
     .map((p) => `${p.product.id}:${p.pageIndex}`)
     .join('|');
@@ -932,6 +955,7 @@ export default function FeedScreen() {
                     : recommendationCatalogState.status === 'ready' && recommendationCatalog.length === 0
                       ? 'ready'
                       : 'loading';
+                const insightChip = insightChips.get(product.id) ?? null;
                 return <SwipeCard
                   key={product.id}
                   product={product}
@@ -953,6 +977,9 @@ export default function FeedScreen() {
                   recommendationStatus={recommendationStatus}
                   selectedRecommendationProductIds={selectedRecommendationProductIds}
                   onSelectRecommendation={canLike ? handleSwipeRight : handleRequireAuth}
+                  insightChip={insightChip && !hiddenInsightKinds.has(insightChip.kind) ? insightChip : null}
+                  onOpenInsightWardrobe={handleOpenLiked}
+                  onHideInsightKind={handleHideInsightKind}
                 />
               })}
             </View>

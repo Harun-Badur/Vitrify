@@ -1,13 +1,10 @@
 import { PRICE_BAND_REASON_LABEL, pickDisplayReason } from '../lib/displayReason';
 
 describe('pickDisplayReason', () => {
-  it('hides the price-band reason when it is the only reason (single or many likes)', () => {
-    expect(pickDisplayReason([PRICE_BAND_REASON_LABEL])).toBeUndefined();
-    expect(pickDisplayReason([PRICE_BAND_REASON_LABEL, PRICE_BAND_REASON_LABEL])).toBeUndefined();
-  });
-
-  it('falls through to the next reason when the price-band reason is first', () => {
-    expect(pickDisplayReason([PRICE_BAND_REASON_LABEL, 'Sevdiğin marka'])).toBe('Sevdiğin marka');
+  it('no longer hides the price-band reason; the insight chip gates it on like evidence', () => {
+    const module = require('../lib/displayReason') as Record<string, unknown>;
+    expect(module.HIDE_PRICE_BAND_REASON).toBeUndefined();
+    expect(pickDisplayReason([PRICE_BAND_REASON_LABEL, 'Sevdiğin marka'])).toBe(PRICE_BAND_REASON_LABEL);
   });
 
   it('keeps other reasons unchanged', () => {
@@ -18,10 +15,6 @@ describe('pickDisplayReason', () => {
   it('returns undefined for empty input', () => {
     expect(pickDisplayReason([])).toBeUndefined();
     expect(pickDisplayReason(['   '])).toBeUndefined();
-  });
-
-  it('shows the price-band reason again when the hide flag is off', () => {
-    expect(pickDisplayReason([PRICE_BAND_REASON_LABEL], false)).toBe(PRICE_BAND_REASON_LABEL);
   });
 });
 

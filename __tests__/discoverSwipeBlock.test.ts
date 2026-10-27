@@ -28,6 +28,8 @@ jest.mock('expo-image', () => ({ Image: Object.assign((props: Record<string, unk
   prefetch: jest.fn(), getCachePathAsync: jest.fn().mockResolvedValue(null),
 }) }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
+jest.mock('../components/InsightChip', () => 'InsightChip');
+jest.mock('../components/InsightWhySheet', () => 'InsightWhySheet');
 const mockImageRenders = jest.fn();
 const mockImageMounts = jest.fn();
 const mockImageUnmounts = jest.fn();

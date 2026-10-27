@@ -492,6 +492,7 @@ const fetchEdgeFeed = async (
     return { ...parsed, items: parsed.items.map(({ productId, ...metadata }) => {
       const product = resolved.get(productId)!;
       product.reason = pickDisplayReason(metadata.reasons);
+      product.reasons = metadata.reasons;
       return { ...metadata, product };
     }) };
   } catch (error) {
