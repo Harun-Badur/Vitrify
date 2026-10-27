@@ -50,12 +50,12 @@ export interface WardrobeSlice {
   hydrateWardrobe: (userId: string) => Promise<void>;
   refreshWardrobe: () => Promise<void>;
   addWardrobeItem: (
-    item: Pick<WardrobeItem, 'title' | 'imageUrl' | 'category' | 'brand'>,
+    item: Pick<WardrobeItem, 'title' | 'imageUrl' | 'category' | 'brand'> & Partial<Pick<WardrobeItem, 'subcategory' | 'color'>>,
     options?: WardrobeAddOptions,
   ) => Promise<void>;
   updateWardrobeItem: (
     id: string,
-    patch: Pick<WardrobeItem, 'title' | 'category' | 'brand'>,
+    patch: Pick<WardrobeItem, 'title' | 'category' | 'brand'> & Partial<Pick<WardrobeItem, 'subcategory' | 'color'>>,
     onStage?: WardrobeProgress,
   ) => Promise<void>;
   removeWardrobeItem: (id: string) => Promise<void>;

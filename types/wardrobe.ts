@@ -22,6 +22,10 @@ export interface WardrobeItem {
   originalVersion?: string;
   cutoutResult?: WardrobeCutoutResult;
   category: GarmentCategory;
+  /** lib/styleVocabulary subtype slug. Local-only for now; older items may not have it. */
+  subcategory?: string;
+  /** lib/styleVocabulary color slug. Local-only for now; older items may not have it. */
+  color?: string;
   brand: string;
   createdAt: string;
 }

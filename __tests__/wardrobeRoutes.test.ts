@@ -127,6 +127,13 @@ describe('Dolap child routes', () => {
       tree.root.findByProps({ accessibilityLabel: label }).props.onPress(),
     );
   };
+  const fillRequired = async (subtype = 'Gömlek', color = 'Siyah'): Promise<void> => {
+    await press(`${subtype} alt türü`);
+    await press(`${color} rengi`);
+  };
+  const titleValue = (): string => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.value as string;
+  const typeTitle = (value: string) =>
+    renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText(value));
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = {};
@@ -180,12 +187,15 @@ describe('Dolap child routes', () => {
           .findByProps({ accessibilityLabel: 'Kıyafet adı' })
           .props.onChangeText('Kendi gömleğim'),
       );
+      await fillRequired();
       await press('Kıyafeti kaydet');
       expect(mockState.addWardrobeItem).toHaveBeenCalledWith({
         title: 'Kendi gömleğim',
         brand: '',
         category: 'upper_body',
         imageUrl: 'file:///cache/selected.jpg',
+        subcategory: 'gomlek',
+        color: 'siyah',
       }, expect.objectContaining({ requestId: expect.any(String), onStage: expect.any(Function) }));
       expect(mockDismissTo).toHaveBeenCalledWith('/(tabs)/liked');
       const picker =
@@ -216,6 +226,7 @@ describe('Dolap child routes', () => {
         .findByProps({ accessibilityLabel: 'Kıyafet adı' })
         .props.onChangeText('Gömlek'),
     );
+    await fillRequired();
     mockState.addWardrobeItem.mockRejectedValueOnce(new Error('disk full'));
     await press('Kıyafeti kaydet');
     expect(Alert.alert).not.toHaveBeenCalledWith('Kaydedilemedi', 'disk full');
@@ -409,6 +420,7 @@ describe('Dolap child routes', () => {
     await mount(AddWardrobeScreen);
     await press('Galeriden seç');
     await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Gömlek'));
+    await fillRequired();
     let finish!: () => void;
     mockState.addWardrobeItem.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
     const save = tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress;
@@ -425,6 +437,7 @@ describe('Dolap child routes', () => {
     await mount(AddWardrobeScreen);
     await press('Galeriden seç');
     await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Gömlek'));
+    await fillRequired();
     let finish!: () => void;
     mockState.addWardrobeItem.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
     await renderer.act(() => { tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress(); });
@@ -434,11 +447,12 @@ describe('Dolap child routes', () => {
     expect(mockDismissTo).not.toHaveBeenCalled();
   });
 
-  it.each([['Üst', 'upper_body'], ['Alt', 'lower_body'], ['Ayakkabı', 'shoes'], ['Aksesuar', 'accessories']])('shows the %s category card and keeps its stored value', async (label, category) => {
+  it.each([['Üst', 'upper_body', 'Gömlek'], ['Alt', 'lower_body', 'Pantolon'], ['Ayakkabı', 'shoes', 'Sneaker'], ['Aksesuar', 'accessories', 'Kemer']])('shows the %s category card and keeps its stored value', async (label, category, subtype) => {
     await mount(AddWardrobeScreen);
     await press('Galeriden seç');
     await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parçam'));
     await press(`${label} kategorisi`);
+    await fillRequired(subtype);
     await press('Kıyafeti kaydet');
     expect(mockState.addWardrobeItem).toHaveBeenCalledWith(expect.objectContaining({ category }), expect.any(Object));
   });
@@ -447,6 +461,8 @@ describe('Dolap child routes', () => {
     mockParams = { id: 'old' };
     mockState.wardrobeItems = [{ id: 'old', title: 'Eski', brand: '', imageUrl: 'old.jpg', category, createdAt: '' }];
     await mount(AddWardrobeScreen);
+    if (category === 'hats') await press('Şapka alt türü');
+    await press('Siyah rengi');
     await press('Kıyafeti kaydet');
     expect(mockState.updateWardrobeItem).toHaveBeenCalledWith('old', expect.objectContaining({ category }), expect.any(Function));
   });
@@ -456,6 +472,7 @@ describe('Dolap child routes', () => {
     await mount(AddWardrobeScreen);
     await press('Galeriden seç');
     await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Gömlek'));
+    await fillRequired();
     mockState.addWardrobeItem.mockRejectedValueOnce(new Error('disk full'));
     await press('Kıyafeti kaydet');
     const options = mockState.addWardrobeItem.mock.calls[0][1];
@@ -483,6 +500,8 @@ describe('Dolap child routes', () => {
     await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parça'));
     await press(`${main} kategorisi`);
     await press(`${sub} alt kategorisi`);
+    if (category === 'hats') await press('Şapka alt türü');
+    await press('Siyah rengi');
     await press('Kıyafeti kaydet');
     expect(mockState.addWardrobeItem).toHaveBeenCalledWith(expect.objectContaining({ category }), expect.any(Object));
   });
@@ -500,6 +519,7 @@ describe('Dolap child routes', () => {
     await mount(AddWardrobeScreen);
     await press('Galeriden seç');
     await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parça'));
+    await fillRequired();
     let finish!: () => void;
     mockState.addWardrobeItem.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
     await renderer.act(() => { tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress(); });
@@ -520,11 +540,136 @@ describe('Dolap child routes', () => {
     await mount(AddWardrobeScreen);
     await press('Galeriden seç');
     await renderer.act(() => tree.root.findByProps({ accessibilityLabel: 'Kıyafet adı' }).props.onChangeText('Parça'));
+    await fillRequired();
     const save = tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' }).props.onPress;
     await renderer.act(async () => { save(); });
     await renderer.act(async () => { save(); });
     expect(mockState.addWardrobeItem).toHaveBeenCalledTimes(1);
     expect(mockDismissTo).toHaveBeenCalledWith('/(tabs)/liked');
+  });
+
+
+  describe('required subtype, color and automatic name', () => {
+    const save = () => tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' });
+    const selected = (label: string) => tree.root.findByProps({ accessibilityLabel: label }).props.accessibilityState.selected;
+
+    it('keeps the second category row and adds Alt tür and Renk rows under it', async () => {
+      await mount(AddWardrobeScreen);
+      for (const label of ['Üst giyim alt kategorisi', 'Elbise alt kategorisi', 'Gömlek alt türü', 'Tişört alt türü', 'Siyah rengi', 'Çok renkli rengi']) {
+        expect(tree.root.findAllByProps({ accessibilityLabel: label }).length).toBeGreaterThan(0);
+      }
+      expect(tree.root.findAllByProps({ children: 'Alt tür' }).length).toBeGreaterThan(0);
+      expect(tree.root.findAllByProps({ children: 'Renk' }).length).toBeGreaterThan(0);
+    });
+
+    it('disables save until a photo, a subtype and a color exist', async () => {
+      await mount(AddWardrobeScreen);
+      expect(save().props.disabled).toBe(true);
+      await press('Galeriden seç');
+      expect(save().props.disabled).toBe(true);
+      await press('Gömlek alt türü');
+      expect(save().props.disabled).toBe(true);
+      await press('Lacivert rengi');
+      expect(save().props.disabled).toBe(false);
+    });
+
+    it('does not save when subtype or color is missing, even if onPress is fired directly', async () => {
+      await mount(AddWardrobeScreen);
+      await press('Galeriden seç');
+      await press('Gömlek alt türü');
+      await press('Kıyafeti kaydet');
+      expect(mockState.addWardrobeItem).not.toHaveBeenCalled();
+    });
+
+    it.each([['Üst', 'Elbise', 'dresses', 'elbise'], ['Aksesuar', 'Çanta', 'bags', 'canta']])(
+      'selects the only subtype of %s / %s automatically and hides the row', async (main, sub, category, slug) => {
+        await mount(AddWardrobeScreen);
+        await press('Galeriden seç');
+        await press(`${main} kategorisi`);
+        await press(`${sub} alt kategorisi`);
+        expect(tree.root.findAllByProps({ accessibilityLabel: `${sub} alt türü` })).toHaveLength(0);
+        expect(tree.root.findAllByProps({ children: 'Alt tür' })).toHaveLength(0);
+        expect(save().props.disabled).toBe(true);
+        await press('Bej rengi');
+        expect(save().props.disabled).toBe(false);
+        await press('Kıyafeti kaydet');
+        expect(mockState.addWardrobeItem).toHaveBeenCalledWith(
+          expect.objectContaining({ category, subcategory: slug, color: 'bej', title: `Bej ${sub.toLocaleLowerCase('tr-TR')}` }), expect.any(Object));
+      });
+
+    it('fills the name from color and subtype, follows later choices, and stops once the user types', async () => {
+      await mount(AddWardrobeScreen);
+      await press('Gömlek alt türü');
+      await press('Lacivert rengi');
+      expect(titleValue()).toBe('Lacivert gömlek');
+      await press('Siyah rengi');
+      expect(titleValue()).toBe('Siyah gömlek');
+      await typeTitle('Benim gömleğim');
+      await press('Kırmızı rengi');
+      await press('Tişört alt türü');
+      expect(titleValue()).toBe('Benim gömleğim');
+    });
+
+    it('names a multi-color item "Çok renkli ..." and stores cok_renkli', async () => {
+      await mount(AddWardrobeScreen);
+      await press('Galeriden seç');
+      await press('Gömlek alt türü');
+      await press('Çok renkli rengi');
+      expect(titleValue()).toBe('Çok renkli gömlek');
+      await press('Kıyafeti kaydet');
+      expect(mockState.addWardrobeItem).toHaveBeenCalledWith(
+        expect.objectContaining({ color: 'cok_renkli', title: 'Çok renkli gömlek' }), expect.any(Object));
+    });
+
+    it('saves an untouched automatic name and an editable manual name', async () => {
+      await mount(AddWardrobeScreen);
+      await press('Galeriden seç');
+      await fillRequired('Polo', 'Mavi');
+      await press('Kıyafeti kaydet');
+      expect(mockState.addWardrobeItem).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Mavi polo', subcategory: 'polo', color: 'mavi' }), expect.any(Object));
+    });
+
+    it('resets an invalid subtype when the category changes but keeps the color', async () => {
+      await mount(AddWardrobeScreen);
+      await press('Galeriden seç');
+      await fillRequired('Gömlek', 'Lacivert');
+      expect(save().props.disabled).toBe(false);
+      await press('Alt kategorisi');
+      expect(selected('Lacivert rengi')).toBe(true);
+      expect(tree.root.findAllByProps({ accessibilityLabel: 'Gömlek alt türü' })).toHaveLength(0);
+      expect(save().props.disabled).toBe(true);
+      await press('Pantolon alt türü');
+      expect(save().props.disabled).toBe(false);
+    });
+
+    it('edit mode loads stored subtype and color and saves them back', async () => {
+      mockParams = { id: 'old' };
+      mockState.wardrobeItems = [{ id: 'old', title: 'Eski ad', brand: '', imageUrl: 'old.jpg', category: 'upper_body',
+        subcategory: 'gomlek', color: 'navy', createdAt: '' } as WardrobeItem];
+      await mount(AddWardrobeScreen);
+      expect(selected('Gömlek alt türü')).toBe(true);
+      expect(selected('Lacivert rengi')).toBe(true);
+      expect(titleValue()).toBe('Eski ad');
+      expect(save().props.disabled).toBe(false);
+      await press('Siyah rengi');
+      expect(titleValue()).toBe('Eski ad');
+      await press('Kıyafeti kaydet');
+      expect(mockState.updateWardrobeItem).toHaveBeenCalledWith('old',
+        expect.objectContaining({ title: 'Eski ad', category: 'upper_body', subcategory: 'gomlek', color: 'siyah' }), expect.any(Function));
+    });
+
+    it('edit mode makes an old item without the fields choose them', async () => {
+      mockParams = { id: 'old' };
+      mockState.wardrobeItems = [{ id: 'old', title: 'Eski ad', brand: '', imageUrl: 'old.jpg', category: 'upper_body', createdAt: '' }];
+      await mount(AddWardrobeScreen);
+      expect(save().props.disabled).toBe(true);
+      await fillRequired('Hoodie', 'Gri');
+      expect(save().props.disabled).toBe(false);
+      await press('Kıyafeti kaydet');
+      expect(mockState.updateWardrobeItem).toHaveBeenCalledWith('old',
+        expect.objectContaining({ title: 'Eski ad', subcategory: 'hoodie', color: 'gri' }), expect.any(Function));
+    });
   });
 
 });

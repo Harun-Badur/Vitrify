@@ -44,6 +44,17 @@ import {
 } from '../../lib/wardrobeProgress';
 import { useAppStore } from '../../store/useAppStore';
 import type { GarmentCategory } from '../../types/product';
+import {
+  canSaveWardrobeForm,
+  editTitle,
+  formFromItem,
+  initialFormState,
+  resolveTitle,
+  selectCategory,
+  selectColor,
+  selectSubcategory,
+} from '../../lib/wardrobeForm';
+import { COLORS, subtypesForCategory } from '../../lib/styleVocabulary';
 
 const groups = [
   { key: 'upper_body', label: 'Üst', icon: Shirt },
@@ -60,6 +71,7 @@ const categories: { key: GarmentCategory; label: string }[] = [
   { key: 'bags', label: 'Çanta' },
   { key: 'hats', label: 'Şapka' },
 ];
+const INITIAL_FORM = initialFormState();
 const groupFor = (category: GarmentCategory) =>
   category === 'dresses'
     ? 'upper_body'
@@ -75,12 +87,9 @@ export default function AddWardrobeScreen() {
   );
   const add = useAppStore((state) => state.addWardrobeItem);
   const update = useAppStore((state) => state.updateWardrobeItem);
-  const [title, setTitle] = useOwnedState(owner, '');
+  const [form, setForm] = useOwnedState(owner, INITIAL_FORM);
   const [brand, setBrand] = useOwnedState(owner, '');
-  const [category, setCategory] = useOwnedState<GarmentCategory>(
-    owner,
-    'upper_body',
-  );
+  const { title, category } = form;
   const [uri, setUri] = useOwnedState(owner, '');
   const [busy, setBusy] = useOwnedState(owner, false);
   const [stage, setStage] = useOwnedState<WardrobeStage>(owner, 'save');
@@ -111,12 +120,11 @@ export default function AddWardrobeScreen() {
     const key = `${owner}:${id ?? ''}`;
     if (existing && initialized.current !== key) {
       initialized.current = key;
-      setTitle(existing.title);
+      setForm(formFromItem(existing));
       setBrand(existing.brand);
-      setCategory(existing.category);
       setUri(existing.imageUrl);
     }
-  }, [owner, id, existing, setTitle, setBrand, setCategory, setUri]);
+  }, [owner, id, existing, setForm, setBrand, setUri]);
   const progress = (value: WardrobeStage) => {
     if (mounted.current) setStage(value);
   };
@@ -194,10 +202,10 @@ export default function AddWardrobeScreen() {
         request.current.id === completedRequest.current)
     )
       return;
-    if (!title.trim() || !uri) {
+    if (!canSaveWardrobeForm(uri, form)) {
       Alert.alert(
         'Kıyafet bilgileri eksik',
-        'Bir fotoğraf seç ve kıyafetine bir ad ver.',
+        'Bir fotoğraf, alt tür ve renk seç.',
       );
       return;
     }
@@ -220,16 +228,24 @@ export default function AddWardrobeScreen() {
               throw new Error('Kıyafet artık dolabında bulunmuyor.');
             await update(
               id,
-              { title: title.trim(), brand: brand.trim(), category },
+              {
+                title: resolveTitle(form),
+                brand: brand.trim(),
+                category,
+                subcategory: form.subcategory,
+                color: form.color,
+              },
               progress,
             );
           } else
             await add(
               {
-                title: title.trim(),
+                title: resolveTitle(form),
                 brand: brand.trim(),
                 category,
                 imageUrl: uri,
+                subcategory: form.subcategory,
+                color: form.color,
               },
               { requestId: request.current.id, onStage: progress },
             );
@@ -252,6 +268,8 @@ export default function AddWardrobeScreen() {
   };
   const formLocked =
     busy || (request.current.owner === owner && !!request.current.id);
+  const submitDisabled = busy || !canSaveWardrobeForm(uri, form);
+  const subtypeOptions = subtypesForCategory(category);
   const activeGroup = groupFor(category);
   const subcategories = categories.filter(
     (value) => groupFor(value.key) === activeGroup,
@@ -349,7 +367,7 @@ export default function AddWardrobeScreen() {
               key={key}
               disabled={formLocked}
               style={[styles.category, activeGroup === key && styles.selected]}
-              onPress={() => setCategory(key)}
+              onPress={() => setForm((previous) => selectCategory(previous, key))}
               accessibilityRole="radio"
               accessibilityState={{
                 selected: activeGroup === key,
@@ -390,18 +408,81 @@ export default function AddWardrobeScreen() {
                   selected: category === value.key,
                   disabled: formLocked,
                 }}
-                onPress={() => setCategory(value.key)}
+                onPress={() => setForm((previous) => selectCategory(previous, value.key))}
               >
                 <Text style={styles.categoryText}>{value.label}</Text>
               </PressableScale>
             ))}
           </View>
         ) : null}
+        {subtypeOptions.length > 1 ? (
+          <>
+            <Text style={styles.label}>Alt tür</Text>
+            <View style={styles.wrapRow}>
+              {subtypeOptions.map((option) => (
+                <PressableScale
+                  key={option.slug}
+                  disabled={formLocked}
+                  style={[
+                    styles.subcategory,
+                    form.subcategory === option.slug && styles.selected,
+                  ]}
+                  accessibilityLabel={`${option.label} alt türü`}
+                  accessibilityRole="radio"
+                  accessibilityState={{
+                    selected: form.subcategory === option.slug,
+                    disabled: formLocked,
+                  }}
+                  onPress={() =>
+                    setForm((previous) => selectSubcategory(previous, option.slug))
+                  }
+                >
+                  <Text style={styles.categoryText}>{option.label}</Text>
+                </PressableScale>
+              ))}
+            </View>
+          </>
+        ) : null}
+        <Text style={styles.label}>Renk</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.colorRow}
+        >
+          {COLORS.map((color) => {
+            const isSelected = form.color === color.slug;
+            return (
+              <PressableScale
+                key={color.slug}
+                disabled={formLocked}
+                style={color.hex ? styles.colorItem : [styles.subcategory, isSelected && styles.selected]}
+                accessibilityLabel={`${color.label} rengi`}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: isSelected, disabled: formLocked }}
+                onPress={() => setForm((previous) => selectColor(previous, color.slug))}
+              >
+                {color.hex ? (
+                  <>
+                    <View style={[styles.colorRing, isSelected && styles.colorRingSelected]}>
+                      <View style={[styles.colorDot, { backgroundColor: color.hex }]} />
+                    </View>
+                    <Text style={[styles.colorName, isSelected && styles.selectedText]}>
+                      {color.label}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={styles.categoryText}>{color.label}</Text>
+                )}
+              </PressableScale>
+            );
+          })}
+        </ScrollView>
         <Text style={styles.label}>Kıyafet adı</Text>
         <TextInput
           style={styles.input}
           value={title}
-          onChangeText={setTitle}
+          onChangeText={(value) => setForm((previous) => editTitle(previous, value))}
           placeholder="Örn. Krem keten gömlek"
           placeholderTextColor={colors.placeholder}
           accessibilityLabel="Kıyafet adı"
@@ -422,12 +503,12 @@ export default function AddWardrobeScreen() {
           onSubmitEditing={() => void save()}
         />
         <PressableScale
-          disabled={busy}
-          style={[styles.submit, busy && styles.disabled]}
+          disabled={submitDisabled}
+          style={[styles.submit, submitDisabled && styles.disabled]}
           onPress={() => void save()}
           accessibilityRole="button"
           accessibilityLabel="Kıyafeti kaydet"
-          accessibilityState={{ disabled: busy, busy }}
+          accessibilityState={{ disabled: submitDisabled, busy }}
         >
           {busy ? <ActivityIndicator color={colors.inverseText} /> : null}
           <Text style={styles.submitText}>
@@ -539,6 +620,27 @@ const styles = StyleSheet.create({
     borderRadius: radius.chip,
     backgroundColor: colors.input,
   },
+  wrapRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  colorRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 2 },
+  colorItem: { width: 56, alignItems: 'center', gap: 2 },
+  colorRing: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colorRingSelected: { borderColor: colors.accent },
+  colorDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  colorName: { color: colors.textSecondary, fontSize: 10, fontWeight: '600', textAlign: 'center' },
   input: {
     minHeight: 46,
     paddingHorizontal: 14,
