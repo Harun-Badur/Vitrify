@@ -1,6 +1,7 @@
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { isExpoGo } from '../lib/expoGo';
 import { logger } from '../lib/logger';
 import { getRequiredSupabaseClient } from '../lib/supabase';
 import { colors } from '../lib/theme';
@@ -97,7 +98,7 @@ const upsertPushToken = async (
 export const registerForPushNotifications = async (
   userId: string,
 ): Promise<void> => {
-  if (Constants.appOwnership === 'expo') {
+  if (isExpoGo()) {
     return;
   }
 

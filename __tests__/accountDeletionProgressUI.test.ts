@@ -18,7 +18,7 @@ jest.mock('../services/accountService', () => ({ resumePendingAccountDeletions: 
 jest.mock('../services/accountDeletionRuntime', () => ({ createAccountDeletionRuntime: jest.fn() }));
 jest.mock('../lib/onboarding', () => ({ hasCompletedOnboarding: async () => true, markOnboardingComplete: async () => {} }));
 jest.mock('../lib/analytics', () => ({ initAnalytics: jest.fn(), track: jest.fn() }));
-jest.mock('expo-constants', () => ({ __esModule: true, default: { appOwnership: 'expo' } }));
+jest.mock('expo-constants', () => ({ __esModule: true, default: { executionEnvironment: 'storeClient' }, ExecutionEnvironment: { StoreClient: 'storeClient' } }));
 jest.mock('expo-router', () => {
   const React = jest.requireActual<typeof import('react')>('react');
   const Stack = (props: { children: ReactNode }) => React.createElement('Stack', props);

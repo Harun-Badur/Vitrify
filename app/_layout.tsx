@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import Constants from 'expo-constants';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -9,6 +8,7 @@ import OnboardingScreen from '../components/OnboardingScreen';
 import { AuthProvider, useAuthContext } from '../hooks/useAuthContext';
 import { PremiumProvider } from '../hooks/usePremium';
 import { initAnalytics, track } from '../lib/analytics';
+import { isExpoGo } from '../lib/expoGo';
 import { logger } from '../lib/logger';
 import { STACK_TRANSITION_MS } from '../lib/motion';
 import {
@@ -22,7 +22,7 @@ import { createAccountDeletionRuntime } from '../services/accountDeletionRuntime
 import { useWardrobeCutoutResume } from '../hooks/useWardrobeCutoutResume';
 
 const registerPushIfSupported = async (userId: string): Promise<void> => {
-  if (Constants.appOwnership === 'expo') {
+  if (isExpoGo()) {
     return;
   }
 
