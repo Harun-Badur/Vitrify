@@ -96,13 +96,13 @@ describe('fetchRecommendationCatalog coverage', () => {
   it('pages past the oldest rows and selects a later LC Waikiki product', async () => {
     const rows = [
       ...Array.from({ length: 80 }, (_, index) => ({
-        id: `old-${index}`, provider: 'trendyol', external_id: String(index), title: `Old ${index}`,
+        id: `old-${index}`, provider: 'trendyol', external_id: String(index), title: `Siyah Old ${index}`,
         brand: 'Trendyol', price: 100, currency: 'TRY', image_url: 'https://example.com/old.jpg',
         product_url: 'https://example.com/old', category: 'upper_body', affiliate_url: null,
         created_at: '2026-01-01T00:00:00.000Z',
       })),
       {
-        id: 'lcw-1', provider: 'lcw', external_id: '1', title: 'LCW Ceket', brand: 'LCW', price: 900,
+        id: 'lcw-1', provider: 'lcw', external_id: '1', title: 'Siyah LCW Ceket', brand: 'LCW', price: 900,
         currency: 'TRY', image_url: 'https://example.com/lcw.jpg', product_url: 'https://example.com/lcw',
         category: 'upper_body', affiliate_url: null, created_at: '2026-10-09T00:00:00.000Z',
       },
@@ -132,5 +132,45 @@ describe('fetchRecommendationCatalog coverage', () => {
     expect(pool.map((item) => item.id)).toContain('lcw-1');
     expect(pool.find((item) => item.id === 'lcw-1')?.outfitRole).toBe('outerwear');
     expect(pool.find((item) => item.id === 'lcw-1')?.gender).not.toBe('men');
+  });
+
+  it('drops a catalog row when stored colors and title inference are both empty', async () => {
+    const valid = {
+      id: 'lcw-1', provider: 'lcw', external_id: '1', title: 'Siyah LCW Ceket', brand: 'LCW', price: 900,
+      currency: 'TRY', image_url: 'https://example.com/lcw.jpg', product_url: 'https://example.com/lcw',
+      category: 'upper_body', affiliate_url: null, created_at: '2026-10-09T00:00:00.000Z',
+    };
+    const incomplete = {
+      ...valid,
+      id: 'broken-1',
+      title: 'Duz Ceket',
+    };
+    const attributes = [{ product_id: 'lcw-1', gender: null, colors: [], fit: null, subcategory: null,
+      brand_slug: 'lcw', price_band: 'mid', outfit_role: 'outerwear', style_tags: null }];
+    const clientFor = (catalog: readonly typeof valid[]) => ({
+      from: (table: string) => {
+        const query = {
+          select: () => query,
+          order: () => query,
+          not: () => query,
+          in: (_column: string, ids: string[]) => Promise.resolve({
+            data: table === 'product_attributes' ? attributes.filter((row) => ids.includes(row.product_id)) : [],
+            error: null,
+          }),
+          range: (start: number, end: number) => Promise.resolve({
+            data: catalog.slice(start, end + 1),
+            error: null,
+          }),
+        };
+        return query;
+      },
+    });
+    jest.mocked(getSupabaseClient).mockReturnValue(clientFor([valid]) as never);
+    const before = (await fetchRecommendationCatalog()).map((item) => item.id);
+    jest.mocked(getSupabaseClient).mockReturnValue(clientFor([incomplete, valid]) as never);
+    const after = await fetchRecommendationCatalog();
+    expect(after.map((item) => item.id)).toEqual(before);
+    expect(after.find((item) => item.id === 'lcw-1')?.colorSlugs).toEqual(['siyah']);
+    expect(after.some((item) => item.id === 'broken-1')).toBe(false);
   });
 });

@@ -1,3 +1,4 @@
+import { isActiveCatalogRecord } from '../lib/catalogEligibility';
 import { catalogMetadataRepair } from '../lib/catalogMetadata';
 import { measureDiscoverStage, measureDiscoverStageSync, recordDiscoverStage } from '../lib/discoverStageTiming';
 import { DISCOVER_CATALOG_PAGE_SIZE, isRecord, isFeedProductRow, isAttributeRow, mapFeedRow } from './catalogProductAdapter';
@@ -294,11 +295,13 @@ const queryCatalogPage = async (
     const products: Product[] = [];
     for (const row of validRows) {
       const cached = cachedProducts.get(row.id);
-      if (cached) products.push(cached);
-      else {
+      if (cached) {
+        if (isActiveCatalogRecord(cached)) products.push(cached);
+      } else {
         const product = mapFeedRow(row);
         if (product) {
           const attributes = attributesById.get(product.id);
+          if (!isActiveCatalogRecord(product, attributes)) continue;
           if (deferEnrichment) {
             // Pool seats depend only on provider/id/role, including existing P0 repairs.
             // Never publish these lightweight records to the canonical repository/UI.
@@ -532,7 +535,7 @@ export const fetchFeedProducts = async (
       const edgeProducts = edge.items.map((item) => item.product).filter(product => {
         if (excluded.has(product.id)) return false;
         excluded.add(product.id);
-        return true;
+        return isActiveCatalogRecord(product);
       });
       return {
         hasMore: edge.has_more ?? true,

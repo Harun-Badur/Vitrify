@@ -54,21 +54,34 @@ export const preparedProductAttributes = (product: Product): InferredProductAttr
   return attributes;
 };
 
+/** Same color and subcategory evidence enrichProduct writes. Not a second predictor. */
+export const resolveCatalogAppearance = (
+  product: Product,
+  attr: ProductAttributeRow | undefined,
+): { colors: string[]; subcategory: string } => {
+  const inferred = preparedProductAttributes(product);
+  const repair = catalogMetadataRepair(product.id);
+  const declaredColors = cleanDeclaredCatalogColors(product.id, attr?.colors);
+  return {
+    colors: declaredColors.length > 0 ? declaredColors : inferred.colors,
+    subcategory: repair?.subcategory ?? attr?.subcategory ?? inferred.subcategory,
+  };
+};
+
 export const enrichProduct = (
   product: Product,
   attr: ProductAttributeRow | undefined,
 ): Product => {
   const inferred = preparedProductAttributes(product);
   const repair = catalogMetadataRepair(product.id);
-  const declaredColors = cleanDeclaredCatalogColors(product.id, attr?.colors);
-  const colorSlugs = declaredColors.length > 0 ? declaredColors : inferred.colors;
+  const appearance = resolveCatalogAppearance(product, attr);
   const genderRaw = declaredCatalogGender(attr?.gender) || inferred.gender;
   const enriched: Product = {
     ...product,
     gender: isProductGender(genderRaw) ? genderRaw : inferred.gender ?? '',
-    colorSlugs,
+    colorSlugs: appearance.colors,
     fit: declaredCatalogFit(attr?.fit) || inferred.fit,
-    subcategory: repair?.subcategory ?? attr?.subcategory ?? inferred.subcategory,
+    subcategory: appearance.subcategory,
     brandSlug: attr?.brand_slug ?? inferred.brand_slug,
     priceBand: attr?.price_band ?? inferred.price_band,
     outfitRole: resolveCatalogOutfitRole(

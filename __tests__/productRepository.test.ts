@@ -1,3 +1,4 @@
+import { isActiveCatalogRecord } from '../lib/catalogEligibility';
 import { ProductRepository, productsById } from '../services/productRepository';
 import { getSupabaseClient } from '../lib/supabase';
 import type { Product } from '../types/product';
@@ -84,6 +85,35 @@ describe('canonical Product repository', () => {
     expect(queries).toEqual([['products', ['top']], ['product_attributes', ['top']]]);
     expect(first.get('top')).toMatchObject({ price: 100, brand: 'Brand', gender: 'women' });
     expect(first.get('top')).toBe(second.get('top'));
+  });
+
+  it('keeps an incomplete catalog row addressable for existing user records', async () => {
+    const client = { from: (table: string) => ({ select: () => ({ in: async () => ({
+      error: null,
+      data: table === 'products' ? [{ id: 'blank', provider: 'defacto', external_id: '9',
+        title: '   ', brand: 'Brand', price: 100, currency: 'TRY',
+        image_url: 'https://example.invalid/a.jpg', product_url: 'https://example.invalid/p',
+        category: 'upper_body', affiliate_url: null }] : [],
+    }) }) }) };
+    jest.mocked(getSupabaseClient).mockReturnValue(client as never);
+    const loaded = await productsById(['blank']);
+    expect(loaded.get('blank')?.id).toBe('blank');
+    expect(loaded.get('blank')?.title).toBe('   ');
+    expect(isActiveCatalogRecord(loaded.get('blank') ?? {})).toBe(false);
+  });
+
+  it('still resolves a colorless catalog row for likes and wardrobe references', async () => {
+    const client = { from: (table: string) => ({ select: () => ({ in: async () => ({
+      error: null,
+      data: table === 'products' ? [{ id: 'plain', provider: 'defacto', external_id: '8',
+        title: 'Duz Ceket', brand: 'Brand', price: 100, currency: 'TRY',
+        image_url: 'https://example.invalid/a.jpg', product_url: 'https://example.invalid/p',
+        category: 'upper_body', affiliate_url: null }] : [{ product_id: 'plain', colors: [], style_tags: [] }],
+    }) }) }) };
+    jest.mocked(getSupabaseClient).mockReturnValue(client as never);
+    const loaded = await productsById(['plain']);
+    expect(loaded.get('plain')?.id).toBe('plain');
+    expect(isActiveCatalogRecord(loaded.get('plain') ?? {})).toBe(false);
   });
 
   it('bounds bulk lookup batches and isolates identity maps when the backend client changes', async () => {

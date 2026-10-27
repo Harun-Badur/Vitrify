@@ -22,6 +22,10 @@ const token = (value: string | undefined): string =>
   value === undefined || value === null ? '' : normalizedRecommendationToken(value, true,
     () => value.trim().toLocaleLowerCase('tr-TR'));
 
+/** Style class the outfit scorer can actually read. Unmapped subtypes stay unscored. */
+export const catalogStyleSignal = (subcategory: string | null | undefined): string | null =>
+  STYLE_BY_SUBCATEGORY[token(subcategory ?? undefined)] ?? null;
+
 /** Soft evidence only. Remaining weights are not rescaled after price proximity was removed. */
 export const catalogCompatibility = (anchor: Product, product: Product): CatalogCompatibility => {
   const evidence = (entry: Product) => [entry.id, entry.outfitRole, entry.colorSlugs,
@@ -39,8 +43,8 @@ export const catalogCompatibility = (anchor: Product, product: Product): Catalog
   const anchorBrand = token(anchor.brand), productBrand = token(product.brand);
   const brand = anchorBrand !== '' && anchorBrand !== 'kabin' && anchorBrand === productBrand ? 1 : 0;
   const fit = anchor.fit && product.fit && anchor.fit === product.fit ? 1 : 0;
-  const anchorStyle = STYLE_BY_SUBCATEGORY[token(anchor.subcategory)];
-  const productStyle = STYLE_BY_SUBCATEGORY[token(product.subcategory)];
+  const anchorStyle = catalogStyleSignal(anchor.subcategory);
+  const productStyle = catalogStyleSignal(product.subcategory);
   const style = anchorStyle && productStyle && anchorStyle === productStyle ? 1 : 0;
   return { color, price, brand, fit, style,
     score: color * WEIGHTS.color + brand * WEIGHTS.brand + fit * WEIGHTS.fit + style * WEIGHTS.style };

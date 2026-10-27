@@ -1,3 +1,4 @@
+import { isActiveCatalogRecord } from '../../../lib/catalogEligibility.ts';
 import { catalogMetadataRepair, cleanDeclaredCatalogColors, declaredCatalogFit, declaredCatalogGender } from '../../../lib/catalogMetadata.ts';
 import { styleProfileFreshness } from '../_shared/styleProfileFreshness.ts';
 // VITRIVIA Recs V1 — feed ranking Edge Function.
@@ -486,6 +487,33 @@ Deno.serve(async (request: Request): Promise<Response> => {
       }
 
       const attr = attributesById.get(row.id);
+      if (!isActiveCatalogRecord({
+        id: row.id,
+        title: row.title,
+        brand: row.brand,
+        price: row.price,
+        currency: row.currency,
+        image_url: row.image_url,
+        images: row.images,
+        colors: row.colors,
+        category: row.category,
+        provider: row.provider,
+        product_url: row.product_url,
+        affiliate_url: row.affiliate_url,
+        external_id: row.external_id,
+      }, attr && typeof attr.product_id === 'string' ? {
+        product_id: attr.product_id,
+        colors: attr.colors,
+        gender: attr.gender,
+        fit: attr.fit,
+        subcategory: attr.subcategory,
+        brand_slug: attr.brand_slug,
+        price_band: attr.price_band,
+        outfit_role: attr.outfit_role,
+        style_tags: attr.style_tags,
+      } : null)) {
+        continue;
+      }
       const price = toPrice(row.price);
       const currentPrice = optionalPrice(row.current_price);
       const displayPrice = currentPrice ?? price;

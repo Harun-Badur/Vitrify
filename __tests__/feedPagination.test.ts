@@ -23,7 +23,7 @@ jest.mock('../lib/logger', () => ({ logger: { debug: jest.fn(), warn: jest.fn(),
 // Test-only backend fixture; never inserted into the application's catalog.
 const rows = Array.from({ length: 278 }, (_, index) => ({
   id: `product-${String(index).padStart(3, '0')}`,
-  provider: 'defacto', external_id: String(index), title: `Ürün ${index}`,
+  provider: 'defacto', external_id: String(index), title: `Siyah Ürün ${index}`,
   brand: 'DeFacto', price: 100, currency: 'TRY',
   image_url: MOCK_PRODUCTS[0].imageUrl, images: [MOCK_PRODUCTS[0].imageUrl],
   product_url: 'https://example.com/product', affiliate_url: null,
