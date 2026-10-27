@@ -38,12 +38,16 @@ export interface DiscoverySlice {
     userId: string | null,
     options?: { filters?: FeedQueryFilters; searchMode?: boolean },
   ) => Promise<void>;
+  /** Re-ranks the cards behind the visible window; never shows a loading state. */
+  refreshFeedPreservingCurrent: () => Promise<void>;
   setFeedMode: (mode: FeedMode) => void;
   swipeLeft: (product: Product) => void;
   undoPass: () => boolean | Promise<boolean>;
 }
 
 const FEED_LIMIT = 20;
+/** Current card plus the next/warm cards the screen has already prepared. */
+const PRESERVED_HEAD = 3;
 
 const appendUniqueId = (ids: string[], productId: string): string[] =>
   ids.includes(productId) ? ids : [...ids, productId];
@@ -69,6 +73,7 @@ const popPassedProduct = (
 export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice> =
   (set, get) => {
     let generation = 0;
+    let refreshGeneration = 0;
     let context: { userId: string | null; filters: FeedQueryFilters; searchMode: boolean } | null = null;
     let deliveredIds = new Set<string>();
     let mutationGeneration = 0;
@@ -185,6 +190,49 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         logger.warn('Feed sonraki batch yüklenemedi', { code: 'FEED_PAGE_FAILED' });
         // Preserve both the existing deck and continuation; a network error is not exhaustion.
         set({ isFetchingNext: false, feedStatus: 'error' });
+      }
+    },
+    refreshFeedPreservingCurrent: async (): Promise<void> => {
+      if (!context || get().feedStatus !== 'success' || get().isFetchingNext) return;
+      const { userId, filters, searchMode } = context;
+      const current = captureOwnerPublication(userId);
+      if (!current()) return;
+      const requestGeneration = generation;
+      const requestRefresh = ++refreshGeneration;
+      try {
+        const request = fetchFeedProducts(
+          FEED_LIMIT,
+          userId,
+          get().feedMode,
+          filters,
+          searchMode ? 'search' : get().feedMode,
+          [...new Set([...get().likedProducts.map(item => item.product.id), ...get().passedProductIds])],
+        );
+        const result = await (userId ? trackOwnerWork(userId, request) : request);
+        // A reload, newer refresh, or in-flight page append owns the deck; give up quietly.
+        if (!current() || requestGeneration !== generation || requestRefresh !== refreshGeneration
+          || get().feedStatus !== 'success' || get().isFetchingNext) return;
+        // The head is read now, so swipes made while fetching stay respected.
+        const head = get().currentProducts.slice(0, PRESERVED_HEAD);
+        const headIds = new Set(head.map(product => product.id));
+        const tail = excludeSeen(
+          [...new Map(result.products.map(product => [product.id, product])).values()]
+            .filter(product => !headIds.has(product.id)),
+          get().likedProducts,
+          get().passedProductIds,
+        );
+        deliveredIds = new Set([...headIds, ...tail.map(product => product.id)]);
+        set(state => ({
+          currentProducts: [...head, ...tail],
+          feedPreparationRevision: state.feedPreparationRevision + 1,
+          feedSource: result.source,
+          feedIsPersonalized: result.isPersonalized,
+          feedFallback: result.fallback === true,
+          feedRelaxed: result.relaxed ?? [],
+          hasMore: result.hasMore ?? state.hasMore,
+        }));
+      } catch {
+        // The visible deck is already valid; a failed background refresh changes nothing.
       }
     },
     setFeedMode: (mode): void => {

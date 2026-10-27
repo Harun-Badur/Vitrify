@@ -73,6 +73,7 @@ import {
   type AccountDetails,
 } from '../../services/accountDetailsService';
 import { useAppStore } from '../../store/useAppStore';
+import { profileChangeAffectsFeed, scheduleFeedRefreshAfterProfileSave } from '../../lib/profileSaveFeedRefresh';
 import { createAccountDeletionRuntime } from '../../services/accountDeletionRuntime';
 import {
   createModelPhotoSignedUrl,
@@ -573,6 +574,9 @@ export default function ProfileScreen() {
     try {
       const next = await upsertStudioProfile(userId, patch);
       setStudio((previous) => ({ ...previous, ...next }));
+      if (profileChangeAffectsFeed(studio, next)) {
+        scheduleFeedRefreshAfterProfileSave(() => useAppStore.getState().refreshFeedPreservingCurrent());
+      }
       return true;
     } catch (error) {
       setErrorMessage(
