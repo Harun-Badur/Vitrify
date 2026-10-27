@@ -12,6 +12,7 @@ import { setLastFeedMode, setLastRecommendationId } from '../lib/recsFeedState';
 import { emptySessionIntent } from '../lib/scoring';
 import { buildIntent } from '../lib/sessionIntent';
 import { getSupabaseClient } from '../lib/supabase';
+import { pickDisplayReason } from '../lib/displayReason';
 import { rankCatalog } from '../src/intelligence/ranking/rankCatalog';
 import { selectRecommendationPool } from '../src/intelligence/recommendations/selectRecommendationPool';
 import { runCooperatively } from '../src/intelligence/cooperativeWork';
@@ -489,7 +490,7 @@ const fetchEdgeFeed = async (
     if (parsed.items.some(item => !resolved.has(item.productId))) return null;
     return { ...parsed, items: parsed.items.map(({ productId, ...metadata }) => {
       const product = resolved.get(productId)!;
-      product.reason = metadata.reasons[0]?.trim() || undefined;
+      product.reason = pickDisplayReason(metadata.reasons);
       return { ...metadata, product };
     }) };
   } catch (error) {
