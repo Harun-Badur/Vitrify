@@ -4,7 +4,9 @@ import {
   COLORS,
   buildAutoTitle,
   defaultSubtype,
+  colorLabel,
   isValidSubtype,
+  subtypesForCategory,
 } from './styleVocabulary';
 
 export interface WardrobeFormState {
@@ -72,3 +74,16 @@ export const formFromItem = (item: WardrobeItem): WardrobeFormState => ({
   title: item.title,
   titleTouched: true,
 });
+
+type StyleFields = Pick<WardrobeItem, 'category' | 'subcategory' | 'color'>;
+
+/** True when a stored subtype or color is absent or no longer valid; only a hint, never blocking. */
+export const wardrobeMissingInfo = (item: StyleFields): boolean =>
+  !isValidSubtype(item.category, item.subcategory) || !(item.color && validColor(item.color));
+
+/** "Gömlek · Beyaz" for whatever is known; undefined when nothing is. */
+export const wardrobeDetailText = (item: StyleFields): string | undefined => {
+  const subtype = subtypesForCategory(item.category).find(option => option.slug === item.subcategory)?.label;
+  const color = item.color && validColor(item.color) ? colorLabel(item.color) : undefined;
+  return [subtype, color].filter(Boolean).join(' · ') || undefined;
+};
