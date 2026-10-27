@@ -8,6 +8,8 @@ import { buildIntent } from '../lib/sessionIntent';
 import { productsById } from '../services/productRepository';
 import { fetchRecsConfig } from '../lib/recsConfig';
 
+// babel-preset-expo reads EXPO_PUBLIC_* through this module, so env is set on its object, not by replacing process.env.
+jest.mock('expo/virtual/env', () => ({ env: process.env }), { virtual: true });
 jest.mock('../lib/supabase', () => ({ getSupabaseClient: jest.fn() }));
 jest.mock('../lib/analytics', () => ({ track: jest.fn() }));
 jest.mock('../lib/recsFeedState', () => ({ setLastFeedMode: jest.fn(), setLastRecommendationId: jest.fn() }));
@@ -75,7 +77,7 @@ describe('Discover pagination using the existing service and store', () => {
       passedStack: [], sessionUserId: null, feedStatus: 'idle', hasMore: true,
       isFetchingNext: false, feedMode: 'personal' });
   });
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => { delete process.env.EXPO_PUBLIC_RECS_FEED_URL; jest.restoreAllMocks(); });
 
   it('reads later recommendation pages with at most two concurrent queries and preserves the selected pool', async () => {
     jest.useFakeTimers();
@@ -250,7 +252,7 @@ describe('Discover pagination using the existing service and store', () => {
 
   it('passes exclusions to the Edge Function and accepts an explicit empty final page', async () => {
     const products = (await fetchFeedProducts(20, null)).products;
-    jest.replaceProperty(process, 'env', { ...process.env, EXPO_PUBLIC_RECS_FEED_URL: 'https://example.com/recs-feed' });
+    process.env.EXPO_PUBLIC_RECS_FEED_URL = 'https://example.com/recs-feed';
     expect(getRecsFeedUrl()).not.toBeNull();
     mockBackend.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'test-token' } }, error: null });
     const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => ({
@@ -270,7 +272,7 @@ describe('Discover pagination using the existing service and store', () => {
 
   it('preserves a legacy Edge first batch, then uses paginated fallback instead of repeating it', async () => {
     const products = (await fetchFeedProducts(20, null)).products;
-    jest.replaceProperty(process, 'env', { ...process.env, EXPO_PUBLIC_RECS_FEED_URL: 'https://example.com/recs-feed' });
+    process.env.EXPO_PUBLIC_RECS_FEED_URL = 'https://example.com/recs-feed';
     mockBackend.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'test-token' } }, error: null });
     const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => ({
       recommendation_id: 'test-rec', score_id: 'test-score', config_version: 'v1',
@@ -287,7 +289,7 @@ describe('Discover pagination using the existing service and store', () => {
 
   it('uses canonical catalog fields instead of stale Edge product snapshots', async () => {
     const canonical = (await fetchFeedProducts(20, null)).products[0];
-    jest.replaceProperty(process, 'env', { ...process.env, EXPO_PUBLIC_RECS_FEED_URL: 'https://example.com/recs-feed' });
+    process.env.EXPO_PUBLIC_RECS_FEED_URL = 'https://example.com/recs-feed';
     mockBackend.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'test-token' } }, error: null });
     jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => ({
       recommendation_id: 'test-rec', score_id: 'test-score', config_version: 'v1', has_more: false,
