@@ -341,11 +341,24 @@ export const createWardrobeSlice: StateCreator<
           item.id === id ? { ...item, ...patch } : item,
         ),
       }), undefined, onStage),
-    removeWardrobeItem: (id) =>
-      mutate(async (data) => ({
-        ...data,
-        wardrobeItems: data.wardrobeItems.filter((item) => item.id !== id),
-      })),
+    removeWardrobeItem: async (id) => {
+      const userId = get().sessionUserId;
+      const action = userId ? createAnalyticsAction(userId, 'wardrobe') : null;
+      let removed = false;
+      await mutate(async (data) => {
+        removed = data.wardrobeItems.some((item) => item.id === id);
+        return {
+          ...data,
+          wardrobeItems: data.wardrobeItems.filter((item) => item.id !== id),
+        };
+      }, (saved, owner) => {
+        // Local offline/conflict persistence is not proof of a cloud commit.
+        if (removed && action && owner === action.userId && saved.wardrobeSync?.state === 'synced'
+          && saved.wardrobeSync.pending === 0 && !saved.wardrobeItems.some(item => item.id === id)) {
+          track('dolap_remove', id, { source: 'wardrobe' }, action);
+        }
+      });
+    },
     createOutfit: (selection) =>
       mutate(async (data) => {
         const candidate = selectedOutfitCandidate(selection);

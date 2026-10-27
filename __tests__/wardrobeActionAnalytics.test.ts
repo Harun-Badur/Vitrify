@@ -105,3 +105,49 @@ test('old refresh does not publish into a new account', async () => {
   finish({wardrobeItems:[{...input,id:'old',createdAt:'2026-10-13'}],savedOutfits:[]});await refreshing;
   expect(store.getState().wardrobeItems).toEqual([]);
 });
+
+describe('personal wardrobe removal', () => {
+  const seeded = async () => {
+    const store = makeStore(); await store.getState().hydrateWardrobe('A');
+    await store.getState().addWardrobeItem(input);
+    jest.mocked(track).mockClear();
+    return { store, id: store.getState().wardrobeItems[0].id };
+  };
+
+  test('emits one owner-bound dolap_remove after cloud commit', async () => {
+    const { store, id } = await seeded();
+    await store.getState().removeWardrobeItem(id);
+    expect(store.getState().wardrobeItems).toEqual([]);
+    expect(track).toHaveBeenCalledTimes(1);
+    expect(track).toHaveBeenCalledWith('dolap_remove', id, { source: 'wardrobe' },
+      expect.objectContaining({ userId: 'A', origin: 'wardrobe', actionId: expect.any(String) }));
+  });
+
+  test('failed save never emits dolap_remove', async () => {
+    const { store, id } = await seeded();
+    jest.mocked(saveWardrobe).mockRejectedValueOnce(Error('synthetic'));
+    await expect(store.getState().removeWardrobeItem(id)).rejects.toThrow();
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  test.each(['pending', 'conflict'] as const)('local %s result is not reported as committed', async state => {
+    const { store, id } = await seeded();
+    jest.mocked(saveWardrobe).mockImplementation(async (_owner, data) => ({ ...data, wardrobeSync: { state, pending: 1 } }));
+    await store.getState().removeWardrobeItem(id);
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  test('removing an unknown id emits nothing', async () => {
+    const { store } = await seeded();
+    await store.getState().removeWardrobeItem('missing');
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  test('personal item carries no catalog attributes in the event, so profile weights stay unchanged', async () => {
+    const { store, id } = await seeded();
+    await store.getState().removeWardrobeItem(id);
+    const [, productId, payload] = jest.mocked(track).mock.calls[0];
+    expect(productId).toMatch(/^wardrobe-/);
+    expect(payload).toEqual({ source: 'wardrobe' });
+  });
+});
