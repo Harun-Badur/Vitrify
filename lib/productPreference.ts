@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { withAccountWriteGuard } from './accountWriteFence';
 import type { FEED_GENDERS } from './catalogEnrichment';
 
 /** Product preference picked by the user; NULL means "not chosen yet" and behaves as 'hepsi'. */
@@ -38,9 +39,42 @@ export async function readLocalProductPref(userId: string | null): Promise<Local
     return { stored: null, effective: PRODUCT_PREF_DEFAULT };
   }
 }
-export async function writeLocalProductPref(userId: string | null, pref: ProductPref): Promise<boolean> {
+export type ProductPrefWriteResult = 'written' | 'skipped' | 'failed';
+/**
+ * Runs an owner write behind the A1 write guard. A guard rejection (deletion pending,
+ * session changed, unreadable fence) is a silent skip; the write's own error is 'failed'.
+ */
+async function guardedOwnerWrite(userId: string, write: () => Promise<void>): Promise<ProductPrefWriteResult> {
   try {
-    await AsyncStorage.setItem(productPrefStorageKey(userId), pref);
+    return await withAccountWriteGuard(userId, async (): Promise<ProductPrefWriteResult> => {
+      try { await write(); return 'written'; } catch { return 'failed'; }
+    });
+  } catch {
+    return 'skipped';
+  }
+}
+export async function writeLocalProductPref(userId: string | null, pref: ProductPref): Promise<ProductPrefWriteResult> {
+  const write = () => AsyncStorage.setItem(productPrefStorageKey(userId), pref);
+  if (userId !== null) return guardedOwnerWrite(userId, write);
+  try { await write(); return 'written'; } catch { return 'failed'; }
+}
+
+/** Device-scoped (not account data): kept across sign-out and account deletion. */
+export const PRODUCT_PREF_PROMPT_COUNT_KEY = 'vitrify.product-pref-prompt-count.v1';
+const clampPromptCount = (count: number): number =>
+  Math.min(PRODUCT_PREF_PROMPT_MAX, Number.isFinite(count) && count > 0 ? Math.floor(count) : 0);
+/** An unreadable count is treated as already shown, so storage errors never re-prompt. */
+export async function readProductPrefPromptCount(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(PRODUCT_PREF_PROMPT_COUNT_KEY);
+    return raw === null ? 0 : clampPromptCount(Number(raw));
+  } catch {
+    return PRODUCT_PREF_PROMPT_MAX;
+  }
+}
+export async function writeProductPrefPromptCount(count: number): Promise<boolean> {
+  try {
+    await AsyncStorage.setItem(PRODUCT_PREF_PROMPT_COUNT_KEY, String(clampPromptCount(count)));
     return true;
   } catch {
     return false;
@@ -65,4 +99,16 @@ export function resolveLoginProductPrefSync(profileValue: unknown, localValue: u
   if (profile) return { effective: profile, writeLocal: profile === local ? null : profile, writeProfile: null };
   if (local) return { effective: local, writeLocal: null, writeProfile: local };
   return { effective: PRODUCT_PREF_DEFAULT, writeLocal: null, writeProfile: null };
+}
+export interface ProductPrefSyncResult {
+  local: ProductPrefWriteResult | 'none';
+  profile: ProductPrefWriteResult | 'none';
+}
+/** Applies a sync decision; both writes go through the A1 guard and never throw. */
+export async function applyLoginProductPrefSync(userId: string, decision: ProductPrefSyncDecision,
+  gateway: ProductPrefProfileGateway): Promise<ProductPrefSyncResult> {
+  const { writeLocal, writeProfile } = decision;
+  const local = writeLocal ? await writeLocalProductPref(userId, writeLocal) : 'none';
+  const profile = writeProfile ? await guardedOwnerWrite(userId, () => gateway.write(userId, writeProfile)) : 'none';
+  return { local, profile };
 }
