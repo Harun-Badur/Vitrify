@@ -29,8 +29,8 @@ describe('buildProductIntelligence: missing data', () => {
       material: UNKNOWN, season: UNKNOWN, occasion: UNKNOWN,
       colors: [], styleTags: [], conflicts: [],
     });
-    // The pipeline falls back to 'tisort'; the contract must not.
-    expect(inferSubcategory('Örnek Ürün', 'upper_body')).toBe('tisort');
+    // Neither the pipeline nor the contract guesses a subtype any more.
+    expect(inferSubcategory('Örnek Ürün', 'upper_body')).toBeUndefined();
   });
 
   it('marks category-derived roles as derived, with low confidence where top/outerwear is ambiguous', () => {

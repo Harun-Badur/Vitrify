@@ -58,7 +58,7 @@ export const preparedProductAttributes = (product: Product): InferredProductAttr
 export const resolveCatalogAppearance = (
   product: Product,
   attr: ProductAttributeRow | undefined,
-): { colors: string[]; subcategory: string } => {
+): { colors: string[]; subcategory: string | undefined } => {
   const inferred = preparedProductAttributes(product);
   const repair = catalogMetadataRepair(product.id);
   const declaredColors = cleanDeclaredCatalogColors(product.id, attr?.colors);

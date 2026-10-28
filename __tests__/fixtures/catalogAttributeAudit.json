@@ -1,0 +1,218 @@
+{
+ "source": "scripts/queries/catalog_attribute_audit.md",
+ "wrongSubcategory": [
+  {
+   "id": "flo-201729383",
+   "category": "accessories",
+   "title": "Rky SERENITY 2 Adet Siyah %100 Hakiki Manda Derisi Kemer – 4.5 cm Genişlik – Tokası Kalın - Kot Pantolon Kemeri",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "flo-201729387",
+   "category": "accessories",
+   "title": "Rky SERENITY 2 Adet Siyah %100 Hakiki Manda Derisi Kemer – 4.5 cm Genişlik – Tokası Kalın - Kot Pantolon Kemeri",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "flo-201729388",
+   "category": "accessories",
+   "title": "Rky SERENITY 2 Adet Siyah %100 Hakiki Manda Derisi Kemer – 4.5 cm Genişlik – Tokası Kalın - Kot Pantolon Kemeri",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5250463",
+   "category": "upper_body",
+   "title": "Bej Dik Yaka Kuşaklı Kadın Gabardin Trençkot",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5250464",
+   "category": "upper_body",
+   "title": "Lacivert Dik Yaka Kuşaklı Kadın Gabardin Trençkot",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5402791",
+   "category": "upper_body",
+   "title": "Kahverengi Dik Yaka Kuşaklı Kadın Gabardin Trençkot",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5489112",
+   "category": "upper_body",
+   "title": "Bej Dik Yaka Kuşaklı Kadın Trençkot",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5599420",
+   "category": "upper_body",
+   "title": "Haki Büyük Beden Kontrast Yaka Kadın Trençkot",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5599421",
+   "category": "upper_body",
+   "title": "Bej Büyük Beden Kontrast Yaka Kadın Trençkot",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5634338",
+   "category": "upper_body",
+   "title": "Kahverengi Dik Yaka Ekose Oversize Kadın Trençkot",
+   "wasSubcategory": "jean"
+  },
+  {
+   "id": "lcw-5635098",
+   "category": "upper_body",
+   "title": "Bordo Dik Yaka Kuşaklı Kadın Trençkot",
+   "wasSubcategory": "jean"
+  }
+ ],
+ "upperBodyWithoutTitleKeyword": [
+  {
+   "id": "boyner-15647412",
+   "category": "upper_body",
+   "title": "Bej Kadın Çizgili Hırka NEN19AH25RRS"
+  },
+  {
+   "id": "boyner-1656182",
+   "category": "upper_body",
+   "title": "Fabrika Bej Erkek Hırka F3WM-HRK154"
+  },
+  {
+   "id": "defacto-3195702",
+   "category": "upper_body",
+   "title": "Bej Erkek Standart Fit Bisiklet Yaka Dokulu Triko Kazak"
+  },
+  {
+   "id": "defacto-3375944",
+   "category": "upper_body",
+   "title": "Ekru Kadın Fıtted Fiyonk Yaka Triko Kazak"
+  },
+  {
+   "id": "defacto-3433385",
+   "category": "upper_body",
+   "title": "Bej Kadın Kontrast Dikişli Şal Yaka Kazak"
+  },
+  {
+   "id": "defacto-3464195",
+   "category": "upper_body",
+   "title": "Bordo Kadın Boxy Fıt Uzun Kollu Triko Kazak"
+  },
+  {
+   "id": "defacto-3464196",
+   "category": "upper_body",
+   "title": "Lacivert Kadın Boxy Fıt Uzun Kollu Triko Kazak"
+  },
+  {
+   "id": "defacto-3475995",
+   "category": "upper_body",
+   "title": "Siyah Erkek Standart Fit Basic Triko Kazak"
+  },
+  {
+   "id": "defacto-3477501",
+   "category": "upper_body",
+   "title": "Kahve Erkek Standart Fıt Bisiklet Yaka Kazak"
+  },
+  {
+   "id": "defacto-3530422",
+   "category": "upper_body",
+   "title": "Beyaz Kadın Regular Fit Fırfırlı Uzun Kollu Basic Bluz"
+  },
+  {
+   "id": "defacto-3530423",
+   "category": "upper_body",
+   "title": "Mavi Kadın Regular Fit Fırfırlı Uzun Kollu Basic Bluz"
+  },
+  {
+   "id": "flo-102691348",
+   "category": "upper_body",
+   "title": "Kinetix ML BASIC 5SOFTSHELL 6PR Gri Erkek Softshell"
+  },
+  {
+   "id": "lcw-5284581",
+   "category": "upper_body",
+   "title": "Siyah Bisiklet Yaka Kadın Body"
+  },
+  {
+   "id": "lcw-5284582",
+   "category": "upper_body",
+   "title": "Beyaz Bisiklet Yaka Kadın Body"
+  },
+  {
+   "id": "lcw-5318396",
+   "category": "upper_body",
+   "title": "Siyah Kayık Yaka Kadın Body"
+  },
+  {
+   "id": "lcw-5413552",
+   "category": "upper_body",
+   "title": "Bordo Bisiklet Yaka Çizgili Kadın Body"
+  },
+  {
+   "id": "lcw-5479966",
+   "category": "upper_body",
+   "title": "Gri Bisiklet Yaka Kadın Body"
+  },
+  {
+   "id": "lcw-5489124",
+   "category": "upper_body",
+   "title": "Siyah Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5489125",
+   "category": "upper_body",
+   "title": "Ekru Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5489126",
+   "category": "upper_body",
+   "title": "Kahverengi Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5489127",
+   "category": "upper_body",
+   "title": "Bordo Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5489128",
+   "category": "upper_body",
+   "title": "Haki Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5489129",
+   "category": "upper_body",
+   "title": "Kahverengi Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5489130",
+   "category": "upper_body",
+   "title": "Beyaz Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5573808",
+   "category": "upper_body",
+   "title": "Antrasit Dik Yaka Kadın Body"
+  },
+  {
+   "id": "lcw-5603424",
+   "category": "upper_body",
+   "title": "Yeşil Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "lcw-5632944",
+   "category": "upper_body",
+   "title": "Kırmızı Dik Yaka Kadın Fitilli Body"
+  },
+  {
+   "id": "trendyol-929647864",
+   "category": "upper_body",
+   "title": "W Collection GRİ KAZAK"
+  },
+  {
+   "id": "trendyol-951326392",
+   "category": "upper_body",
+   "title": "Tudors Kadın Standart Fit Kısa Kollu Yarım Balıkçı Yaka Siyah Bluz"
+  }
+ ]
+}

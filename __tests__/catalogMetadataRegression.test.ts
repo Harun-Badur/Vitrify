@@ -93,7 +93,7 @@ it('limits subtype repairs to the four P0 IDs and leaves generic inference uncha
   const row = attr('other', { subcategory: 'polo', outfit_role: 'accessory' });
   expect(enrichProduct(product('other', 'Polo Gözlük', 'accessories'), row).subcategory).toBe('polo');
   expect(row.subcategory).toBe('polo');
-  expect(attributes.inferSubcategory('Örnek Ürün', 'upper_body')).toBe('tisort');
+  expect(attributes.inferSubcategory('Örnek Ürün', 'upper_body')).toBeUndefined();
 });
 
 it('prepares once and performs no metadata extraction inside repeated recommendation runs', () => {

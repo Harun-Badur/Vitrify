@@ -10,7 +10,7 @@ export const toScoringCandidate = (product: Product): ScoringCandidate => {
     brand: product.brand,
     brandSlug: product.brandSlug ?? inferred.brand_slug,
     category: product.category,
-    subcategory: product.subcategory ?? inferred.subcategory,
+    subcategory: product.subcategory ?? inferred.subcategory ?? '', // '' = unknown: scores 0, never a guess
     fit: product.fit ?? inferred.fit,
     colors:
       product.colorSlugs && product.colorSlugs.length > 0

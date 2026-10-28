@@ -205,7 +205,7 @@ const resolveSubtype = (
   conflicts: ConflictLog,
 ): ProductSignal<string> => {
   if (repairSubtype) return signal(repairSubtype, 'catalog_repair');
-  const titleMatch = matchSubcategoryFromTitle(product.title) || null;
+  const titleMatch = matchSubcategoryFromTitle(product.title, product.category) || null;
   const declared = declaredText(attributes?.subcategory);
   if (declared) {
     if (titleMatch && titleMatch !== declared) {

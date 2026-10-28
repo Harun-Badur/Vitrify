@@ -1,0 +1,355 @@
+﻿# Salt okunur önizleme: veritabanına YAZILMADI, skorlamaya BAĞLANMADI. Yeniden üretmek için: npx tsx scripts/previewCatalogEnrichment.ts
+# Ürün: 349. Değeri değişecek: 293 (yalnız boş alan dolar: 286; dolu bir değer değişir: 7).
+# Hâlâ bilinmeyen (tüm ürünler üzerinden): renk 1, alt tür 29, kalıp 170 (yalnız giyimde), gender 45; en az bir alanı bilinmeyen ürün: 190.
+# sozluk_* sütunları (formalite/stil ailesi/sezon) yalnız gösterim: çıkarılan alt türün lib/styleVocabulary.ts karşılığı; 232 üründe karşılık var, boşsa alt tür sözlükte yok (genel ayakkabi/canta/aksesuar/sapka) veya bilinmiyor.
+# kural: sub:title_keyword|category_default|unknown; gender:<kural>(<anahtar>). degisti_mi: çıkarım boş olmayıp mevcut değerden farklıysa evet.
+id,baslik,kaynak,kategori,mevcut_renk,mevcut_alt_tur,mevcut_kalip,mevcut_gender,cikarilan_renk,cikarilan_alt_tur,cikarilan_kalip,cikarilan_gender,kural,gender_guven,degisti_mi,belirsiz_alanlar,sozluk_formalite(1-5),sozluk_stil_ailesi,sozluk_sezon
+boyner-1294233,Fabrika Bej Erkek Mont EO,boyner,upper_body,bej,ceket,regular,erkek,bej,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,3,gunluk,tumu
+boyner-15343326,Hammer Jack Su Geçirmez Vectör Siyah Lacivert Erkek Çocuk Outdoor Bot,boyner,shoes,siyah|navy,ayakkabi,regular,erkek,siyah|navy,ayakkabi,,cocuk,sub:category_default;gender:title_child_token(çocuk),high,evet,yok,,,
+boyner-15383784,RESTA KUMAŞ AÇIK KAHVERENGİ PANTOLON,boyner,lower_body,kahverengi,pantolon,regular,,kahverengi,pantolon,,bilinmiyor,sub:title_keyword;gender:none,none,hayir,kalip|gender,3,klasik,tumu
+boyner-15512075,Regular Fit   Kadın Mavi Jean Pantolon,boyner,lower_body,mavi,jean,regular,kadin,mavi,jean,regular,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,yok,2,gunluk,tumu
+boyner-15605761,Fabrika Siyah Erkek Pantolon F5WM-PNT 2531,boyner,lower_body,siyah,pantolon,regular,erkek,siyah,pantolon,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,3,klasik,tumu
+boyner-15647412,Bej Kadın Çizgili Hırka NEN19AH25RRS,boyner,upper_body,bej,tisort,regular,kadin,bej,,,kadin,sub:unknown;gender:title_token(kadın),high,hayir,alt_tur|kalip,,,
+boyner-15690117,Levi's 501 Original Erkek Lacivert Jean Kot Pantolon - A7735-0015,boyner,lower_body,navy,jean,regular,erkek,navy,jean,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,2,gunluk,tumu
+boyner-15691146,Desigual Siyah Kadın Omuz Çantası 25WAXP492000,boyner,bags,siyah,canta,regular,kadin,siyah,canta,,kadin,sub:category_default;gender:title_token(kadın),high,hayir,yok,3,gunluk,tumu
+boyner-15709212,Koyu Kahve Kadın Yün Karışımlı Ceket TBWRJC1018-3,boyner,upper_body,kahverengi,ceket,regular,kadin,kahverengi,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,3,gunluk,tumu
+boyner-15714044,Erkek Lacivert %100 Keten Regular Fit Kısa Kollu Gömlek,boyner,upper_body,navy,gomlek,regular,erkek,navy,gomlek,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,3,klasik,tumu
+boyner-15775199,Limited Edition Yeşil Kadın Çiçek Nakışlı Süet Espadril Terlik,boyner,shoes,yesil,ayakkabi,regular,kadin,yesil,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,hayir,yok,,,
+boyner-15815058,Calvin Klein Siyah Erkek Logo Baskılı Sweatshirt LV04LE250GUB1_LS 350FLEECE RETRO GR,boyner,upper_body,siyah,sweatshirt,regular,erkek,siyah,sweatshirt,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,1,spor,soguk
+boyner-15837511,Network Lacivert Erkek Slim Fit Ceket 1098046,boyner,upper_body,navy,ceket,slim,erkek,navy,ceket,slim,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,3,gunluk,tumu
+boyner-15891188,Mavi Kadın Pamuklu Elbise TJW MINI STRIPE SHIRT DRESS,boyner,dresses,mavi,elbise,regular,kadin,mavi,elbise,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,3,gunluk,tumu
+boyner-15896249,Koton Mavi Kadın Elbise 6SAL80023IW,boyner,dresses,mavi,elbise,regular,kadin,mavi,elbise,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,3,gunluk,tumu
+boyner-15927675,İndigo Erkek %100 Pamuk Relaxed Denim Gömlek W2510395381 İndigo Denim Gömlek,boyner,upper_body,navy,gomlek,relaxed,erkek,navy,gomlek,relaxed,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,3,klasik,tumu
+boyner-15969332,Gage Erkek Sneaker Ayakkabı Beyaz,boyner,shoes,beyaz,ayakkabi,regular,erkek,beyaz,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,hayir,yok,,,
+boyner-1656182,Fabrika Bej Erkek Hırka F3WM-HRK154,boyner,upper_body,bej,tisort,regular,erkek,bej,,,erkek,sub:unknown;gender:title_token(erkek),high,hayir,alt_tur|kalip,,,
+boyner-1716227,Fabrika Siyah Erkek Bot BLAST,boyner,shoes,siyah,ayakkabi,regular,erkek,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,hayir,yok,,,
+boyner-1771558,AT.P.CO Siyah Erkek Mont A273JULIAN649PF1032-,boyner,upper_body,siyah,ceket,regular,erkek,siyah,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,3,gunluk,tumu
+boyner-1775564,Nike Pembe Kız Çocuk Şapka 9A0724-A9Y-JN JORDAN ESSENTIALS CAP,boyner,hats,pembe,sapka,regular,,pembe,sapka,,cocuk,sub:category_default;gender:title_child_token(çocuk),high,evet,yok,1,gunluk,tumu
+defacto-2857264,Kahve Erkek Regular Fit Yarım Fermuarlı Basic Sweatshirt,defacto,upper_body,,,,erkek,kahverengi,sweatshirt,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,spor,soguk
+defacto-3141043,Gri Erkek Regular Fit Yarım Fermuarlı Basic Sweatshirt,defacto,upper_body,,,,erkek,gri,sweatshirt,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,spor,soguk
+defacto-3159839,Lacivert Erkek Kırışmaz Oversize Pamuklu Tişört,defacto,upper_body,,,,erkek,navy,tisort,oversized,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,gunluk,sicak
+defacto-3195702,Bej Erkek Standart Fit Bisiklet Yaka Dokulu Triko Kazak,defacto,upper_body,,,,erkek,bej,,,erkek,sub:unknown;gender:title_token(erkek),high,evet,alt_tur|kalip,,,
+defacto-3255037,Kahve Kadın Polo Yaka Basic Triko Kazak,defacto,upper_body,,,,kadin,kahverengi,polo,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,2,gunluk,sicak
+defacto-3280820,Siyah Erkek Regular Fit Mevsimlik Suni Deri Ceket,defacto,upper_body,,,,erkek,siyah,ceket,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+defacto-3287863,İndigo Erkek Sıcak Tutan Su İtici Regular Fit Kapüşonlu Mont,defacto,upper_body,,,,erkek,navy,ceket,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+defacto-3288642,Siyah Erkek Standart Fit Sporcu Şort,defacto,lower_body,,,,erkek,siyah,sort,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,gunluk,sicak
+defacto-3292577,Bej Erkek Regular Fit Yarım Fermuarlı Basic Sweatshirt,defacto,upper_body,,,,erkek,bej,sweatshirt,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,spor,soguk
+defacto-3301212,Yeşil Erkek Boxy Fit Rahat Kesim Polo Yaka Düğmeli Çizgili Sweatshirt,defacto,upper_body,,,,erkek,yesil,sweatshirt,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,spor,soguk
+defacto-3315755,Haki Erkek Usb Isıtıcılı Su İtici Rüzgar Geçirmez Kayak Montu,defacto,upper_body,,,,erkek,yesil,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+defacto-3320536,Beyaz Erkek Regular Fit Yarım Fermuarlı Basic Sweatshirt,defacto,upper_body,,,,erkek,beyaz,sweatshirt,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,spor,soguk
+defacto-3321495,Kadın Lacivert Beli Lastikli Basic Paça Triko Pantolon,defacto,lower_body,,,,kadin,navy,pantolon,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+defacto-3339043,DCEY x DeFacto Kadın Topuklu Gold Ayakkabı,defacto,shoes,,,,kadin,altin,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+defacto-3353900,Kahve Kadın %100 Pamuk Wide Leg Jean Pantolon,defacto,lower_body,,,,kadin,kahverengi,jean,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,2,gunluk,tumu
+defacto-3355637,Lacivert Kadın %100 Pamuk Relax Fit Jean Pantolon,defacto,lower_body,,,,kadin,navy,jean,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,2,gunluk,tumu
+defacto-3375352,Koyu Haki Erkek Su İtici Slım Fıt Kolej Yaka Bomber Mont,defacto,upper_body,,,,erkek,yesil,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+defacto-3375353,Siyah Erkek Su İtici Slım Fıt Kolej Yaka Bomber Mont,defacto,upper_body,,,,erkek,siyah,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+defacto-3375944,Ekru Kadın Fıtted Fiyonk Yaka Triko Kazak,defacto,upper_body,,,,kadin,bej,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+defacto-3376033,Siyah Erkek Nefes Alabilir Loose Fit Kısa Kollu Basic Tişört,defacto,upper_body,,,,erkek,siyah,tisort,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,gunluk,sicak
+defacto-3377134,Siyah Erkek Sıcak Tutan Regular Fıt Kolej Yaka Bomber Kaşe Mont,defacto,upper_body,,,,erkek,siyah,ceket,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+defacto-3403514,Erkek Lacivert Keten Karışımlı Regular Fit Pantolon,defacto,lower_body,,,,erkek,navy,pantolon,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+defacto-3407970,Beyaz Kadın %100 Pamuk Oversıze Basıc Penye Tişört,defacto,upper_body,,,,kadin,beyaz,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+defacto-3407972,Kadın Antrasit %100 Pamuk Oversıze Basıc Penye Tişört,defacto,upper_body,,,,kadin,gri,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+defacto-3415590,Lacivert Kadın Fitted Bisiklet Yaka Ribana Basic Tişört,defacto,upper_body,,,,kadin,navy,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+defacto-3419058,Siyah Erkek %100 Pamuk Baggy Fit Pantolon,defacto,lower_body,,,,erkek,siyah,pantolon,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+defacto-3427630,Bordo Erkek Nefes Alabilir Regular Fit Uzun Kollu Modal Gömlek,defacto,upper_body,,,,erkek,bordo,gomlek,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+defacto-3427631,Beyaz Erkek Nefes Alabilir Regular Fit Uzun Kollu Modal Gömlek,defacto,upper_body,,,,erkek,beyaz,gomlek,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+defacto-3430047,Siyah Kadın Su İtici Kapitone Balloon Fit Mont,defacto,upper_body,,,,kadin,siyah,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+defacto-3430099,Kahve Erkek Regular Fit Süet Ceket,defacto,upper_body,,,,erkek,kahverengi,ceket,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+defacto-3430184,Kadın Kahve Su itici Balloon Fit Süet Görünümlü Mont,defacto,upper_body,,,,kadin,kahverengi,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+defacto-3430227,Siyah Erkek Su İtici Oversize Çıtçıtlı Deri Ceket,defacto,upper_body,,,,erkek,siyah,ceket,oversized,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+defacto-3430230,Bej Erkek Ekru Su İtici Kapüşonlu Mont,defacto,upper_body,,,,erkek,bej,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+defacto-3430252,Sarı Erkek Ultra Yumuşak Regular Fit Süet Ceket,defacto,upper_body,,,,erkek,sari,ceket,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+defacto-3430253,Kahve Erkek Ultra Yumuşak Regular Fit Süet Ceket,defacto,upper_body,,,,erkek,kahverengi,ceket,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+defacto-3433385,Bej Kadın Kontrast Dikişli Şal Yaka Kazak,defacto,upper_body,,,,kadin,bej,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+defacto-3434231,Siyah Kadın Su İtici Kapüşonlu Kapitone Mont,defacto,upper_body,,,,kadin,siyah,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+defacto-3434281,Siyah Kadın Dad Fit Dik Yaka Suni Deri Mont,defacto,upper_body,,,,kadin,siyah,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+defacto-3435307,Siyah Kadın Regular Fit Su İtici Kapitone Mont,defacto,upper_body,,,,kadin,siyah,ceket,regular,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+defacto-3440780,Kadın Haki Regular Fit Geniş Paça Keten Pantolon,defacto,lower_body,,,,kadin,yesil,pantolon,regular,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,yok,3,klasik,tumu
+defacto-3453259,Bordo Kadın El Çantası,defacto,bags,,,,kadin,bordo,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+defacto-3454861,Ekru Erkek Relax Fit Pamuklu Gömlek,defacto,upper_body,,,,erkek,bej,gomlek,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+defacto-3454863,Gri Erkek Relax Fit Pamuklu Gömlek,defacto,upper_body,,,,erkek,gri,gomlek,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+defacto-3455873,Beyaz Erkek Ultra Yumuşak %100 Pamuk Basic Tişört,defacto,upper_body,,,,erkek,beyaz,tisort,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,gunluk,sicak
+defacto-3463945,Ekru Kadın Regular Fit Düz Paça Pantolon,defacto,lower_body,,,,kadin,bej,pantolon,regular,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,yok,3,klasik,tumu
+defacto-3464195,Bordo Kadın Boxy Fıt Uzun Kollu Triko Kazak,defacto,upper_body,,,,kadin,bordo,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+defacto-3464196,Lacivert Kadın Boxy Fıt Uzun Kollu Triko Kazak,defacto,upper_body,,,,kadin,navy,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+defacto-3467192,Kadın Açık Mavi %100 Pamuk Geniş Paça Jean Pantolon,defacto,lower_body,,,,kadin,mavi,jean,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,2,gunluk,tumu
+defacto-3473720,Kahverengi Erkek Boxy Fit Polo Yaka Çizgili Sweatshirt,defacto,upper_body,,,,erkek,kahverengi,sweatshirt,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,spor,soguk
+defacto-3475288,Yeşil Erkek %100 Pamuk Boxy Fit Baskılı Mesh Forma Tişört,defacto,upper_body,,,,erkek,yesil,tisort,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,gunluk,sicak
+defacto-3475995,Siyah Erkek Standart Fit Basic Triko Kazak,defacto,upper_body,,,,erkek,siyah,,,erkek,sub:unknown;gender:title_token(erkek),high,evet,alt_tur|kalip,,,
+defacto-3476760,Haki Erkek Fermuarlı Polo Yaka Basic Kazak,defacto,upper_body,,,,erkek,yesil,polo,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,2,gunluk,sicak
+defacto-3477501,Kahve Erkek Standart Fıt Bisiklet Yaka Kazak,defacto,upper_body,,,,erkek,kahverengi,,,erkek,sub:unknown;gender:title_token(erkek),high,evet,alt_tur|kalip,,,
+defacto-3477754,Açık Bej Erkek Yarım Fermuarlı Polo Yaka Basic Triko Kazak,defacto,upper_body,,,,erkek,bej,polo,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,2,gunluk,sicak
+defacto-3479838,Kadın Siyah %100 Pamuk Straight Fit Yüksek Bel Jean Pantolon,defacto,lower_body,,,,kadin,siyah,jean,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,2,gunluk,tumu
+defacto-3498839,Kadın Kahve Ekoseli Fermuarlı Dik Yaka Pamuk Astarlı Ceket,defacto,upper_body,,,,kadin,kahverengi,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+defacto-3499420,Antrasit Kadın Regular Fit Dik Yaka Pamuklu Blazer,defacto,upper_body,,,,kadin,gri,blazer,regular,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,yok,4,klasik,tumu
+defacto-3501459,Ekru Erkek Regular Fit Henley Yaka Basic Tişört,defacto,upper_body,,,,erkek,bej,tisort,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,gunluk,sicak
+defacto-3506454,Lacivert Erkek Çabuk Kuruyan Slım Fıt Uzun Kollu Gömlek,defacto,upper_body,,,,erkek,navy,gomlek,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+defacto-3506510,Kadın Kahve %100 Pamuk Loose Fıt Baskılı Çizgili Sweatshirt,defacto,upper_body,,,,kadin,kahverengi,sweatshirt,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,spor,soguk
+defacto-3506511,Kadın Lacivert %100 Pamuk Loose Fıt Baskılı Çizgili Sweatshirt,defacto,upper_body,,,,kadin,navy,sweatshirt,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,spor,soguk
+defacto-3506512,Kadın Sarı %100 Pamuk Loose Fıt Baskılı Çizgili Sweatshirt,defacto,upper_body,,,,kadin,sari,sweatshirt,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,spor,soguk
+defacto-3510253,Haki Kadın Relax Fit Fermuarlı Dokuma Ceket,defacto,upper_body,,,,kadin,yesil,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+defacto-3510272,Kahve Erkek Standart Fit Polo Yaka Triko Basic Kazak,defacto,upper_body,,,,erkek,kahverengi,polo,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,2,gunluk,sicak
+defacto-3521371,Siyah Erkek Ultra Yumuşak Regular Fit Uzun Kollu Gömlek,defacto,upper_body,,,,erkek,siyah,gomlek,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+defacto-3524938,Siyah Kadın Beli Büzgülü Balloon Fit Blazer,defacto,upper_body,,,,kadin,siyah,blazer,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,4,klasik,tumu
+defacto-3526401,Mavi Erkek Straight Fit Jean 3526401,defacto,lower_body,,,,erkek,mavi,jean,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,2,gunluk,tumu
+defacto-3527443,Kadın Kırmızı %100 Pamuk Oversize Blok Detaylı Poplin Ceket,defacto,upper_body,,,,kadin,kirmizi,ceket,oversized,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+defacto-3529650,Mavi Kadın Loose Fit Reglan Uzun Kollu Tişört,defacto,upper_body,,,,kadin,mavi,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+defacto-3530422,Beyaz Kadın Regular Fit Fırfırlı Uzun Kollu Basic Bluz,defacto,upper_body,,,,kadin,beyaz,,regular,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur,,,
+defacto-3530423,Mavi Kadın Regular Fit Fırfırlı Uzun Kollu Basic Bluz,defacto,upper_body,,,,kadin,mavi,,regular,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur,,,
+defacto-3530847,Mavi Erkek Straight Fit Jean Pantolon,defacto,lower_body,,,,erkek,mavi,jean,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,2,gunluk,tumu
+defacto-3534171,Erkek Kahve Relaxed Fit Jean,defacto,lower_body,,,,erkek,kahverengi,jean,relaxed,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,2,gunluk,tumu
+flo-101909425,adidas VL COURT BASE Beyaz Kadın Sneaker,flo,shoes,,,,,beyaz,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-101909426,adidas VL COURT BASE Beyaz Kadın Sneaker,flo,shoes,,,,,beyaz,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-101925325,Butigo CLT KMR BGT 4PR Ekru Kadın Omuz Çantası,flo,bags,,,,,bej,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-101925350,Butigo MNG GS KL 4PR KAHVE MULTI Kadın Kol Çantası,flo,bags,,,,,kahverengi,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-101925351,Butigo MNG GS KL 4PR Siyah Kadın Kol Çantası,flo,bags,,,,,siyah,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-101925352,Butigo MNG GS OMZ 4PR KAHVE MULTI Kadın Omuz Çantası,flo,bags,,,,,kahverengi,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-101925353,Butigo MNG GS OMZ 4PR Siyah Kadın Omuz Çantası,flo,bags,,,,,siyah,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-101961799,Jjxx JXLEILA BOMBER JACKET OTW GRI Kadın Ceket,flo,upper_body,,,,,gri,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+flo-101978340,adidas VL COURT BASE Siyah Kadın Sneaker,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102013433,Butigo CLT PRM EL 5FX Siyah Kadın El Çantası,flo,bags,,,,,siyah,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102013434,Butigo CLT PRM EL 5FX Ekru Kadın El Çantası,flo,bags,,,,,bej,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102013435,Butigo CLT PRM KL 5FX Siyah Kadın Kol Çantası,flo,bags,,,,,siyah,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102013477,Butigo CLT RENKLI BUCKET OMZ 5FX Yeşil Kadın Omuz Çantası,flo,bags,,,,,yesil,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102013478,Butigo CLT RENKLI BUCKET OMZ 5FX Bej Kadın Omuz Çantası,flo,bags,,,,,bej,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102026253,Kinetix ML TROOTS 1KMNT-02 5PR Siyah Erkek Mont,flo,upper_body,,,,,siyah,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-102031349,Kinetix Mont Erkek Açık Gri ML TROOTS 1KMNT-02,flo,upper_body,,,,,gri,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-102035407,Dockers by Gerli FISHER 5PR Siyah Erkek Bot,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102035656,Dockers by Gerli 225088 5PR Siyah Erkek Bot,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102042852,Butigo 24K-901 5PR Siyah Kadın Topuklu Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102045085,Garamond DORUK 5PR Siyah Erkek Klasik Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102045086,Garamond DORUK Kahverengi Erkek Klasik Ayakkabı,flo,shoes,,,,,kahverengi,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102050923,Butigo 24K-1002 5PR Siyah Kadın Kovboy Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102050924,Butigo 25K-8003 5PR Siyah Kadın Kovboy Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102051257,Butigo 25K-8111 5PR Siyah Kadın Topuklu Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102054666,Butigo 21K-256 5PR Siyah Kadın Topuklu Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102054667,Butigo 21K-256 5PR Bej Kadın Topuklu Bot,flo,shoes,,,,,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102054669,Butigo 23K-151 5PR Siyah Kadın Topuklu Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102054673,Butigo 24K-643 5PR Bej Kadın Topuklu Bot,flo,shoes,,,,,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102054807,Butigo 25K-7009 5PR Siyah Kadın Düz Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102054810,Butigo 25K-7032 5PR Siyah Kadın Topuklu Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102054818,Butigo 25K-7114 5PR Siyah Kadın Düz Çizme,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102062900,Butigo FOLDAWAY BAG 5PR Siyah Kadın Omuz Çantası,flo,bags,,,,,siyah,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102062901,Butigo FOLDAWAY BAG 5PR Haki Kadın Omuz Çantası,flo,bags,,,,,yesil,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102062902,Butigo FOLDAWAY BAG 5PR KAHVE MULTI Kadın Omuz Çantası,flo,bags,,,,,kahverengi,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102232389,adidas BB CAP COT NL       OLIST PASTEL YESIL Unisex Şapka,flo,hats,,,,,yesil,sapka,,unisex,sub:category_default;gender:title_token(unisex),high,evet,yok,1,gunluk,tumu
+flo-102253162,Butigo Hasır Şapka Kadın Krem BLOOM STRAW,flo,hats,,,,,bej,sapka,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,1,gunluk,tumu
+flo-102253195,Butigo Hasır Şapka Kadın Krem DANTEL STRAW,flo,hats,,,,,bej,sapka,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,1,gunluk,tumu
+flo-102253322,Butigo El Çantası Kadın Beyaz CILT AKS DTY MINI EL,flo,bags,,,,,beyaz,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+flo-102496478,adidas BB CAP COT NL BLACK/WHITE Siyah Unisex Şapka,flo,hats,,,,,siyah|beyaz,sapka,,unisex,sub:category_default;gender:title_token(unisex),high,evet,yok,1,gunluk,tumu
+flo-102689669,adidas ULTRARUN 5 TR Siyah Erkek Koşu Ayakkabısı,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102691348,Kinetix ML BASIC 5SOFTSHELL 6PR Gri Erkek Softshell,flo,upper_body,,,,,gri,,,erkek,sub:unknown;gender:title_token(erkek),high,evet,alt_tur|kalip,,,
+flo-102691437,Kinetix Mont Erkek Lacivert ML 1SINGO,flo,upper_body,,,,,navy,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-102694423,Dockers by Gerli HERNANDEZ Siyah Erkek Comfort Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,relaxed,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102694424,Dockers by Gerli HERNANDEZ Kahverengi Erkek Comfort Ayakkabı,flo,shoes,,,,,kahverengi,ayakkabi,relaxed,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102694703,Kinetix Mont Erkek Haki ML 1NEAL,flo,upper_body,,,,,yesil,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-102695490,Dockers by Gerli SCAPE Siyah Erkek Comfort Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,relaxed,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102695491,Dockers by Gerli SCAPE Kahverengi Erkek Comfort Ayakkabı,flo,shoes,,,,,kahverengi,ayakkabi,relaxed,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102709344,Butigo 26K-236 Siyah Kadın Topuklu Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102709346,Butigo 26K-236 Bordo Kadın Topuklu Ayakkabı,flo,shoes,,,,,bordo,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102709397,Butigo 26K-289 Kahverengi Kadın Topuklu Ayakkabı,flo,shoes,,,,,kahverengi,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102709398,Butigo 26K-289 Siyah Kadın Topuklu Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102715648,adidas GALAXY 8 M Siyah Erkek Koşu Ayakkabısı,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102715649,adidas GALAXY 8 M Siyah Erkek Koşu Ayakkabısı,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102716684,Garamond LENARS Siyah Erkek Klasik Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102716692,Garamond MANDER Haki Erkek Klasik Ayakkabı,flo,shoes,,,,,yesil,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102716693,Garamond MANDER Siyah Erkek Klasik Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102719053,Butigo 26K-604 Siyah Kadın Topuklu Bot,flo,shoes,,,,,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+flo-102721166,adidas Mont Erkek Siyah M ESS SD LT P J,flo,upper_body,,,,,siyah,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-102721167,adidas Mont Erkek Mavi M ESS SD LT P J,flo,upper_body,,,,,mavi,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-102721929,Dockers by Gerli VALANCE Siyah Erkek Comfort Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,relaxed,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102726546,Kinetix Elbise Kadın Siyah WL 28NEBISU,flo,dresses,,,,,siyah,elbise,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+flo-102726547,Kinetix Elbise Kadın Gri WL 28NEBISU,flo,dresses,,,,,gri,elbise,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+flo-102727745,Garamond CRESPO Siyah Erkek Klasik Ayakkabı,flo,shoes,,,,,siyah,ayakkabi,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-102731694,Butigo Hasır Şapka Kadın Bej BEACH STRAW,flo,hats,,,,,bej,sapka,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,1,gunluk,tumu
+flo-200699464,Freecamp 3In1 Softshell Erkek Ceket-SİYAH,flo,upper_body,,,,,siyah,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-200704568,Berg Palani Erkek Ceket-HAKİ,flo,upper_body,,,,,yesil,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-200711593,Berg Mahavi Erkek Ceket-MAVİ,flo,upper_body,,,,,mavi,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,gunluk,tumu
+flo-201598185,Madmext Camel Desenli Yırtmaç Detaylı Uzun Elbise MG2325,flo,dresses,,,,,camel,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+flo-201646296,"Rky SERENITY %100 Hakiki Deri 3,5 Cm Siyah Erkek Kemer",flo,accessories,,,,,siyah,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-201646306,Rky SERENITY %100 hakiki deri 4 Cm Siyah Erkek Kemer,flo,accessories,,,,,siyah,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+flo-201703539,Fabrika Gömlek Yaka Düz Siyah Diz Üstü Kadın Elbise F6SL-ELB0153,flo,dresses,,,,,siyah,elbise,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+flo-201703987,BAHELS Kadın Acı Kahve Renk El ve Omuz Çantası,flo,bags,kahverengi,canta,regular,kadin,kahverengi,canta,,kadin,sub:category_default;gender:title_token(kadın),high,hayir,yok,3,gunluk,tumu
+flo-201729383,Rky SERENITY 2 Adet Siyah %100 Hakiki Manda Derisi Kemer – 4.5 cm Genişlik – Tokası Kalın - Kot Pantolon Kemeri,flo,accessories,,,,,siyah,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+flo-201729387,Rky SERENITY 2 Adet Siyah %100 Hakiki Manda Derisi Kemer – 4.5 cm Genişlik – Tokası Kalın - Kot Pantolon Kemeri,flo,accessories,,,,,siyah,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+flo-201729388,Rky SERENITY 2 Adet Siyah %100 Hakiki Manda Derisi Kemer – 4.5 cm Genişlik – Tokası Kalın - Kot Pantolon Kemeri,flo,accessories,,,,,siyah,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+flo-201734529,Madmext Kırmızı Desenli Yırtmaç Detaylı Uzun Elbise MG2325,flo,dresses,,,,,kirmizi,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+flo-201809989,LC Waikiki LCW Modest Antrasit Dik Yaka Triko Elbise,flo,dresses,,,,,gri,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+flo-201845552,Arcade Ranger Adventure Slim Kemer-LACİVERT,flo,accessories,,,,,navy,aksesuar,slim,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+flo-201846669,Arcade Ranger Adventure Kemer-SİYAH,flo,accessories,,,,,siyah,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+hepsiburada-HBC00002D9IWN,Süvari Rahat Kalıp Siyah Erkek Kumaş,hepsiburada,lower_body,siyah,pantolon,relaxed,erkek,siyah,pantolon,relaxed,erkek,sub:category_default;gender:title_token(erkek),high,hayir,yok,3,klasik,tumu
+hepsiburada-HBC00009FVCQG,Erkek Pamuklu Basic Pembe Polo Yaka,hepsiburada,upper_body,pembe,polo,regular,erkek,pembe,polo,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,2,gunluk,sicak
+hepsiburada-HBCV00008NG76F,Erkek İndigo Comfort Fit Bisiklet Yaka Tişört,hepsiburada,upper_body,navy,tisort,relaxed,erkek,navy,tisort,relaxed,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,1,gunluk,sicak
+hepsiburada-HBCV0000CYITMK,Slogan Baskılı Basic Beyaz T-Shirt,hepsiburada,upper_body,beyaz,tisort,regular,unisex,beyaz,tisort,,bilinmiyor,sub:title_keyword;gender:none,none,hayir,kalip|gender,1,gunluk,sicak
+hepsiburada-HBCV0000FG17PA,Kahverengi ve Siyah Tül Pareo 2'li Set,hepsiburada,lower_body,kahverengi|siyah,pareo,regular,kadin,siyah|kahverengi,pareo,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,,,
+lcw-4275208,Siyah Regular Fit Erkek Chino Pantolon,lcw,lower_body,siyah,,,erkek,siyah,pantolon,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-4348772,Beyaz Bağcıklı Unisex Sneaker 158,lcw,shoes,beyaz,,,unisex,beyaz,ayakkabi,,unisex,sub:category_default;gender:title_token(unisex),high,evet,yok,,,
+lcw-4459951,Siyah Chily Kemer Ve Toka Detaylı Kalın Topuklu Kadın Bot,lcw,shoes,siyah,,,kadin,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-4646347,Beyaz Carina Günlük Ortopedik Kadın Sneaker Spor Ayakkabı,lcw,shoes,beyaz,,,kadin,beyaz,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-4646350,Beyaz Agnus Günlük Ortopedik Kadın Sneaker Spor Ayakkabı,lcw,shoes,beyaz,,,kadin,beyaz,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-4828419,01fs2038-s Siyah Erkek Laptop / Evrak Çantası,lcw,bags,siyah,,,erkek,siyah,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+lcw-4868475,Lacivert Beli Bağlamalı Saten Etek,lcw,lower_body,,,,kadin,navy,etek,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,klasik,tumu
+lcw-4885993,Lacivert Beli Lastikli A Kesim Saten Etek,lcw,lower_body,,,,kadin,navy,etek,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,klasik,tumu
+lcw-4887452,Beyaz Slim Fit Uzun Kollu Erkek Gömlek,lcw,upper_body,,,,erkek,beyaz,gomlek,slim,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-4913775,Lacivert Slim Fit Erkek Şort,lcw,lower_body,,,,erkek,navy,sort,slim,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,gunluk,sicak
+lcw-5078073,7002 Unisex Sırt Çantası Laptop Çantası Evrak Çantası Siyah,lcw,bags,siyah,,,erkek,siyah,canta,,unisex,sub:category_default;gender:title_token(unisex),high,evet,yok,3,gunluk,tumu
+lcw-5080923,İndigo Balon Kollu Belden Oturtmalı Jean Elbise,lcw,dresses,,,,kadin,navy,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5113630,Bar 3 Reflective Stripes Unisex Siyah Sırt Çantası,lcw,bags,siyah,,,erkek,siyah,canta,,unisex,sub:category_default;gender:title_token(unisex),high,evet,yok,3,gunluk,tumu
+lcw-5114921,Bordo Beli Fermuarlı Kloş Etek,lcw,lower_body,bordo,,,kadin,bordo,etek,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,klasik,tumu
+lcw-5130013,Bej Cilt İnce Kısa Topuklu Kadın Abiye Ayakkabı 357171 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5130015,Bej Kısa İnce Topuklu Abiye Ayakkabı 357188 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+lcw-5130049,Bej Saten İnce Taşlı Topuklu Kadın Abiye Ayakkabı 357191 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5130063,Bej Kırışık Kısa İnce Topuklu Kadın Abiye Ayakkabı 357190 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5140581,Bej Saten Taş İşlemeli İnce Topuklu Kadın Abiye Ayakkabı 248245 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5140587,Bej Cilt Hafif Esnek Kadın Casual Ayakkabı 572433 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5140594,Bej İçi Polarlı Fermuarlı Kaymaz Kadın Bot 24071 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5141124,2063 Vegan Kahverengi Baskılı Deri El Portföy Çanta,lcw,bags,kahverengi,,,erkek,kahverengi,canta,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,3,gunluk,tumu
+lcw-5141130,2063 Vegan Kahverengi Deri El Portföy Çanta,lcw,bags,kahverengi,,,erkek,kahverengi,canta,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,3,gunluk,tumu
+lcw-5142098,Bej 2063 Vegan Vizon Kahverengi Deri El Portföy Çanta,lcw,bags,bej,,,erkek,bej|kahverengi,canta,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,3,gunluk,tumu
+lcw-5155094,Bej İnce Uzun Topuklu Kadın Abiye Ayakkabı 448205 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5155099,Bej Cilt Fiyonk Kurdeleli Kadın Topuklu Ayakkabı 519081 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5155100,Bej Kadın Kalın Yüksek Topuklu Ayakkabı 619004 Z,lcw,shoes,bej,,,kadin,bej,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5182282,Kahverengi Beli Fermuarlı Zincir Detaylı Şort Etek,lcw,lower_body,kahverengi,,,kadin,kahverengi,sort,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,1,gunluk,sicak
+lcw-5215694,Kahverengi Beli Fermuarlı Dokulu Tüvit Şort Etek,lcw,lower_body,kahverengi,,,kadin,kahverengi,sort,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,1,gunluk,sicak
+lcw-5229108,Base Shopper Kadın Siyah Çanta,lcw,bags,siyah,,,kadin,siyah,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+lcw-5242565,Gri Regular Fit Erkek Şort,lcw,lower_body,,,,erkek,gri,sort,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,gunluk,sicak
+lcw-5246063,Bej Ceket Yaka Kuşaklı Kadın Trençkot,lcw,upper_body,bej,,,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5250463,Bej Dik Yaka Kuşaklı Kadın Gabardin Trençkot,lcw,upper_body,bej,,,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5250464,Lacivert Dik Yaka Kuşaklı Kadın Gabardin Trençkot,lcw,upper_body,,,,kadin,navy,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5261159,Lacivert Regular Fit Erkek Chino Pantolon,lcw,lower_body,,,,erkek,navy,pantolon,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-5261290,Bej Ceket Yaka Kemerli Kadın Trençkot,lcw,upper_body,bej,,oversized,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5261462,Haki Ceket Yaka Kuşaklı Kadın Trençkot,lcw,upper_body,,,,kadin,yesil,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5261463,Bej Ceket Yaka Kuşaklı Kadın Trençkot,lcw,upper_body,bej,,,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5261464,Kahverengi Ceket Yaka Kuşaklı Kadın Trençkot,lcw,upper_body,kahverengi,,,kadin,kahverengi,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5269108,Lacivert Standart Kalıp Çizgili Gabardin Erkek Gömlek,lcw,upper_body,,,,erkek,navy,gomlek,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+lcw-5284581,Siyah Bisiklet Yaka Kadın Body,lcw,upper_body,,,,kadin,siyah,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5284582,Beyaz Bisiklet Yaka Kadın Body,lcw,upper_body,,,,kadin,beyaz,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5318396,Siyah Kayık Yaka Kadın Body,lcw,upper_body,,,,kadin,siyah,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5352517,Kahverengi Berny Gizli Topuklu Deri Tek Bantlı Kadın Babet,lcw,shoes,kahverengi,,,kadin,kahverengi,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5381755,Kahverengi Ayıcık Aksesuarlı Kadın Sırt Çantası,lcw,bags,kahverengi,,,kadin,kahverengi,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+lcw-5385324,Siyah Ayarlanabilir Askılı Erkek Sırt Çantası,lcw,bags,siyah,,,erkek,siyah,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+lcw-5389490,Kahverengi Belden Oturtmalı Triko Elbise,lcw,dresses,kahverengi,,,kadin,kahverengi,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5389617,Siyah Baskılı Erkek Sırt Çantası,lcw,bags,siyah,,,erkek,siyah,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+lcw-5402791,Kahverengi Dik Yaka Kuşaklı Kadın Gabardin Trençkot,lcw,upper_body,kahverengi,,,kadin,kahverengi,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5413552,Bordo Bisiklet Yaka Çizgili Kadın Body,lcw,upper_body,,,,kadin,bordo,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5417707,Siyah Regular Fit Erkek Pantolon,lcw,lower_body,,,,erkek,siyah,pantolon,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-5421432,Haki Ayarlanabilir Askılı Erkek Göğüs Çantası,lcw,bags,,,,erkek,yesil,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+lcw-5431912,Bordo Bağlamalı Kadın Gömlek Tunik,lcw,upper_body,bordo,,,kadin,bordo,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5441853,Kahverengi Regular Fit Erkek Chino Pantolon,lcw,lower_body,,,,erkek,kahverengi,pantolon,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-5442010,Bordo Bebe Yaka Modal Karışımlı Kadın Gömlek Tunik,lcw,upper_body,bordo,,,kadin,bordo,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5443487,Kahverengi Aksesuarlı Deri Görünümlü Kadın Omuz Çantası,lcw,bags,kahverengi,,,kadin,kahverengi,canta,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+lcw-5443659,Bej Ceket Yaka Kuşaklı Kadın Trençkot,lcw,upper_body,bej,,,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5452852,Siyah Suni Deri Erkek Kemer,lcw,accessories,,,,erkek,siyah,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+lcw-5457108,Bordo Beli Büzgülü Kadın Gömlek Elbise,lcw,dresses,bordo,,,kadin,bordo,elbise,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5457109,Kahverengi Beli Bağcıklı Modal Karışımlı Gömlek Elbise,lcw,dresses,kahverengi,,,kadin,kahverengi,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5459960,Siyah Deri Erkek Kemer,lcw,accessories,,,,erkek,siyah,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+lcw-5461480,Siyah Yüksek Bel İspanyol Paça Kadın Pantolon,lcw,lower_body,,,,kadin,siyah,pantolon,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5470237,Siyah Deri Görünümlü Kadın Kemer,lcw,accessories,,,,kadin,siyah,aksesuar,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5475302,Lacivert Bağlamalı Yaka Çiçekli Elbise,lcw,dresses,,,,kadin,navy,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5479966,Gri Bisiklet Yaka Kadın Body,lcw,upper_body,,,,kadin,gri,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5482166,Kahverengi Süet Görünümlü Kadın Kemer,lcw,accessories,,,,kadin,kahverengi,aksesuar,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5486182,Kahverengi Deri Görünümlü Kadın Kemer 2'li,lcw,accessories,,,,kadin,kahverengi,aksesuar,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5487929,Bordo Bağlama Detaylı Modal Karışımlı Gömlek Elbise,lcw,dresses,bordo,,,kadin,bordo,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5488032,Bordo %100 Pamuklu Kadın Gömlek Tunik,lcw,upper_body,bordo,,,kadin,bordo,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5489112,Bej Dik Yaka Kuşaklı Kadın Trençkot,lcw,upper_body,bej,,,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5489124,Siyah Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,siyah,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5489125,Ekru Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,bej,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5489126,Kahverengi Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,kahverengi,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5489127,Bordo Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,bordo,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5489128,Haki Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,yesil,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5489129,Kahverengi Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,kahverengi,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5489130,Beyaz Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,beyaz,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5489450,Antrasit Regular Fit Gabardin Erkek Kargo Şort,lcw,lower_body,,,,erkek,gri,kargo,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,sokak,tumu
+lcw-5493241,Siyah Yüksek Bel Pileli Kadın Kumaş Pantolon,lcw,lower_body,,,,kadin,siyah,pantolon,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5493747,Kahverengi A Kesim Süet Görünümlü Elbise,lcw,dresses,kahverengi,,,kadin,kahverengi,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5495414,Academy Aop Siyah Sırt Çantası,lcw,bags,siyah,,,erkek,siyah,canta,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,3,gunluk,tumu
+lcw-5504537,Yeşil Belden Oturtmalı Modal Karışımlı Elbise,lcw,dresses,yesil,,,kadin,yesil,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5504757,Pembe Çizgili %100 Pamuklu Kadın Tişört,lcw,upper_body,,,,kadin,pembe,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+lcw-5504851,Lacivert Regular Fit Gabardin Erkek Kargo Pantolon,lcw,lower_body,,,,erkek,navy,kargo,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,1,sokak,tumu
+lcw-5507551,Sarı %100 Pamuklu Kadın Gömlek Tunik,lcw,upper_body,sari,,,kadin,sari,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5507552,Pembe %100 Pamuklu Kadın Gömlek Tunik,lcw,upper_body,pembe,,,kadin,pembe,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5507642,Beyaz Baskılı %100 Pamuklu Kadın Tişört,lcw,upper_body,beyaz,,,kadin,beyaz,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+lcw-5507961,Siyah Beli Lastikli Krep Kadın Balon Pantolon,lcw,lower_body,,,,kadin,siyah,pantolon,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5508017,Siyah Kemerli Geniş Paça Kadın Pantolon,lcw,lower_body,,,,kadin,siyah,pantolon,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5509773,Siyah Standart Kalıp Hakim Yaka Erkek Gömlek,lcw,upper_body,,,,erkek,siyah,gomlek,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+lcw-5509776,İndigo Regular Fit Erkek Gömlek,lcw,upper_body,,,,erkek,navy,gomlek,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-5509777,Kahverengi Regular Fit Krinkle Erkek Gömlek,lcw,upper_body,,,,erkek,kahverengi,gomlek,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-5509778,Lacivert Standart Kalıp Erkek Dokulu Gömlek,lcw,upper_body,,,,erkek,navy,gomlek,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+lcw-5513984,Kırmızı %100 Pamuklu Kadın Tişört,lcw,upper_body,kirmizi,,,kadin,kirmizi,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+lcw-5513985,Lacivert %100 Pamuklu Kadın Tişört,lcw,upper_body,,,,kadin,navy,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+lcw-5513987,Beyaz %100 Pamuklu Kadın Tişört,lcw,upper_body,beyaz,,,kadin,beyaz,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+lcw-5533558,Beyaz %100 Pamuklu Kadın Gömlek,lcw,upper_body,beyaz,,,kadin,beyaz,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5534040,Alya Fular Detaylı Baget Çanta Siyah,lcw,bags,siyah,,,kadin,siyah,canta,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,3,gunluk,tumu
+lcw-5534588,Kahverengi Hakiki Deri Erkek Kemer,lcw,accessories,,,,erkek,kahverengi,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+lcw-5534589,Siyah Dokulu Erkek Kemer,lcw,accessories,,,,erkek,siyah,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+lcw-5535675,Bordo Beli Bağcıklı Çizgili Kadın Gömlek Tunik,lcw,upper_body,bordo,,,kadin,bordo,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5543655,Sarı Ayarlanabilir Metal Aksesuarlı Kadın Zincir Kemer,lcw,accessories,,,,kadin,sari,aksesuar,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5546065,Siyah Beli Kemerli Kadın Kumaş Pantolon,lcw,lower_body,,,,kadin,siyah,pantolon,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5549802,Siyah Erkek Kemer,lcw,accessories,,,,erkek,siyah,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+lcw-5555767,Haki Regular Fit Gabardin Erkek Gömlek,lcw,upper_body,,,,erkek,yesil,gomlek,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-5556166,Kırmızı %100 Pamuklu Kadın Gömlek,lcw,upper_body,kirmizi,,,kadin,kirmizi,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5558677,Ekru Dik Yaka Kruvaze Kadın Trençkot,lcw,upper_body,,,,kadin,bej,blazer,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,4,klasik,tumu
+lcw-5566535,Kahverengi Beli Kemerli Havuç Kesim Kadın Kumaş Pantolon,lcw,lower_body,,,,kadin,kahverengi,pantolon,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+lcw-5573808,Antrasit Dik Yaka Kadın Body,lcw,upper_body,,,,kadin,gri,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5578860,Siyah Baskılı Erkek Sırt Çantası,lcw,bags,siyah,,,erkek,siyah,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+lcw-5578878,Haki Baskılı Erkek Spor Çanta,lcw,bags,,,,erkek,yesil,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+lcw-5590316,Siyah Regular Fit Erkek Pantolon,lcw,lower_body,,,,erkek,siyah,pantolon,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,yok,3,klasik,tumu
+lcw-5592980,Mara Tokalı Kemer Kahverengi,lcw,accessories,,,,kadin,kahverengi,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+lcw-5595915,Bordo Bağlama Detaylı Çizgili Elbise,lcw,dresses,bordo,,,kadin,bordo,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5599420,Haki Büyük Beden Kontrast Yaka Kadın Trençkot,lcw,upper_body,,,,kadin,yesil,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5599421,Bej Büyük Beden Kontrast Yaka Kadın Trençkot,lcw,upper_body,bej,,,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5602143,Siyah Balon Kollu Mini Elbise,lcw,dresses,siyah,,,kadin,siyah,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+lcw-5603424,Yeşil Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,yesil,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5607600,Kahverengi Süet Görünümlü Erkek Kemer,lcw,accessories,,,,erkek,kahverengi,aksesuar,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,,,
+lcw-5621622,Lacivert Şal Figürlü Kadın Kemer,lcw,accessories,,,,kadin,navy,aksesuar,,kadin,sub:category_default;gender:title_token(kadın),high,evet,yok,,,
+lcw-5632944,Kırmızı Dik Yaka Kadın Fitilli Body,lcw,upper_body,,,,kadin,kirmizi,,,kadin,sub:unknown;gender:title_token(kadın),high,evet,alt_tur|kalip,,,
+lcw-5634338,Kahverengi Dik Yaka Ekose Oversize Kadın Trençkot,lcw,upper_body,kahverengi,,oversized,kadin,kahverengi,ceket,oversized,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,yok,3,gunluk,tumu
+lcw-5635098,Bordo Dik Yaka Kuşaklı Kadın Trençkot,lcw,upper_body,bordo,,,kadin,bordo,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,gunluk,tumu
+lcw-5638015,Ekru %100 Pamuklu Kadın Tişört,lcw,upper_body,,,,kadin,bej,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+lcw-5638019,Ekru %100 Pamuklu Kadın Tişört,lcw,upper_body,,,,kadin,bej,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,1,gunluk,sicak
+lcw-5657632,Kahverengi Armürlü Kadın Gömlek Tunik,lcw,upper_body,kahverengi,,,kadin,kahverengi,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,evet,kalip,3,klasik,tumu
+mavi-0010593-70489,Erkek Lacivert Pantolon,mavi,lower_body,,,,erkek,navy,pantolon,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+mavi-0010607-70497,Outlet Erkek Esnek Lacivert Travel Pantolon,mavi,lower_body,,,,erkek,navy,pantolon,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,3,klasik,tumu
+mavi-0410276-71568,Erkek Haki Keten Şort,mavi,lower_body,,,,erkek,yesil,sort,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,gunluk,sicak
+mavi-0417315-A3264,Erkek Garrett Mavi Edition Ekru Keten Karışımlı Jean Şort,mavi,lower_body,,,,erkek,bej,jean,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,2,gunluk,tumu
+mavi-066935-900,Erkek Siyah Basic Şort,mavi,lower_body,,,,erkek,siyah,sort,,erkek,sub:title_keyword;gender:title_token(erkek),high,evet,kalip,1,gunluk,sicak
+mavi-0911807-70500,Erkek Nakışlı Lacivert Şapka,mavi,hats,,,,erkek,navy,sapka,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,1,gunluk,tumu
+mavi-0912035-70246,Erkek Kahverengi Sırt Çantası,mavi,bags,,,,erkek,kahverengi,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+mavi-0912374-900,Erkek Mavi Pro Siyah Sırt Çantası,mavi,bags,,,,erkek,siyah,canta,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,3,gunluk,tumu
+mavi-0912397-71544,Erkek Mavi Pro Haki Şapka,mavi,hats,,,,erkek,yesil,sapka,,erkek,sub:category_default;gender:title_token(erkek),high,evet,yok,1,gunluk,tumu
+mavi-1310896-86623,Lacivert Uzun Elbise,mavi,dresses,,,,kadin,navy,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+mavi-1310916-91677,Baskılı Siyah Midi Elbise,mavi,dresses,,,,kadin,siyah,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,3,gunluk,tumu
+trendyol-1043656408,Converse Chuck 70 At-Cx Unisex Kahverengi Platform Sneaker,trendyol,shoes,kahverengi,ayakkabi,regular,unisex,kahverengi,ayakkabi,,unisex,sub:category_default;gender:title_token(unisex),high,hayir,yok,,,
+trendyol-1044046282,Dagi Siyah Kadın Bisiklet Yaka Tişört,trendyol,upper_body,siyah,tisort,regular,kadin,siyah,tisort,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,1,gunluk,sicak
+trendyol-1056517113,Converse Cargo Kadın Bordo Pantolon,trendyol,lower_body,bordo,kargo,regular,kadin,bordo,kargo,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,1,sokak,tumu
+trendyol-1082211454,Koton Kadın Jean Pantolon 6SAL40101MD SİYAH,trendyol,lower_body,siyah,jean,regular,kadin,siyah,jean,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,2,gunluk,tumu
+trendyol-1082236145,Saade Gri Kadın Oversize Kapüşonlu Basic Hoodie Sweatshirt,trendyol,upper_body,gri,hoodie,oversized,kadin,gri,hoodie,oversized,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,yok,1,sokak,soguk
+trendyol-1086036215,Taşmir Sertifikalı 925 Ayar Gümüş Doğal 10MM Inci Kolye Bileklik Set Gelin Düğün Nişan Set,trendyol,accessories,gumus,aksesuar,regular,,gumus,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,hayir,gender,,,
+trendyol-1124488940,Jack & Jones Lacivert Erkek Tişört Bisiklet Yaka Günlük Basic 12268415,trendyol,upper_body,navy,tisort,regular,erkek,navy,tisort,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,1,gunluk,sicak
+trendyol-1132679148,adL Gri Uzun Kollu Ceket,trendyol,upper_body,gri,ceket,regular,,gri,ceket,,bilinmiyor,sub:title_keyword;gender:none,none,hayir,kalip|gender,3,gunluk,tumu
+trendyol-1133983117,Converse Chuck Taylor All Star Elements Kadın Kahverengi Bot,trendyol,shoes,kahverengi,ayakkabi,regular,kadin,kahverengi,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,hayir,yok,,,
+trendyol-1137621323,"TRENDY Unisex Gri Sneaker Spor Ayakkabı – Hafif Taban, Nefes Alabilen Günlük Yürüyüş Ayakkabısı",trendyol,shoes,gri,ayakkabi,regular,unisex,gri,ayakkabi,,unisex,sub:category_default;gender:title_token(unisex),high,hayir,yok,,,
+trendyol-1146488907,COLNY şort 2 Adet siyah gri şort günlük kullanım,trendyol,lower_body,siyah|gri,sort,regular,,siyah|gri,sort,,bilinmiyor,sub:title_keyword;gender:none,none,hayir,kalip|gender,1,gunluk,sicak
+trendyol-1149754938,Erkek Kahverengi Polo Yaka Tişört,trendyol,upper_body,kahverengi,polo,slim,erkek,kahverengi,polo,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,2,gunluk,sicak
+trendyol-1173071782,Kahverengi Drapeli Çiçek Aksesuarlı Midi Elbise,trendyol,dresses,kahverengi,elbise,regular,kadin,kahverengi,elbise,,kadin,sub:title_keyword;gender:url_token(kadin),medium,hayir,kalip,3,gunluk,tumu
+trendyol-1868883,Mavi Kadın Adriana Siyah Jean Pantolon 1072816443,trendyol,lower_body,siyah|mavi,jean,regular,kadin,siyah|mavi,jean,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,2,gunluk,tumu
+trendyol-353730430,Luminos Butik Kışlık Sıcak Yumuşak Geniş Püsküllü Atkı - Kremsi Beyaz Siyah Gri Çizgili Atkı Sal1270,trendyol,accessories,siyah|beyaz|gri|bej,aksesuar,regular,,siyah|beyaz|gri,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,evet,gender,,,
+trendyol-662226049,modaes butik 3lü Set Kemer Renkler Siyah Taba Beyaz En 2.5cm Gümüş Tokali,trendyol,accessories,siyah|beyaz|gumus,aksesuar,regular,,siyah|beyaz|gumus,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,hayir,gender,,,
+trendyol-669847260,Altamira Erkek Siyah Oversize Şeritli Şort,trendyol,lower_body,siyah,sort,oversized,erkek,siyah,sort,oversized,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,1,gunluk,sicak
+trendyol-777541770,ELMANDO Günlük Kadın Bot Siyah cilt Çift Fermuarlı Kadın Bot & Bootie,trendyol,shoes,siyah,ayakkabi,regular,kadin,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,hayir,yok,,,
+trendyol-822488656,Erkek Gri Keten Relaxed Fit Pantolon,trendyol,lower_body,gri,pantolon,relaxed,erkek,gri,pantolon,relaxed,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,3,klasik,tumu
+trendyol-83134151,AC&Co / Altınyıldız Classics Erkek Beyaz Kolay Ütülenebilen %100 Pamuk Nefes Alabilen Terletmez Slim Fit Gömlek,trendyol,upper_body,beyaz,gomlek,slim,erkek,beyaz,gomlek,slim,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,3,klasik,tumu
+trendyol-831507713,Mavi Erkek Jean,trendyol,lower_body,mavi,jean,regular,erkek,,jean,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,renk|kalip,2,gunluk,tumu
+trendyol-832285444,Fabrika Siyah Kadın Babet MADDIE,trendyol,shoes,siyah,ayakkabi,regular,kadin,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,hayir,yok,,,
+trendyol-858622960,Fabrika Siyah Kadın Bot FATEMA,trendyol,shoes,siyah,ayakkabi,regular,kadin,siyah,ayakkabi,,kadin,sub:category_default;gender:title_token(kadın),high,hayir,yok,,,
+trendyol-896837377,MODEFENDİ Erkek Siyah Yaka Kürkü Çıkmalı Uzun Fermuarlı Yan Ceplı Şişme Mont,trendyol,upper_body,siyah,ceket,regular,erkek,siyah,ceket,,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,kalip,3,gunluk,tumu
+trendyol-920942405,Madmext Siyah Maxi Boy %100 Pamuklu Kadın Elbise Mg2365,trendyol,dresses,siyah,elbise,regular,kadin,siyah,elbise,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,3,gunluk,tumu
+trendyol-929647864,W Collection GRİ KAZAK,trendyol,upper_body,gri,tisort,regular,,gri,,,bilinmiyor,sub:unknown;gender:none,none,hayir,alt_tur|kalip|gender,,,
+trendyol-929681071,Gri Çizgili Kruvaze Takım Elbise,trendyol,upper_body,gri,blazer,regular,erkek,gri,elbise,,bilinmiyor,sub:title_keyword;gender:none,none,evet,kalip|gender,,,
+trendyol-943974640,Bo Takı ve Aksesuar Şekil Alabilen Gold Renk Özel Seri Kolye,trendyol,accessories,altin,aksesuar,regular,,altin,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,hayir,gender,,,
+trendyol-945450161,Penti Normal V Yaka Bej Kadın Gömlek Plkm2pl425iy,trendyol,upper_body,bej,gomlek,regular,kadin,bej,gomlek,,kadin,sub:title_keyword;gender:title_token(kadın),high,hayir,kalip,3,klasik,tumu
+trendyol-950142055,berfmoda 2 ADET SİYAH VE GRİ ŞORT TERLETMEYEN KUMAŞ,trendyol,lower_body,siyah|gri,sort,regular,,siyah|gri,sort,,bilinmiyor,sub:title_keyword;gender:none,none,hayir,kalip|gender,1,gunluk,sicak
+trendyol-951326392,Tudors Kadın Standart Fit Kısa Kollu Yarım Balıkçı Yaka Siyah Bluz,trendyol,upper_body,siyah,tisort,regular,kadin,siyah,,,kadin,sub:unknown;gender:title_token(kadın),high,hayir,alt_tur|kalip,,,
+trendyol-952669343,Bo Takı ve Aksesuar Şekil alabilen gümüş renk özel seri kolye,trendyol,accessories,gumus,aksesuar,regular,,gumus,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,hayir,gender,,,
+trendyol-980661948,EXPECTED Erkek Lacivert Oversize Fermuarlı Hoodie - Streetwear Kapüşonlu Hırka,trendyol,upper_body,navy,hoodie,oversized,erkek,navy,hoodie,oversized,erkek,sub:title_keyword;gender:title_token(erkek),high,hayir,yok,1,sokak,soguk
+trendyol-990425210,"xtaki 10 Çeyrekli kolye, çeyrek altın zincirli kolye, Kilitli çeyrek takılabilir kolye, balık sırtı kolye",trendyol,accessories,altin,aksesuar,regular,,altin,aksesuar,,bilinmiyor,sub:category_default;gender:none,none,hayir,gender,,,

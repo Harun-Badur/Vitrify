@@ -163,7 +163,7 @@ const preparedAppearance = (
   );
   return {
     colors: appearance.colors.filter((color) => color.trim().length > 0),
-    subcategory: appearance.subcategory,
+    subcategory: appearance.subcategory ?? '',
   };
 };
 

@@ -19,7 +19,8 @@ export interface InferredProductAttributes {
   gender: ProductGender | undefined;
   colors: string[];
   fit: FitSlug | '';
-  subcategory: string;
+  /** undefined = no title or category evidence; never a guessed default. */
+  subcategory: string | undefined;
   brand_slug: string;
   price_band: PriceBand;
 }
@@ -74,7 +75,7 @@ interface SubcategoryRule {
 const SUBCATEGORY_RULES: readonly SubcategoryRule[] = [
   { slug: 'elbise', keys: ['elbise', 'dress', 'midi elbise'] },
   { slug: 'blazer', keys: ['blazer', 'kruvaze', 'takım elbise', 'takim elbise'] },
-  { slug: 'ceket', keys: ['ceket', 'jacket', 'mont', 'kaban'] },
+  { slug: 'ceket', keys: ['ceket', 'jacket', 'mont', 'kaban', 'trençkot', 'trenckot', 'trench'] },
   { slug: 'hoodie', keys: ['hoodie', 'kapüşon', 'kapuson'] },
   { slug: 'sweatshirt', keys: ['sweatshirt', 'sweat'] },
   { slug: 'gomlek', keys: ['gömlek', 'gomlek', 'shirt'] },
@@ -185,19 +186,47 @@ export const inferFitFromTitle = (title: string): FitSlug | '' => {
   return '';
 };
 
-/** Title keyword evidence only; `''` means inferSubcategory would use a category fallback. */
-export const matchSubcategoryFromTitle = (title: string): string => {
-  const haystack = haystackOf(title);
-  for (const rule of SUBCATEGORY_RULES) {
-    if (rule.keys.some((key) => haystack.includes(lowerTurkish(key)))) {
+// Categories whose titles mention garments only as a use ("Kot Pantolon Kemeri").
+const NON_GARMENT_CATEGORIES = ['shoes', 'bags', 'hats', 'accessories'];
+const NON_GARMENT_SUBCATEGORY_SLUGS = ['pareo'];
+
+const isWordChar = (char: string | undefined): boolean =>
+  char !== undefined && /[\p{L}\p{N}]/u.test(char);
+
+// Keys match only at the start of a word, so suffixes ("pantolonu", "kapüşonlu")
+// still match but embedded fragments ("trençkot" -> "kot") do not.
+const startsAWord = (haystack: string, key: string): boolean => {
+  for (let from = haystack.indexOf(key); from >= 0; from = haystack.indexOf(key, from + 1)) {
+    if (!isWordChar(haystack[from - 1])) return true;
+  }
+  return false;
+};
+
+const SUBCATEGORY_KEYS = SUBCATEGORY_RULES.map(rule => ({
+  slug: rule.slug,
+  keys: rule.keys.map(key => lowerTurkish(key)),
+}));
+
+/**
+ * Title keyword evidence only; `''` means no keyword matched. Pass `category` so
+ * garment words in accessory/shoe/bag titles are not read as the product type.
+ */
+export const matchSubcategoryFromTitle = (title: string, category?: string): string => {
+  // "t-shirt" would otherwise be split into "t" + "shirt" (a shirt keyword).
+  const haystack = haystackOf(title).replace(/(^|[^\p{L}\p{N}])t[-\s]?shirt/gu, '$1tshirt');
+  const restricted = category !== undefined && NON_GARMENT_CATEGORIES.includes(category);
+  for (const rule of SUBCATEGORY_KEYS) {
+    if (restricted && !NON_GARMENT_SUBCATEGORY_SLUGS.includes(rule.slug)) continue;
+    if (rule.keys.some((key) => startsAWord(haystack, key))) {
       return rule.slug;
     }
   }
   return '';
 };
 
-export const inferSubcategory = (title: string, category: string): string => {
-  const matched = matchSubcategoryFromTitle(title);
+/** `undefined` = unknown: an upper_body title without a type keyword is not guessed. */
+export const inferSubcategory = (title: string, category: string): string | undefined => {
+  const matched = matchSubcategoryFromTitle(title, category);
   if (matched) {
     return matched;
   }
@@ -219,7 +248,70 @@ export const inferSubcategory = (title: string, category: string): string => {
   if (category === 'accessories') {
     return 'aksesuar';
   }
-  return 'tisort';
+  return undefined;
+};
+
+export type GenderLabel = 'kadin' | 'erkek' | 'cocuk' | 'unisex' | 'bilinmiyor';
+
+export interface GenderInference {
+  gender: GenderLabel;
+  /** none = unknown; medium = URL path only; high = title word. */
+  confidence: 'high' | 'medium' | 'none';
+  /** title_token | title_child_token | title_conflict | url_token | url_conflict | none */
+  rule: string;
+  /** The matched word, or '' when unknown. */
+  key: string;
+}
+
+const GENDER_TOKEN_LABELS: ReadonlyArray<readonly [GenderLabel, readonly string[]]> = [
+  ['kadin', ['kadın', 'kadin', 'bayan']],
+  ['erkek', ['erkek']],
+  ['unisex', ['unisex', 'uniseks']],
+];
+const CHILD_TOKENS = ['çocuk', 'cocuk', 'bebek'] as const;
+// Child-only words: they say "child" but not which gender.
+const CHILD_IMPLIED_TOKENS = ['kız', 'kiz', 'oğlan', 'oglan'] as const;
+
+const wordsOf = (text: string): string[] =>
+  lowerTurkish(text).match(/[\p{L}\p{N}]+/gu) ?? [];
+
+const genderFromWords = (words: string[], rulePrefix: 'title' | 'url'): GenderInference | undefined => {
+  const present = new Set(words);
+  const child = [...CHILD_TOKENS, ...CHILD_IMPLIED_TOKENS].find(token => present.has(token));
+  const hits = GENDER_TOKEN_LABELS.flatMap(([gender, tokens]) => {
+    const key = tokens.find(token => present.has(token));
+    return key ? [{ gender, key }] : [];
+  });
+  if (child) {
+    return { gender: 'cocuk', confidence: rulePrefix === 'title' ? 'high' : 'medium',
+      rule: `${rulePrefix}_child_token`, key: child };
+  }
+  if (hits.length > 1) {
+    return { gender: 'bilinmiyor', confidence: 'none', rule: `${rulePrefix}_conflict`, key: '' };
+  }
+  if (hits.length === 1) {
+    return { gender: hits[0].gender, confidence: rulePrefix === 'title' ? 'high' : 'medium',
+      rule: `${rulePrefix}_token`, key: hits[0].key };
+  }
+  return undefined;
+};
+
+/**
+ * Pure gender evidence from whole words in the title, then (title silent only) the
+ * product URL path. Ambiguous or conflicting evidence is 'bilinmiyor', never a guess.
+ */
+export const inferGenderDetail = (title: string, productUrl?: string | null): GenderInference => {
+  const fromTitle = genderFromWords(wordsOf(title), 'title');
+  if (fromTitle) return fromTitle;
+  if (productUrl) {
+    try {
+      const fromUrl = genderFromWords(wordsOf(decodeURIComponent(new URL(productUrl).pathname)), 'url');
+      if (fromUrl) return fromUrl;
+    } catch {
+      // Malformed URL: no URL evidence.
+    }
+  }
+  return { gender: 'bilinmiyor', confidence: 'none', rule: 'none', key: '' };
 };
 
 export const inferPriceBand = (price: number): PriceBand => {

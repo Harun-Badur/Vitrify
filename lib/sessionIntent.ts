@@ -101,7 +101,7 @@ export const attrsFromProduct = (product: Product): SessionProductAttrs => {
   });
   return {
     category: product.category,
-    subcategory: product.subcategory ?? inferred.subcategory,
+    subcategory: product.subcategory ?? inferred.subcategory ?? '',
     brandSlug: product.brandSlug ?? inferred.brand_slug,
     colors:
       product.colorSlugs && product.colorSlugs.length > 0
