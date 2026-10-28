@@ -85,6 +85,8 @@ export const SUBTYPES: Readonly<Record<GarmentCategory, readonly VocabularySubty
     subtype('ceket', 'Ceket', 'dis_giyim', 3, 'gunluk', 'tumu'),
     subtype('blazer', 'Blazer', 'dis_giyim', 4, 'klasik', 'tumu', 'tailored'),
     subtype('mont', 'Mont', 'dis_giyim', 2, 'gunluk', 'soguk'),
+    subtype('kaban', 'Kaban', 'dis_giyim', 4, 'klasik', 'soguk'),
+    subtype('trenckot', 'Trençkot', 'dis_giyim', 3, 'klasik', 'tumu'),
   ],
   dresses: [subtype('elbise', 'Elbise', 'tek_parca', 3, 'gunluk', 'tumu')],
   lower_body: [
@@ -161,12 +163,12 @@ export const buildAutoTitle = (
 
 // --- Catalog mapping (data only; nothing reads these yet) -------------------------------------
 // Rule: map to the slug the catalog already assigns to the same kind of product. Several wardrobe
-// subtypes may share one catalog slug (mont -> ceket); null where the catalog has no honest slug.
+// subtypes may share one catalog slug; null where the catalog has no honest slug.
 // kazak/hirka have their own catalog slugs now that unmatched upper_body is unknown, not 'tisort'.
 const CATALOG_SUBTYPES: Readonly<Record<GarmentCategory, Readonly<Record<string, string | null>>>> = {
   upper_body: {
     tisort: 'tisort', gomlek: 'gomlek', bluz: 'bluz', body: 'body', polo: 'polo', kazak: 'kazak', hirka: 'hirka', sweatshirt: 'sweatshirt',
-    hoodie: 'hoodie', ceket: 'ceket', blazer: 'blazer', mont: 'ceket',
+    hoodie: 'hoodie', ceket: 'ceket', blazer: 'blazer', mont: 'mont', kaban: 'kaban', trenckot: 'trenckot',
   },
   dresses: { elbise: 'elbise' },
   lower_body: { pantolon: 'pantolon', jean: 'jean', kargo: 'kargo', esofman: 'esofman', sort: 'sort', etek: 'etek' },

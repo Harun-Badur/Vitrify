@@ -12,7 +12,7 @@ describe('subcategory inference: word boundaries', () => {
   it.each(audit.wrongSubcategory)('$id is not assigned the substring match "$wasSubcategory"', (row) => {
     const matched = matchSubcategoryFromTitle(row.title, row.category);
     expect(matched).not.toBe(row.wasSubcategory);
-    expect(matched).toBe(/trençkot/i.test(row.title) ? 'ceket' : '');
+    expect(matched).toBe(/trençkot/i.test(row.title) ? 'trenckot' : '');
   });
 
   it('keeps real jean/kot words and Turkish suffixes', () => {

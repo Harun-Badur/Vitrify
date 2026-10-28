@@ -1,3 +1,4 @@
+import { ENRICHMENT_ATTRIBUTE_VERSION } from '../lib/catalogEnrichment';
 import {
   ACCESSORY_GENDER_FIX_IDS,
   buildFixSql,
@@ -55,7 +56,7 @@ describe('fix SQL', () => {
     expect(sql).toContain('set gender = null,');
     expect(sql).toContain('feed_eligible = false,');
     expect(sql).toContain("array_append(coalesce(eligibility_missing, '{}'::text[]), 'gender')");
-    expect(sql).toContain('attribute_version = 3');
+    expect(sql).toContain(`attribute_version = ${ENRICHMENT_ATTRIBUTE_VERSION}`);
     expect(sql).toMatch(/update public\.product_attributes\s+set gender = null/);
     expect(sql).toContain("'trendyol-990425210'");
   });

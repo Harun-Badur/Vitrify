@@ -11,7 +11,7 @@ import {
 /** Written to products.attribute_source / attribute_version by the backfill. */
 export const ENRICHMENT_ATTRIBUTE_SOURCE = 'title_rules';
 /** Bump when an inference rule changes, so a rerun rewrites every row. */
-export const ENRICHMENT_ATTRIBUTE_VERSION = 3;
+export const ENRICHMENT_ATTRIBUTE_VERSION = 4;
 /** A person decided these attributes; the title backfill never rewrites such a row. */
 export const MANUAL_REVIEW_ATTRIBUTE_SOURCE = 'manual_review';
 export const MANUAL_REVIEW_ATTRIBUTE_VERSION = 1;
@@ -69,6 +69,22 @@ export const mergeAttribute = <T extends string | readonly string[]>(
   if (isEmpty(existing)) return { value: inferred as T, review: null };
   if (asKey(existing) === asKey(inferred)) return { value: existing as T, review: null };
   return { value: inferred as T, review: { from: asText(existing), to: asText(inferred) } };
+};
+
+/** `ceket` is the uncertain outerwear subtype; these refine it (rule v4) and are never a contradiction of it. */
+const CEKET_REFINEMENTS: readonly string[] = ['mont', 'kaban', 'trenckot', 'blazer'];
+
+/**
+ * Subtype merge: mergeAttribute, except that refining `ceket` into a specific outerwear slug is
+ * not a review item, and a refined slug is never replaced by the less specific `ceket`.
+ */
+export const mergeSubcategory = (
+  existing: string | null | undefined,
+  inferred: string | null | undefined,
+): MergeResult<string> => {
+  if (existing === 'ceket' && inferred && CEKET_REFINEMENTS.includes(inferred)) return { value: inferred, review: null };
+  if (inferred === 'ceket' && existing && CEKET_REFINEMENTS.includes(existing)) return { value: existing, review: null };
+  return mergeAttribute<string>(existing, inferred);
 };
 
 export interface EnrichmentProductInput {
@@ -154,8 +170,8 @@ export const computeCatalogEnrichment = (
   const storedSubcategory = stored?.subcategory?.trim() || null;
   const keyword = matchSubcategoryFromTitle(product.title, product.category);
   const subcategory = keyword
-    ? mergeAttribute<string>(storedSubcategory, keyword)
-    : mergeAttribute<string>(storedSubcategory, storedSubcategory ? null : inferSubcategory(product.title, product.category));
+    ? mergeSubcategory(storedSubcategory, keyword)
+    : mergeSubcategory(storedSubcategory, storedSubcategory ? null : inferSubcategory(product.title, product.category));
   note('alt_tur', subcategory);
 
   const storedFit = declaredCatalogFit(stored?.fit) || null;

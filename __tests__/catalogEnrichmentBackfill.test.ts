@@ -59,7 +59,7 @@ describe('computeCatalogEnrichment', () => {
   });
 
   it('leaves a belt or necklace with no gender word ungendered and out of the feed (rule v3)', () => {
-    expect(ENRICHMENT_ATTRIBUTE_VERSION).toBe(3);
+    expect(ENRICHMENT_ATTRIBUTE_VERSION).toBe(4);
     for (const title of ['Arcade Ranger Adventure Kemer-SİYAH', 'Bo Takı ve Aksesuar Gümüş Renk Kolye']) {
       const result = computeCatalogEnrichment(product({ title, category: 'accessories' }),
         attributes({ colors: ['siyah'], subcategory: 'aksesuar' }));

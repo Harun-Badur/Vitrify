@@ -40,6 +40,7 @@ export const UPPER_SUBCATEGORY_ROLE: Readonly<Record<string, 'top' | 'outerwear'
   blazer: 'outerwear',
   mont: 'outerwear',
   kaban: 'outerwear',
+  trenckot: 'outerwear',
   palto: 'outerwear',
   'hırka': 'outerwear',
   hirka: 'outerwear',

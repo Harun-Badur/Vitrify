@@ -66,14 +66,16 @@ export const PAIRING_POLICY_V1: CompatibilityPolicy = Object.freeze({
 /**
  * Coarse season and formality read off subtype slugs (lib/productAttributes SUBCATEGORY_RULES).
  * Only unambiguous slugs are listed: `ceket` spans coats and light jackets, `gomlek` spans
- * dress and casual shirts, so they stay unknown. Evidence only in S2; no decision reads it.
+ * dress and casual shirts, so they stay unknown. Rule v4 splits `ceket` into mont / kaban /
+ * trenckot; trenckot has no season (it spans cool seasons) and mont no formality. Evidence only in S2; no decision reads it.
  */
 export const PAIRING_EVIDENCE_POLICY_V1: PairEvidencePolicy = Object.freeze({
   version: 1,
-  seasonBySubtype: Object.freeze({ sort: 'warm', kazak: 'cold' } as const),
+  seasonBySubtype: Object.freeze({ sort: 'warm', kazak: 'cold', mont: 'cold', kaban: 'cold' } as const),
   formalityBySubtype: Object.freeze({
     // `blazer` also covers suits (takım elbise).
     blazer: 'formal',
+    kaban: 'formal',
     sort: 'casual',
     kargo: 'casual',
     esofman: 'casual',

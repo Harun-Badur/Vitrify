@@ -70,6 +70,10 @@ const COLOR_TOKEN_RULES = COLOR_ALIASES.map(alias => ({
 interface SubcategoryRule {
   slug: string;
   keys: readonly string[];
+  /** Keys must be whole words (no suffix, no embedded match); high-confidence rules only. */
+  wholeWord?: boolean;
+  /** Skipped when the category is known and is not upper_body. */
+  upperBodyOnly?: boolean;
 }
 
 const SUBCATEGORY_RULES: readonly SubcategoryRule[] = [
@@ -77,6 +81,11 @@ const SUBCATEGORY_RULES: readonly SubcategoryRule[] = [
   { slug: 'blazer', keys: ['takım elbise', 'takim elbise'] },
   { slug: 'elbise', keys: ['elbise', 'dress', 'midi elbise'] },
   { slug: 'blazer', keys: ['blazer', 'kruvaze'] },
+  // Rule v4: outerwear types that used to fold into `ceket`. A suffixed or embedded form
+  // ("montlu") still falls through to the uncertain `ceket` rule below.
+  { slug: 'mont', keys: ['mont'], wholeWord: true, upperBodyOnly: true },
+  { slug: 'kaban', keys: ['kaban'], wholeWord: true, upperBodyOnly: true },
+  { slug: 'trenckot', keys: ['trençkot', 'trenckot', 'trench'], wholeWord: true, upperBodyOnly: true },
   { slug: 'ceket', keys: ['ceket', 'jacket', 'mont', 'kaban', 'trençkot', 'trenckot', 'trench', 'softshell'] },
   { slug: 'hoodie', keys: ['hoodie', 'kapüşon', 'kapuson'] },
   { slug: 'sweatshirt', keys: ['sweatshirt', 'sweat'] },
@@ -210,9 +219,18 @@ const startsAWord = (haystack: string, key: string): boolean => {
   return false;
 };
 
+const isWholeWord = (haystack: string, key: string): boolean => {
+  for (let from = haystack.indexOf(key); from >= 0; from = haystack.indexOf(key, from + 1)) {
+    if (!isWordChar(haystack[from - 1]) && !isWordChar(haystack[from + key.length])) return true;
+  }
+  return false;
+};
+
 const SUBCATEGORY_KEYS = SUBCATEGORY_RULES.map(rule => ({
   slug: rule.slug,
   keys: rule.keys.map(key => lowerTurkish(key)),
+  wholeWord: rule.wholeWord === true,
+  upperBodyOnly: rule.upperBodyOnly === true,
 }));
 
 /**
@@ -225,7 +243,8 @@ export const matchSubcategoryFromTitle = (title: string, category?: string): str
   const restricted = category !== undefined && NON_GARMENT_CATEGORIES.includes(category);
   for (const rule of SUBCATEGORY_KEYS) {
     if (restricted && !NON_GARMENT_SUBCATEGORY_SLUGS.includes(rule.slug)) continue;
-    if (rule.keys.some((key) => startsAWord(haystack, key))) {
+    if (rule.upperBodyOnly && category !== undefined && category !== 'upper_body') continue;
+    if (rule.keys.some((key) => (rule.wholeWord ? isWholeWord(haystack, key) : startsAWord(haystack, key)))) {
       return rule.slug;
     }
   }

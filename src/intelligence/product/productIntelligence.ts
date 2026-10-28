@@ -118,6 +118,9 @@ const CATEGORY_ROLES: Readonly<Record<GarmentCategory, readonly OutfitRole[]>> =
 const SUBTYPE_IMPLIED_ROLE: Readonly<Record<string, OutfitRole>> = {
   elbise: 'one_piece',
   ceket: 'outerwear',
+  mont: 'outerwear',
+  kaban: 'outerwear',
+  trenckot: 'outerwear',
   tisort: 'top',
   gomlek: 'top',
   polo: 'top',
