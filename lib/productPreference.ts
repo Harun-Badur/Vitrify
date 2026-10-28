@@ -1,26 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { withAccountWriteGuard } from './accountWriteFence';
 import type { FEED_GENDERS } from './catalogEnrichment';
+import { PRODUCT_PREF_DEFAULT, parseProductPref, type ProductPref, type ProductPrefGender } from './productPreferenceRules';
 
-/** Product preference picked by the user; NULL means "not chosen yet" and behaves as 'hepsi'. */
-export type ProductPref = 'kadin' | 'erkek' | 'hepsi';
-export type ProductPrefGender = (typeof FEED_GENDERS)[number];
+export {
+  PRODUCT_PREF_DEFAULT, allowedGendersFor, effectiveProductPref, parseProductPref,
+  type ProductPref, type ProductPrefGender,
+} from './productPreferenceRules';
+// The Edge-safe rules spell the gender union out; keep it equal to the catalog's FEED_GENDERS.
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+const genderUnionMatchesCatalog: Same<ProductPrefGender, (typeof FEED_GENDERS)[number]> = true;
+void genderUnionMatchesCatalog;
 
-const PRODUCT_PREFS: readonly string[] = ['kadin', 'erkek', 'hepsi'];
-const ALLOWED: Readonly<Record<ProductPref, readonly ProductPrefGender[]>> = {
-  kadin: ['kadin', 'unisex'],
-  erkek: ['erkek', 'unisex'],
-  hepsi: ['kadin', 'erkek', 'unisex'],
-};
 /** The choice screen is shown at most this many times. */
 export const PRODUCT_PREF_PROMPT_MAX = 2;
-export const PRODUCT_PREF_DEFAULT: ProductPref = 'hepsi';
-
-export const parseProductPref = (value: unknown): ProductPref | null =>
-  typeof value === 'string' && PRODUCT_PREFS.includes(value) ? (value as ProductPref) : null;
-export const effectiveProductPref = (value: unknown): ProductPref => parseProductPref(value) ?? PRODUCT_PREF_DEFAULT;
-/** Catalog genders a preference admits; cocuk is never included. */
-export const allowedGendersFor = (pref: ProductPref): readonly ProductPrefGender[] => ALLOWED[pref];
 export const nextPromptCount = (count: number): number =>
   Math.min(PRODUCT_PREF_PROMPT_MAX, (Number.isFinite(count) && count > 0 ? Math.floor(count) : 0) + 1);
 

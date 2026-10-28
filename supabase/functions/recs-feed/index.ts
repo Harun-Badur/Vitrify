@@ -1,5 +1,6 @@
 import { isActiveCatalogRecord } from '../../../lib/catalogEligibility.ts';
 import { FEED_ELIGIBLE_COLUMN, isFeedEligibleRow } from '../../../lib/feedEligibility.ts';
+import { allowedGendersFor, effectiveProductPref } from '../../../lib/productPreferenceRules.ts';
 import { catalogMetadataRepair, cleanDeclaredCatalogColors, declaredCatalogFit, declaredCatalogGender } from '../../../lib/catalogMetadata.ts';
 import { styleProfileFreshness } from '../_shared/styleProfileFreshness.ts';
 // VITRIVIA Recs V1 — feed ranking Edge Function.
@@ -377,6 +378,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const intent = parseIntent(payload.intent);
   const mode: FeedMode = isFeedMode(payload.mode) ? payload.mode : 'personal';
   const structuredFilters = parseStructuredFilters(payload.filters);
+  // Missing or invalid preference is 'hepsi'. It is a hard catalog filter; intent.constraints.gender
+  // (legacy women/men on product_attributes) still narrows on top of it.
+  const allowedGenders = allowedGendersFor(effectiveProductPref(payload.gender_pref));
   if (structuredFilters.category && !intent.constraints.category) {
     intent.constraints.category = structuredFilters.category;
   }
@@ -402,7 +406,8 @@ Deno.serve(async (request: Request): Promise<Response> => {
           .select(
             'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible',
           )
-          .eq(FEED_ELIGIBLE_COLUMN, true),
+          .eq(FEED_ELIGIBLE_COLUMN, true)
+          .in('gender', [...allowedGenders]),
         admin
           .from('product_attributes')
           .select(

@@ -8,14 +8,15 @@ const source = readFileSync(file, 'utf8');
 function fixture(options: { empty?: boolean; errors?: Record<string, string>; throws?: string; profile?:Record<string,unknown>; profileMode?:Record<string,unknown>; extraProducts?: Record<string, unknown>[] } = {}) {
   let handler: ((request: Request) => Promise<Response>) | undefined;
   const filters: Array<[string, string, unknown]> = [];
-  const products = [
-    ...Array.from({ length: 20 }, (_, index) => ({
+  const ins: Array<[string, string, readonly unknown[]]> = [];
+  const products: Record<string, unknown>[] = [
+    ...Array.from({ length: 20 }, (_, index) => ({ gender: 'unisex',
       id: `fixture-${index}`, provider: 'flo', external_id: `fixture-${index}`,
       title: `Siyah Fixture ${index}`, brand: 'Fixture', price: 100, currency: 'TRY',
       image_url: 'https://example.invalid/image.jpg', product_url: 'https://example.invalid/product',
       category: 'shoes', affiliate_url: null, created_at: '2026-10-12T00:00:00Z', feed_eligible: true,
     })),
-    ...(options.extraProducts ?? []),
+    ...(options.extraProducts ?? []).map(row => ({ gender: 'unisex', ...row })),
   ];
   const getUser = jest.fn(async (token: string) => ({
     data: { user: token === 'valid' ? { id: 'test-owner' } : null }, error: null,
@@ -23,15 +24,18 @@ function fixture(options: { empty?: boolean; errors?: Record<string, string>; th
   const from = jest.fn((table: string) => {
     if (options.throws === table) throw new Error('private-sql-detail test-owner fixture-0');
     let selection = '';
+    const kept: Array<[string, readonly unknown[]]> = [];
     const result = () => {
       const fault = options.errors?.[table];
       const legacySuccess = fault === 'column outfit_role does not exist' && !selection.includes('outfit_role');
-      return { data: fault && !legacySuccess ? null : table === 'products' && !options.empty ? products : table==='recs_config' && options.profileMode ? [{key:'style_profile_v2',value:options.profileMode,updated_at:'2026-10-13T00:00:00Z'}] : [],
+      const rows = products.filter(row => kept.every(([column, values]) => values.includes(row[column])));
+      return { data: fault && !legacySuccess ? null : table === 'products' && !options.empty ? rows : table==='recs_config' && options.profileMode ? [{key:'style_profile_v2',value:options.profileMode,updated_at:'2026-10-13T00:00:00Z'}] : [],
         error: fault && !legacySuccess ? { message: fault } : null };
     };
     const query = {
       select: (columns: string) => { selection = columns; return query; },
       eq: (column: string, value: unknown) => { filters.push([table, column, value]); return query; },
+      in: (column: string, values: readonly unknown[]) => { ins.push([table, column, values]); kept.push([column, values]); return query; },
       gte: () => query,
       maybeSingle: async () => ({ ...result(), data: table==='user_style_profiles'?options.profile??null:null }),
       then: (fulfilled: (value: ReturnType<typeof result>) => unknown) => Promise.resolve(result()).then(fulfilled),
@@ -49,7 +53,7 @@ function fixture(options: { empty?: boolean; errors?: Record<string, string>; th
     console: logs,
   });
   if (!handler) throw new Error('Handler not registered');
-  return { handler, filters, from, getUser, logs };
+  return { handler, filters, ins, from, getUser, logs };
 }
 const request = (body: object, token = 'valid') => new Request('https://example.invalid/recs-feed', {
   method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: JSON.stringify(body),
@@ -184,4 +188,44 @@ test('limit, exclusion pagination and hard category filters retain their contrac
   next.items.forEach((item: { product: { id: string } }) => expect(excluded).not.toContain(item.product.id));
   const filtered = await (await f.handler(request({ intent: { constraints: { category: 'upper_body' } } }))).json();
   expect(filtered.items).toEqual([]); expect(filtered.has_more).toBe(false);
+});
+const gendered = (id: string, gender: string) => ({ id, provider: 'flo', external_id: id, title: `Siyah ${id}`,
+  brand: 'Fixture', price: 100, currency: 'TRY', image_url: 'https://example.invalid/image.jpg',
+  product_url: 'https://example.invalid/product', category: 'shoes', affiliate_url: null,
+  created_at: '2026-10-12T00:00:00Z', feed_eligible: true, gender });
+const genderedCatalog = [gendered('g-kadin', 'kadin'), gendered('g-erkek', 'erkek'), gendered('g-cocuk', 'cocuk')];
+const feedIds = async (f: ReturnType<typeof fixture>, body: object) =>
+  (await (await f.handler(request(body))).json()).items.map((item: { product: { id: string } }) => item.product.id);
+test.each([
+  ['kadin', ['kadin', 'unisex'], ['g-kadin'], ['g-erkek', 'g-cocuk']],
+  ['erkek', ['erkek', 'unisex'], ['g-erkek'], ['g-kadin', 'g-cocuk']],
+  ['hepsi', ['kadin', 'erkek', 'unisex'], ['g-kadin', 'g-erkek'], ['g-cocuk']],
+])('gender_pref %s adds .in(gender) next to feed_eligible', async (pref, allowed, present, absent) => {
+  const f = fixture({ extraProducts: genderedCatalog });
+  const ids = await feedIds(f, { limit: 40, gender_pref: pref });
+  expect(f.ins).toContainEqual(['products', 'gender', allowed]);
+  expect(f.filters).toContainEqual(['products', 'feed_eligible', true]);
+  expect(ids).toEqual(expect.arrayContaining(present));
+  absent.forEach(id => expect(ids).not.toContain(id));
+});
+test.each([undefined, null, 'x', 'KADIN', 'women', 42, {}])('missing or invalid gender_pref %p is hepsi, silently', async pref => {
+  const f = fixture({ extraProducts: genderedCatalog });
+  const response = await f.handler(request(pref === undefined ? { limit: 40 } : { limit: 40, gender_pref: pref }));
+  expect(response.status).toBe(200);
+  expect(f.ins).toContainEqual(['products', 'gender', ['kadin', 'erkek', 'unisex']]);
+  expect(f.logs.error).not.toHaveBeenCalled(); expect(f.logs.warn).not.toHaveBeenCalled();
+  expect(response.headers.has('X-Recs-Warnings')).toBe(false);
+});
+test('without gender_pref the feed equals the hepsi feed (legacy behavior kept)', async () => {
+  const legacy = await feedIds(fixture({ extraProducts: genderedCatalog }), { limit: 40 });
+  expect(legacy).toEqual(await feedIds(fixture({ extraProducts: genderedCatalog }), { limit: 40, gender_pref: 'hepsi' }));
+  expect(legacy).toHaveLength(22); expect(legacy).not.toContain('g-cocuk');
+});
+test('gender_pref stays a hard filter while the legacy intent gender still narrows', async () => {
+  const f = fixture({ extraProducts: genderedCatalog });
+  const response = await f.handler(request({ limit: 40, gender_pref: 'erkek', intent: { constraints: { gender: 'women' } } }));
+  expect(response.status).toBe(200);
+  expect(f.ins).toContainEqual(['products', 'gender', ['erkek', 'unisex']]);
+  // No product_attributes gender in the fixture, so the legacy women constraint removes every row.
+  expect((await response.json()).items).toEqual([]);
 });

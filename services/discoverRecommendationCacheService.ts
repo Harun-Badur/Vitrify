@@ -4,6 +4,7 @@ import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
 import { RECOMMENDATION_ENGINE_VERSION } from '../src/recommendationCache/fingerprint';
@@ -32,8 +33,12 @@ const preparationCaches = new WeakMap<DiscoverRecommendationCache, {
 /** Optional cache reads cannot hold Discover behind an unavailable backend/worker. */
 export async function readCachedFinals(request: FeedPacketRequest, ownerId: string | null,
   signal: AbortSignal, onCacheError?: () => void): Promise<CachedFinal[]> {
+  // Public rows are ranked over every gender; only 'hepsi' may reuse them.
+  const scopes = effectiveProductPref(request.productPref) === 'hepsi'
+    ? (ownerId ? ['public', ownerId] : ['public'])
+    : (ownerId ? [ownerId] : []);
   const client = getSupabaseClient();
-  if (!client || signal.aborted) return [];
+  if (!client || signal.aborted || scopes.length === 0) return [];
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   let onAbort = () => {};
@@ -53,7 +58,7 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
     const query = client.from('discover_recommendation_cache')
       .select('payload,catalog_version,anchor_product_id').eq('kind', 'final').eq('engine_version', RECOMMENDATION_ENGINE_VERSION)
       .gt('updated_at', recommendationCacheCutoff())
-      .in('scope', ownerId ? ['public', ownerId] : ['public'])
+      .in('scope', scopes)
       .in('anchor_product_id', request.anchors.map(anchor => anchor.id)).abortSignal(controller.signal).limit(1000);
     const pending = Promise.resolve(query).then(({ data, error }) => {
       if (error) { report(); return []; }

@@ -1,3 +1,4 @@
+import type { ProductPref } from '../../lib/productPreferenceRules';
 import type { Product } from '../../types/product';
 import type { WardrobeItemForCandidate } from '../intelligence/outfits/outfitCandidate';
 import { fingerprint, type CacheContext } from './fingerprint';
@@ -13,6 +14,8 @@ export interface FeedPacketRequest {
   shownAnchorIds: string[];
   /** Shown IDs whose pinned product snapshot still matches this batch. */
   reusableAnchorIds?: string[];
+  /** Product preference; anything other than 'hepsi' skips the public (all-gender) cache. */
+  productPref?: ProductPref | null;
 }
 export interface FeedPacketEntry {
   anchorProductId: string;
