@@ -5,8 +5,10 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppErrorBoundary from '../components/AppErrorBoundary';
 import OnboardingScreen from '../components/OnboardingScreen';
+import ProductPrefChoiceScreen from '../components/ProductPrefChoiceScreen';
 import { AuthProvider, useAuthContext } from '../hooks/useAuthContext';
 import { PremiumProvider } from '../hooks/usePremium';
+import { useProductPrefGate } from '../hooks/useProductPrefGate';
 import { initAnalytics, track } from '../lib/analytics';
 import { isExpoGo } from '../lib/expoGo';
 import { logger } from '../lib/logger';
@@ -84,6 +86,8 @@ function RootNavigator() {
     void hydrateSession(userId);
     void registerPushIfSupported(userId);
   }, [hydrateSession, resetSession, userId]);
+  // Declared after the session effect so a sign-out clears the session before the preference.
+  const productPrefGate = useProductPrefGate(userId);
 
   const handleOnboardingComplete = useCallback((): void => {
     void markOnboardingComplete().then(() => {
@@ -107,7 +111,7 @@ function RootNavigator() {
       </View>
     );
   }
-  if (loading || onboardingGate === 'checking') {
+  if (loading || onboardingGate === 'checking' || (onboardingGate === 'done' && productPrefGate.gate === 'checking')) {
     return (
       <View style={styles.boot}>
         <ActivityIndicator color={colors.accent} size="large" />
@@ -118,6 +122,10 @@ function RootNavigator() {
 
   if (onboardingGate === 'required') {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+  }
+
+  if (productPrefGate.gate === 'prompt') {
+    return <ProductPrefChoiceScreen onSelect={productPrefGate.choose} onSkip={productPrefGate.skip} />;
   }
 
   return (

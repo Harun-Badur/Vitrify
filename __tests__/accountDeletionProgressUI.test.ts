@@ -28,10 +28,13 @@ jest.mock('expo-status-bar', () => ({ StatusBar: 'StatusBar' }));
 jest.mock('react-native-gesture-handler', () => ({ GestureHandlerRootView: 'GestureHandlerRootView' }));
 jest.mock('../components/AppErrorBoundary', () => 'AppErrorBoundary');
 jest.mock('../components/OnboardingScreen', () => 'OnboardingScreen');
+jest.mock('../components/ProductPrefChoiceScreen', () => 'ProductPrefChoiceScreen');
+let mockPrefGate: 'checking' | 'prompt' | 'done' = 'done';
+jest.mock('../hooks/useProductPrefGate', () => ({ useProductPrefGate: () => ({ gate: mockPrefGate, choose: jest.fn(), skip: jest.fn() }) }));
 
 describe('account deletion progress navigation guard', () => {
   let tree: ReactTestRenderer;
-  beforeEach(() => { jest.clearAllMocks(); mockUser = { id: 'A' }; mockProgress = null; });
+  beforeEach(() => { jest.clearAllMocks(); mockUser = { id: 'A' }; mockProgress = null; mockPrefGate = 'done'; });
   afterEach(async () => { await act(async () => tree.unmount()); });
   it('shows waiting instead of Auth navigation and closes session only after completion', async () => {
     mockProgress = { phase: 'waiting', attempt: 1, message: 'Güvenli bekleme sürüyor.' };
@@ -54,5 +57,20 @@ describe('account deletion progress navigation guard', () => {
     await act(async () => { tree = create(createElement(RootLayout)); });
     expect(mockSignOut).not.toHaveBeenCalled();
     expect(tree.root.findAllByProps({ accessibilityLabel: 'Hesap silme durumu' })).toHaveLength(0);
+  });
+});
+describe('product preference choice screen gate', () => {
+  let tree: ReactTestRenderer;
+  beforeEach(() => { mockUser = { id: 'A' }; mockProgress = null; });
+  afterEach(async () => { await act(async () => tree.unmount()); });
+  it.each([
+    ['checking', 0, 0],
+    ['prompt', 1, 0],
+    ['done', 0, 1],
+  ] as const)('%s: choice screen %d, tabs %d', async (gate, screens, tabs) => {
+    mockPrefGate = gate;
+    await act(async () => { tree = create(createElement(RootLayout)); });
+    expect(tree.root.findAllByType('ProductPrefChoiceScreen' as never)).toHaveLength(screens);
+    expect(tree.root.findAllByProps({ name: '(tabs)' })).toHaveLength(tabs);
   });
 });

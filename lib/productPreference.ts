@@ -16,6 +16,18 @@ void genderUnionMatchesCatalog;
 export const PRODUCT_PREF_PROMPT_MAX = 2;
 export const nextPromptCount = (count: number): number =>
   Math.min(PRODUCT_PREF_PROMPT_MAX, (Number.isFinite(count) && count > 0 ? Math.floor(count) : 0) + 1);
+/** Shown only while nothing is chosen and "Şimdi değil" was used fewer than PRODUCT_PREF_PROMPT_MAX times. */
+export const shouldShowProductPrefPrompt = (pref: ProductPref | null, promptCount: number): boolean =>
+  pref === null && promptCount < PRODUCT_PREF_PROMPT_MAX;
+
+export const PRODUCT_PREF_OPTIONS: readonly { value: ProductPref; label: string }[] = [
+  { value: 'kadin', label: 'Kadın' },
+  { value: 'erkek', label: 'Erkek' },
+  { value: 'hepsi', label: 'Hepsi' },
+];
+/** Display label; NULL (not chosen) reads as the effective 'Hepsi'. */
+export const productPrefLabel = (pref: ProductPref | null): string =>
+  PRODUCT_PREF_OPTIONS.find(option => option.value === (pref ?? PRODUCT_PREF_DEFAULT))!.label;
 
 /** Signed-out users get their own key; it never collides with a user key and is not account data. */
 export const PRODUCT_PREF_GUEST_KEY = 'vitrify.product-pref.guest.v1';

@@ -48,6 +48,7 @@ import InviteCodeModal from '../../components/InviteCodeModal';
 import PressableScale from '../../components/PressableScale';
 import ProfileSheet from '../../components/ProfileSheet';
 import PrivacyCenter from '../../components/PrivacyCenter';
+import ProductPrefSetting from '../../components/ProductPrefSetting';
 import PremiumMembership from '../../components/PremiumMembership';
 import {premiumClient} from '../../services/revenueCatMobile';
 import {buildPremiumDeletionNotice,subscriptionManagementUrl} from '../../lib/premiumDeletionNotice';
@@ -812,6 +813,17 @@ export default function ProfileScreen() {
             disabled={isBusy}
             accessibilityLabel="Hesap Bilgilerim"
           />
+          <ProductPrefSetting userId={userId}>
+            {({ valueLabel, open }) => (
+              <MenuRow
+                label="Ürün tercihi"
+                icon={<Shirt color={colors.text} size={22} />}
+                onPress={open}
+                accessibilityLabel={`Ürün tercihi: ${valueLabel}`}
+                trailing={<Text style={styles.menuValue}>{valueLabel}</Text>}
+              />
+            )}
+          </ProductPrefSetting>
           <MenuRow
             label="Bildirim Ayarları"
             icon={<Bell color={colors.text} size={22} />}
@@ -1266,6 +1278,11 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.text,
     fontSize: 16,
+    fontWeight: '500',
+  },
+  menuValue: {
+    color: colors.textSecondary,
+    fontSize: 15,
     fontWeight: '500',
   },
   menuTrailing: {
