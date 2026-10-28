@@ -56,6 +56,8 @@ const product = (id: string, role: OutfitRole, brand: string): Product => ({
         : 'upper_body',
   outfitRole: role,
   garmentDescription: id,
+  // Faz 4 S3b: a catalog complement needs a known gender to be eligible.
+  gender: 'women',
 });
 const top = product('top', 'top', 'AVVA');
 const bottom = product('bottom', 'bottom', 'Çok uzun bir mağaza ve marka adı');

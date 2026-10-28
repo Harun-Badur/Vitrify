@@ -8,7 +8,8 @@ import { createFinalCacheKey } from '../src/recommendationCache/fingerprint';
 import type { Product } from '../types/product';
 
 const top: Product = { id: 'top', title: 'Top', category: 'upper_body', outfitRole: 'top', price: 100,
-  brand: 'Brand', imageUrl: 'top.jpg', garmentDescription: 'Top', fit: undefined };
+  // Faz 4 S3b: complements need a known gender.
+  brand: 'Brand', imageUrl: 'top.jpg', garmentDescription: 'Top', fit: undefined, gender: 'women' };
 const bottom: Product = { ...top, id: 'bottom', title: 'Bottom', category: 'lower_body', outfitRole: 'bottom' };
 const bag: Product = { ...top, id: 'bag', title: 'Bag', category: 'bags', outfitRole: 'bag' };
 const catalog = [top, bottom, bag];

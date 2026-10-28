@@ -36,7 +36,7 @@ assertTrue<Same<PairRole, OutfitRole>>();
 assertTrue<Same<PairGender, ProductGender>>();
 assertTrue<Same<PairConfidence, ProductSignalConfidence>>();
 assertTrue<Same<PairConflictCode, ProductConflictCode>>();
-assertTrue<Same<Exclude<PairSignalSource, 'derived_from_subtype'>, ProductSignalSource>>();
+assertTrue<Same<Exclude<PairSignalSource, 'derived_from_subtype' | 'human_review'>, ProductSignalSource>>();
 
 const product = (id: string, title: string, patch: Partial<Product> = {}): Product => ({
   id, title, category: 'upper_body', brand: 'Mavi', price: 400,
@@ -199,7 +199,7 @@ describe('pairing boundary (Edge-compatible)', () => {
     }
   });
 
-  it('is reached by app code only through the compatibility gate adapter', () => {
+  it('is reached by app code only through the gate adapter and the S3b catalog adapter', () => {
     const sourceFiles = (path: string): string[] => readdirSync(path).flatMap(name => {
       const child = join(path, name);
       if (statSync(child).isDirectory()) return sourceFiles(child);
@@ -215,6 +215,7 @@ describe('pairing boundary (Edge-compatible)', () => {
     expect(importers).toEqual([
       'src/intelligence/compatibility/compatibilityGate.ts',
       'src/intelligence/compatibility/compatibilityPolicy.ts',
+      'src/intelligence/recommendations/catalogPairing.ts',
     ]);
   });
 });

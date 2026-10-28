@@ -73,13 +73,14 @@ it.each([
   ['trendyol-736813153', 'Polo Exchange POLARİZE GÜNEŞ GÖZLÜĞÜ', 'accessories', 'accessory', 'polo', 'accessory', 'gozluk'],
   ['hepsiburada-HBCV0000H0CMNI', 'Yazlık Etek Kombinleri | Etek Modelleri 2026 - Etek Ceket Takımı', 'lower_body', 'bottom', 'ceket', 'bottom', 'etek'],
 ] as const)('repairs %s before generation and permits a complete valid outfit', (id, title, category, role, subtype, expectedRole, expectedSubtype) => {
-  const row = attr(id, { outfit_role: role, subcategory: subtype });
+  // Faz 4 S3b: complements need a known gender; the repair under test is role/subtype only.
+  const row = attr(id, { outfit_role: role, subcategory: subtype, gender: 'men' });
   const loaded = enrichProduct(product(id, title, category), row);
   expect(loaded).toMatchObject({ outfitRole: expectedRole, subcategory: expectedSubtype });
   expect(row).toMatchObject({ outfit_role: role, subcategory: subtype });
   expect(hasHardConflict([{ sourceType: 'catalog', sourceId: id, role: expectedRole, product: loaded }])).toBe(false);
   const core = (['top', 'bottom', 'shoes'] as OutfitRole[]).filter(r => r !== expectedRole).map(r => ({
-    ...product(r, r, r === 'bottom' ? 'lower_body' : r === 'shoes' ? 'shoes' : 'upper_body'), outfitRole: r,
+    ...product(r, r, r === 'bottom' ? 'lower_body' : r === 'shoes' ? 'shoes' : 'upper_body'), outfitRole: r, gender: 'men' as const,
   }));
   const recommendations = getDiscoverRecommendations({ wardrobeItems: [], catalogProducts: [loaded, ...core],
     requiredCatalogProductId: id, firstOnly: true });

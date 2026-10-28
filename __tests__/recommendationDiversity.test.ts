@@ -86,7 +86,8 @@ describe('Deterministic compatibility and complement diversity', () => {
     shown.forEach(p => expect(result[0].candidate.items.some(i => i.sourceType === 'catalog' && i.product === p)).toBe(true));
   });
   it('keeps gender, role/category and pareo guards with a unisex anchor', () => {
-    const anchor = product('anchor', 'shoes', { gender: 'unisex' });
+    // Faz 4 S3b: unisex counts only with an explicit word; an unverified unisex anchor gets no complements.
+    const anchor = product('anchor', 'shoes', { gender: 'unisex', title: 'Unisex Sneaker' });
     const result = getDiscoverRecommendations({ wardrobeItems: [], catalogProducts: [anchor,
       product('top', 'top'), product('bottom', 'bottom'),
       product('men', 'bottom', { gender: 'men' }),

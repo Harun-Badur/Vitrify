@@ -8,7 +8,7 @@ import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
 jest.mock('../lib/supabase', () => ({ getSupabaseClient: jest.fn() }));
 
 const top: Product = { id: 'top', title: 'Top', category: 'upper_body', outfitRole: 'top',
-  price: 100, brand: 'Brand', imageUrl: 'top.jpg', garmentDescription: 'Top' };
+  price: 100, brand: 'Brand', imageUrl: 'top.jpg', garmentDescription: 'Top', gender: 'women' };
 const bottom: Product = { ...top, id: 'bottom', title: 'Bottom', category: 'lower_body', outfitRole: 'bottom' };
 
 describe('canonical Product repository', () => {

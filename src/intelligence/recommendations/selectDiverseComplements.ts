@@ -4,7 +4,7 @@ import type { WardrobeItemForCandidate } from '../outfits/outfitCandidate';
 import { hasCoreFootwear } from '../pairing/outfitRules.ts';
 import type { RankedOutfitCandidate } from '../outfits/outfitRanking';
 import { catalogCompatibility, catalogSemanticKey, sameCatalogProduct } from '../outfits/catalogCompatibility';
-import { isVerifiedHumanIncompatibility } from './verifiedHumanIncompatibilities';
+import { isCatalogPairEligible } from './catalogPairing';
 import { runCooperatively, runSynchronously, type CooperativeWorkOptions } from '../cooperativeWork';
 
 export interface ComplementSelection<T extends WardrobeItemForCandidate> {
@@ -43,8 +43,11 @@ function* selectionWork<T extends WardrobeItemForCandidate>(
     const choices = new Map<string, Product>();
     for (const entry of compatible) for (const item of entry.candidate.items) {
 
+        // Pairing decides against the anchor and every complement already chosen; a slot with no
+        // eligible product stays empty (0-3 complements, never force-filled).
         if (item.sourceType === 'catalog' && !choices.has(item.sourceId) && !roles.has(item.role)
-          && !isVerifiedHumanIncompatibility(anchor.id, item.product.id)) choices.set(item.sourceId, item.product);
+          && isCatalogPairEligible(anchor, item.product)
+          && selected.every((chosen) => isCatalogPairEligible(chosen, item.product))) choices.set(item.sourceId, item.product);
 
       yield;
     }

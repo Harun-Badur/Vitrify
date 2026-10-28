@@ -23,7 +23,6 @@ const renderer = jest.requireActual('react-test-renderer') as {
 test.each<[RecommendationStatus, string]>([
   ['loading', 'Tamamlayıcı parçalar hazırlanıyor.'],
   ['error', 'Tamamlayıcı parçalar yüklenemedi. Daha sonra tekrar dene.'],
-  ['ready', 'Bu ürün için henüz tamamlayıcı parça önerisi yok.'],
 ])(
   'shows the correct %s state while keeping the section mounted',
   async (status, message) => {
@@ -48,3 +47,18 @@ test.each<[RecommendationStatus, string]>([
     }
   },
 );
+
+// Faz 4 S3b: a ready result with zero complements hides the whole section (no empty heading).
+test('hides the section when the ready result has no complements', async () => {
+  let tree!: ReturnType<typeof renderer.create>;
+  await renderer.act(() => {
+    tree = renderer.create(
+      createElement(DiscoverRecommendations, { currentProductId: 'anchor', recommendations: [], status: 'ready' }),
+    );
+  });
+  try {
+    expect(tree.root.findAllByType(Text)).toHaveLength(0);
+  } finally {
+    await renderer.act(() => tree.unmount());
+  }
+});

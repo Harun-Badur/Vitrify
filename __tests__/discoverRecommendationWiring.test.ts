@@ -157,27 +157,32 @@ const renderer = jest.requireActual('react-test-renderer') as {
   };
 };
 
-const top = { ...MOCK_PRODUCTS[0], id: 'real-top', outfitRole: 'top' as const };
+// Faz 4 S3b: complements need a known gender; the mock catalog has none.
+const top = { ...MOCK_PRODUCTS[0], id: 'real-top', outfitRole: 'top' as const, gender: 'women' as const };
 const bottom = {
   ...MOCK_PRODUCTS[1],
   id: 'real-bottom',
+  gender: 'women' as const,
   category: 'lower_body' as const,
   outfitRole: 'bottom' as const,
 };
 const shoes = {
   ...MOCK_PRODUCTS[2],
   id: 'real-shoes',
+  gender: 'women' as const,
   category: 'shoes' as const,
   outfitRole: 'shoes' as const,
 };
 const jacket = {
   ...MOCK_PRODUCTS[3],
   id: 'real-jacket',
+  gender: 'women' as const,
   outfitRole: 'outerwear' as const,
 };
 const bag = {
   ...MOCK_PRODUCTS[3],
   id: 'real-bag',
+  gender: 'women' as const,
   category: 'bags' as const,
   outfitRole: 'bag' as const,
 };

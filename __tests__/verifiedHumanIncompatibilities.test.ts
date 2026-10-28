@@ -1,9 +1,8 @@
 import { complementaryProductsForDisplay } from '../src/intelligence/recommendations/complementaryProductsForDisplay';
 import { getDiscoverRecommendations } from '../src/intelligence/recommendations/getDiscoverRecommendations';
-import {
-  VERIFIED_HUMAN_INCOMPATIBILITIES,
-  isVerifiedHumanIncompatibility,
-} from '../src/intelligence/recommendations/verifiedHumanIncompatibilities';
+import { HUMAN_DECISIONS_V1, isHumanIncompatible as isVerifiedHumanIncompatibility } from '../src/intelligence/pairing/humanDecisions';
+
+const VERIFIED_HUMAN_INCOMPATIBILITIES = HUMAN_DECISIONS_V1.rows;
 import { isValidOutfitItems, isCatalogRoleCompatible } from '../src/intelligence/outfits/outfitCandidate';
 import type { OutfitRole, Product } from '../types/product';
 

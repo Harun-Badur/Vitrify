@@ -1,3 +1,4 @@
+import { HUMAN_DECISIONS_V1, isHumanIncompatible, type HumanDecisionSet } from './humanDecisions.ts';
 import { PAIRING_EVIDENCE_POLICY_V1, PAIRING_POLICY_V1 } from './pairingPolicy.ts';
 import {
   PAIR_EVALUATION_VERSION,
@@ -11,7 +12,9 @@ import {
   type PairEvidencePolicy,
   type PairGender,
   type PairItem,
+  type PairFormality,
   type PairRole,
+  type PairSeason,
   type PairSignal,
 } from './pairingTypes.ts';
 
@@ -22,6 +25,7 @@ export interface PairInput {
   sessionGender: string | null;
   policy?: CompatibilityPolicy;
   evidencePolicy?: PairEvidencePolicy;
+  humanDecisions?: HumanDecisionSet;
 }
 
 /** Narrows any product-shaped signal set to a PairItem; extra fields are ignored. */
@@ -29,8 +33,10 @@ export const pairItemFromSignals = (
   id: string,
   signals: { role: PairSignal<PairRole>; gender: PairSignal<PairGender>; subtype: PairSignal<string> },
   conflicts: readonly PairConflict[],
+  origin: 'catalog' | 'wardrobe' = 'catalog',
 ): PairItem => ({
   id,
+  origin,
   role: { value: signals.role.value, source: signals.role.source, confidence: signals.role.confidence },
   gender: { value: signals.gender.value, source: signals.gender.source, confidence: signals.gender.confidence },
   subtype: { value: signals.subtype.value, source: signals.subtype.source, confidence: signals.subtype.confidence },
@@ -99,6 +105,15 @@ const genderCheck = (anchor: PairItem, candidate: PairItem, policy: Compatibilit
   ];
   const a = anchor.gender.value;
   const c = candidate.gender.value;
+  if (policy.s3b?.uncertainGender) {
+    // S3b: the rule compares two catalog products; a wardrobe item's gender is the user's own.
+    if (anchor.origin === 'wardrobe' || candidate.origin === 'wardrobe') {
+      return { check: 'gender', status: 'pass', code: 'gender_not_applicable', evidence };
+    }
+    if (a === null || c === null) return { check: 'gender', status: 'insufficient', code: 'gender_unknown', evidence };
+    const unverifiedNeutral = evidence.some((entry) => entry.value === policy.genderNeutral && !entry.reliable);
+    if (unverifiedNeutral) return { check: 'gender', status: 'insufficient', code: 'gender_unisex_unverified', evidence };
+  }
   if (a === null || c === null) return { check: 'gender', status: 'pass', code: 'gender_unknown', evidence };
   if (a === c) return { check: 'gender', status: 'pass', code: 'gender_match', evidence };
   if (a === policy.genderNeutral || c === policy.genderNeutral) {
@@ -134,6 +149,42 @@ const sessionGenderCheck = (
     : { check: 'session_gender', status: 'insufficient', code: 'session_gender_mismatch_unverified', evidence };
 };
 
+const coarseCheck = <T extends string>(
+  check: 'season' | 'formality',
+  table: Readonly<Record<string, T>>,
+  anchor: PairItem,
+  candidate: PairItem,
+  policy: CompatibilityPolicy,
+): CompatibilityCheck => {
+  const signals = [fromSubtype(anchor, table), fromSubtype(candidate, table)];
+  const evidence: CompatibilityEvidence[] = signals.map((signal, index) => ({
+    subject: index === 0 ? 'anchor' : 'candidate',
+    field: check,
+    value: signal.value,
+    source: signal.source,
+    confidence: signal.confidence,
+    reliable: isReliable(signal, affectsSubtype((index === 0 ? anchor : candidate).conflicts), policy),
+  }));
+  const [a, c] = signals.map((signal) => signal.value);
+  if (a === null || c === null) return { check, status: 'pass', code: `${check}_unknown`, evidence };
+  // Only the two coarse ends exist (warm/cold, formal/casual), so any difference is a coarse conflict.
+  if (a === c) return { check, status: 'pass', code: `${check}_compatible`, evidence };
+  return evidence.every((entry) => entry.reliable)
+    ? { check, status: 'reject', code: `${check}_conflict`, evidence }
+    : { check, status: 'insufficient', code: `${check}_conflict_unverified`, evidence };
+};
+
+const humanDecisionCheck = (anchor: PairItem, candidate: PairItem, decisions: HumanDecisionSet): CompatibilityCheck => {
+  const blocked = isHumanIncompatible(anchor.id, candidate.id, decisions);
+  const evidence: CompatibilityEvidence[] = [{
+    subject: 'candidate', field: 'human_decision', value: blocked ? `v${decisions.version}` : null,
+    source: 'human_review', confidence: 'high', reliable: true,
+  }];
+  return blocked
+    ? { check: 'human_decision', status: 'reject', code: 'human_incompatible', evidence }
+    : { check: 'human_decision', status: 'pass', code: 'human_decision_none', evidence };
+};
+
 const outcomeOf = (checks: readonly CompatibilityCheck[]): CompatibilityOutcome => {
   if (checks.some((check) => check.status === 'reject')) return 'rejected';
   if (checks.some((check) => check.status === 'insufficient')) return 'insufficient_evidence';
@@ -166,9 +217,10 @@ const affectsSubtype = (conflicts: readonly PairConflict[]): boolean =>
   conflicts.some((conflict) => conflict.field === 'subtype');
 
 /**
- * Pure pairing decision between an anchor and one candidate. The outcome uses identity, role,
- * gender and the session gender filter; unreliable evidence can only make a pair insufficient,
- * never rejected. Season and formality are reported as evidence and never decide (Faz 4 S2).
+ * Pure pairing decision between an anchor and one candidate. V1 (S2) decides on identity, role,
+ * gender and the session gender filter. V2 (S3b) also makes unknown/unverified-neutral catalog
+ * gender uncertain, decides coarse season/formality conflicts and applies human reviewer
+ * decisions. Unreliable evidence can only make a pair insufficient (uncertain), never rejected.
  */
 export const evaluatePair = ({
   anchor,
@@ -176,6 +228,7 @@ export const evaluatePair = ({
   sessionGender,
   policy = PAIRING_POLICY_V1,
   evidencePolicy = PAIRING_EVIDENCE_POLICY_V1,
+  humanDecisions = HUMAN_DECISIONS_V1,
 }: PairInput): PairEvaluation => {
   const checks = [
     identityCheck(anchor, candidate),
@@ -183,6 +236,13 @@ export const evaluatePair = ({
     genderCheck(anchor, candidate, policy),
     sessionGenderCheck(sessionGender, candidate, policy),
   ];
+  if (policy.s3b?.coarseSeasonFormality) {
+    checks.push(
+      coarseCheck<PairSeason>('season', evidencePolicy.seasonBySubtype, anchor, candidate, policy),
+      coarseCheck<PairFormality>('formality', evidencePolicy.formalityBySubtype, anchor, candidate, policy),
+    );
+  }
+  if (policy.s3b?.humanDecisions) checks.push(humanDecisionCheck(anchor, candidate, humanDecisions));
   const outcome = outcomeOf(checks);
   const deciding = outcome === 'rejected' ? 'reject' : outcome === 'insufficient_evidence' ? 'insufficient' : 'pass';
   const sides = [['anchor', anchor], ['candidate', candidate]] as const;

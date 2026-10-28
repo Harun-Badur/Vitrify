@@ -23,6 +23,7 @@ export type PairSignalSource =
   | 'price_rule'
   | 'title_inferred'
   | 'derived_from_subtype'
+  | 'human_review'
   | 'unknown';
 
 export type PairConflictCode =
@@ -48,6 +49,8 @@ export interface PairConflict {
 /** One side of a pair, reduced to the signals the pairing rules read. */
 export interface PairItem {
   id: string;
+  /** Catalog product (default) or the user's own wardrobe item; gender rules skip wardrobe items. */
+  origin?: 'catalog' | 'wardrobe';
   role: PairSignal<PairRole>;
   gender: PairSignal<PairGender>;
   subtype: PairSignal<string>;
@@ -79,9 +82,18 @@ export interface CompatibilityPolicy {
   roleAffectingConflicts: readonly PairConflictCode[];
   /** Values that are compatible with every gender and gender filter. */
   genderNeutral: PairGender;
+  /** Faz 4 S3b decisions; absent in V1 (the S2 gate behavior). */
+  s3b?: {
+    /** Catalog↔catalog: unknown gender or an unverified neutral gender is uncertain. */
+    uncertainGender: true;
+    /** Coarse season/formality conflicts from derived_from_subtype evidence decide. */
+    coarseSeasonFormality: true;
+    /** Versioned human reviewer decisions reject their pair. */
+    humanDecisions: true;
+  };
 }
 
-export const COMPATIBILITY_CHECKS = ['identity', 'role', 'gender', 'session_gender'] as const;
+export const COMPATIBILITY_CHECKS = ['identity', 'role', 'gender', 'session_gender', 'season', 'formality', 'human_decision'] as const;
 
 export type CompatibilityCheckName = (typeof COMPATIBILITY_CHECKS)[number];
 
@@ -107,13 +119,26 @@ export const COMPATIBILITY_REASON_CODES = [
   'session_gender_unknown',
   'session_gender_mismatch',
   'session_gender_mismatch_unverified',
+  // Faz 4 S3b (policy V2).
+  'gender_unisex_unverified',
+  'gender_not_applicable',
+  'season_compatible',
+  'season_unknown',
+  'season_conflict',
+  'season_conflict_unverified',
+  'formality_compatible',
+  'formality_unknown',
+  'formality_conflict',
+  'formality_conflict_unverified',
+  'human_decision_none',
+  'human_incompatible',
 ] as const;
 
 export type CompatibilityReasonCode = (typeof COMPATIBILITY_REASON_CODES)[number];
 
 export interface CompatibilityEvidence {
   subject: 'anchor' | 'candidate' | 'session';
-  field: 'id' | 'role' | 'gender';
+  field: 'id' | 'role' | 'gender' | 'season' | 'formality' | 'human_decision';
   value: string | null;
   source: PairSignalSource | 'catalog_product' | 'session_filter';
   confidence: PairConfidence;

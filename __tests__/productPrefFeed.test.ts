@@ -146,8 +146,9 @@ describe('product preference on the client feed', () => {
 });
 
 describe('Discover cache leak across a preference change', () => {
-  const base: Product = { id: 'k-top', title: 'Top', price: 100, brand: 'Brand', category: 'upper_body',
-    outfitRole: 'top', imageUrl: 'top.jpg', garmentDescription: 'Top' };
+  // Faz 4 S3b: complements need a known gender; explicit unisex keeps the hepsi-era mix possible.
+  const base: Product = { id: 'k-top', title: 'Unisex Top', price: 100, brand: 'Brand', category: 'upper_body',
+    outfitRole: 'top', imageUrl: 'top.jpg', garmentDescription: 'Top', gender: 'unisex' };
   const kadinPool: Product[] = [base, { ...base, id: 'k-bottom', category: 'lower_body', outfitRole: 'bottom' },
     { ...base, id: 'u-shoes', category: 'shoes', outfitRole: 'shoes' }];
   const erkek: Product[] = [{ ...base, id: 'e-bottom', category: 'lower_body', outfitRole: 'bottom' },

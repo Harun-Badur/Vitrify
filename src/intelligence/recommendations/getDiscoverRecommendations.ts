@@ -7,7 +7,7 @@ import { generateWardrobeCatalogOutfits } from '../outfits/generateWardrobeCatal
 import { rankOutfitCandidates, rankOutfitCandidatesAsync, rankDiversityCandidatesAsync } from '../outfits/rankOutfitCandidates';
 import type { OutfitDiscoverRecommendation } from './discoverRecommendation';
 import { selectDiverseComplements, selectDiverseComplementsAsync } from './selectDiverseComplements';
-import { isVerifiedHumanIncompatibility } from './verifiedHumanIncompatibilities';
+import { isCatalogPairEligible } from './catalogPairing';
 import type { CooperativeWorkOptions } from '../cooperativeWork';
 import { createRecommendationMemo } from '../../../lib/recommendationMemo';
 
@@ -31,15 +31,12 @@ const prepareInput = <T extends WardrobeItemForCandidate>(
   const requiredProduct = input.requiredCatalogProductId
     ? catalogProducts.find((product) => product.id === input.requiredCatalogProductId)
     : undefined;
-  const genderCompatible = requiredProduct?.gender === 'women'
-    ? catalogProducts.filter((product) => product.gender !== 'men')
-    : requiredProduct?.gender === 'men'
-      ? catalogProducts.filter((product) => product.gender !== 'women')
-      : catalogProducts;
+  // Faz 4 S3b: the pairing decision (gender, coarse season/formality, human decisions) replaces
+  // the raw gender split and the separate human list. Only eligible products reach generation.
   const compatibleProducts = requiredProduct
-    ? genderCompatible.filter((product) => product.id === requiredProduct.id
-      || !isVerifiedHumanIncompatibility(requiredProduct.id, product.id))
-    : genderCompatible;
+    ? catalogProducts.filter((product) => product.id === requiredProduct.id
+      || isCatalogPairEligible(requiredProduct, product))
+    : catalogProducts;
 
   const outfitInput = {
     wardrobeItems: input.wardrobeItems,

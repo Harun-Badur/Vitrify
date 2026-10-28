@@ -26,6 +26,8 @@ const catalog = (
   category,
   outfitRole,
   garmentDescription: id,
+  // Faz 4 S3b: a catalog complement needs a known gender to be eligible.
+  gender: 'women',
 });
 
 const roles = (items: { role: OutfitRole }[]): OutfitRole[] =>

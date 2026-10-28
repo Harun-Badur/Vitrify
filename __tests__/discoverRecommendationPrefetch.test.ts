@@ -10,7 +10,7 @@ import type { Product } from '../types/product';
 jest.mock('../lib/supabase', () => ({ getSupabaseClient: jest.fn(() => null) }));
 
 const top: Product = { id: 'prefetch-top', title: 'Top', price: 100, brand: 'Brand', category: 'upper_body',
-  outfitRole: 'top', imageUrl: 'top.jpg', garmentDescription: 'Top' };
+  outfitRole: 'top', imageUrl: 'top.jpg', garmentDescription: 'Top', gender: 'women' };
 const catalog: Product[] = [top,
   { ...top, id: 'prefetch-bottom', category: 'lower_body', outfitRole: 'bottom' },
   { ...top, id: 'prefetch-shoes', category: 'shoes', outfitRole: 'shoes' },

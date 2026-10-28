@@ -64,6 +64,16 @@ export const PAIRING_POLICY_V1: CompatibilityPolicy = Object.freeze({
 });
 
 /**
+ * Faz 4 S3b: unknown or unverified-neutral catalog gender is uncertain, coarse season/formality
+ * conflicts decide, and human reviewer decisions reject. Role relations are unchanged from V1.
+ */
+export const PAIRING_POLICY_V2: CompatibilityPolicy = Object.freeze({
+  ...PAIRING_POLICY_V1,
+  version: 2,
+  s3b: Object.freeze({ uncertainGender: true, coarseSeasonFormality: true, humanDecisions: true } as const),
+});
+
+/**
  * Coarse season and formality read off subtype slugs (lib/productAttributes SUBCATEGORY_RULES).
  * Only unambiguous slugs are listed: `ceket` spans coats and light jackets, `gomlek` spans
  * dress and casual shirts, so they stay unknown. Rule v4 splits `ceket` into mont / kaban /

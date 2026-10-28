@@ -10,7 +10,7 @@ import type { Product } from '../types/product';
 
 jest.mock('../lib/supabase', () => ({ getSupabaseClient: jest.fn() }));
 const top: Product = { id: 'top', title: 'Top', price: 100, brand: 'Brand', category: 'upper_body',
-  outfitRole: 'top', imageUrl: 'top.jpg', garmentDescription: 'Top' };
+  outfitRole: 'top', imageUrl: 'top.jpg', garmentDescription: 'Top', gender: 'women' };
 const bottom: Product = { ...top, id: 'bottom', category: 'lower_body', outfitRole: 'bottom' };
 const shoes: Product = { ...top, id: 'shoes', category: 'shoes', outfitRole: 'shoes' };
 const bag: Product = { ...top, id: 'bag', category: 'bags', outfitRole: 'bag' };

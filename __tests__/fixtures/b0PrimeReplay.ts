@@ -15,7 +15,7 @@ import {
   completeDiscoverRecommendationsAsync,
   prepareDiscoverRankingAsync,
 } from '../../src/intelligence/recommendations/getDiscoverRecommendations';
-import { isVerifiedHumanIncompatibility } from '../../src/intelligence/recommendations/verifiedHumanIncompatibilities';
+import { isHumanIncompatible as isVerifiedHumanIncompatibility } from '../../src/intelligence/pairing/humanDecisions';
 import { buildStyleContext } from '../../src/intelligence/style/styleContext';
 import { enrichProduct } from '../../src/intelligence/style/productStyle';
 import { anchorContext } from '../../src/recommendationCache/feedPacket';

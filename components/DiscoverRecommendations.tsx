@@ -51,6 +51,9 @@ function DiscoverRecommendations({
     recommendations, currentProductId,
   ), [recommendations, currentProductId]);
 
+  // Faz 4 S3b: no complements means no section (no empty heading or placeholder).
+  if (status === 'ready' && products.length === 0) return null;
+
   return (
     <View style={styles.section}>
       <View style={styles.divider} />
