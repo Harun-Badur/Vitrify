@@ -110,6 +110,7 @@ describe('outfit rules boundary', () => {
       .filter(path => /pairing\/outfitRules/.test(readFileSync(path, 'utf8')))
       .map(path => relative(root, path).replace(/\\/g, '/'));
     expect(importers).toEqual([
+      'lib/insightChip.ts',
       'src/intelligence/outfits/generateOutfitCandidates.ts',
       'src/intelligence/outfits/outfitCandidate.ts',
       'src/intelligence/outfits/outfitRanking.ts',

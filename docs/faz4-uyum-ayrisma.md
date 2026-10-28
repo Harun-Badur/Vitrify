@@ -79,3 +79,18 @@ Onaylı ilkelere ("bilinmeyen ≠ uyumlu/uyumsuz", "kanıt yoksa iddia yok") ayk
 - **S3b — bilinmeyen cinsiyet (2026-10-28):** katalog↔katalog çiftlerinde cinsiyeti bilinmeyen (`unknown`) veya kanıtı güvenilmez `unisex` (`unverified`) olan çift `uncertain` olur ve seçilmez. Dolap parçalarında cinsiyet kuralı **uygulanmaz** (dolapta cinsiyet alanı yok; kullanıcının kendi parçası). S2/S3'te karar değişmez; bu S3b'nin onaya sunulacak B0′ farkıdır.
 - **S2b — alt tür sözlüğünü inceltme (S3b'den önce, 2026-10-28):** `ceket` slug'ı mont / kaban / trençkot / blazer olarak ayrılır (T4 mevsim kanıtı bugün `ceket`ten okunamıyor). Kural sürümü artırılır, `backfillCatalogEnrichment` canlıya karşı dry-run ile farkı listeler; canlı yazma yalnız kullanıcı onayıyla.
 - **S3b — 0 parçada bölümü gizle:** tamamlayıcı ürün sayısı 0 olduğunda (B0′'de 1 çapa) tamamlayıcı bölümü gösterilmez; boş başlık/iskelet kalmaz.
+
+## S4 — chip kararı pairing'e geçti (2026-10-28)
+
+`lib/insightChip.ts` artık kendi kategori tablosunu ve birebir-renk kuralını kullanmıyor; dolap eşleşmesi `evaluatePair` (V2, `ACTIVE_CATALOG_PAIRING_POLICY`) ile karar verilir, dolap parçası `fromWardrobe` adaptöründen gelir (cinsiyet kuralı uygulanmaz). Chip için ek şartlar: rol ilişkisi `role_complementary` (katmanlama gibi bağlama bağlı ilişkiler chip sayılmaz) ve iki tarafta da renk biliniyor. Dolap metni "lacivert jean" yalnız renk bilinen bir slug ve alt tür sözlükte geçerliyse yazılır; aksi halde kategori adı.
+
+| # | Eski | Yeni | Neden |
+| --- | --- | --- | --- |
+| C1 | Elbise + aynı renk ceket/blazer: chip yok | `wardrobe_match` | one_piece↔outerwear tamamlayıcı; elbise + sade üst hâlâ yok (bağlama bağlı) |
+| C2 | Üst ürün + aynı renk dış giyim: chip yok | `wardrobe_match` | top↔outerwear tamamlayıcı; üst + üst hâlâ yok |
+| C3 | Lacivert ürün + siyah alt: chip yok | `wardrobe_match` | nötr renk uyumlu (puanlayıcıyla aynı) |
+| C4 | `Navy` ↔ `navy`: chip yok | `wardrobe_match` | slug'lar normalize edilir |
+| C5 | Renksiz dolap parçaları: `completes_wardrobe` | chip yok | renk bilinmiyor → uncertain |
+| C6 | Şapka + aynı renk alt: chip yok | `wardrobe_match` | hat↔bottom tamamlayıcı |
+
+Ek: rolü bilinmeyen üst giyim dolap parçası (alt türü yok) uncertain → chip yok; kaba mevsim/resmiyet çelişkisi chip'i durdurur; kategori tablosundaki eski kısıtlar (ör. aksesuar yalnız üst/elbise) kalktı, tamamlayıcı rol ilişkisi ne diyorsa o geçerli.

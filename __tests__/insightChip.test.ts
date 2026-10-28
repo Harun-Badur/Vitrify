@@ -22,6 +22,8 @@ const product = (id: string, patch: Partial<Product> = {}): Product => ({
   price: 100,
   brand: 'Marka',
   category: 'upper_body',
+  // Faz 4 S4: the pairing decision needs a role; an upper-body product without one is uncertain.
+  outfitRole: 'top',
   garmentDescription: '',
   colorSlugs: ['siyah'],
   ...patch,
@@ -30,6 +32,7 @@ const product = (id: string, patch: Partial<Product> = {}): Product => ({
 const wardrobeItem = (id: string, patch: Partial<InsightWardrobeItem> = {}): InsightWardrobeItem => ({
   id,
   category: 'lower_body',
+  subcategory: 'pantolon',
   colorSlugs: ['siyah'],
   imageUrl: `https://w/${id}.jpg`,
   ...patch,
@@ -45,8 +48,8 @@ const context = (patch: Partial<InsightChipContext> = {}): InsightChipContext =>
 
 const fullWardrobe = [
   wardrobeItem('w1'),
-  wardrobeItem('w2', { category: 'shoes', colorSlugs: ['beyaz'] }),
-  wardrobeItem('w3', { category: 'bags', colorSlugs: ['kahverengi'] }),
+  wardrobeItem('w2', { category: 'shoes', subcategory: 'sneaker', colorSlugs: ['beyaz'] }),
+  wardrobeItem('w3', { category: 'bags', subcategory: 'canta', colorSlugs: ['kahverengi'] }),
 ];
 
 describe('parseReasonSignals', () => {
@@ -80,8 +83,9 @@ describe('selectInsightChip', () => {
     const likeCount = BUDGET_CHIP_MIN_LIKES;
     expect(selectInsightChip(product('p'), context({ reasons, likeCount, wardrobe: fullWardrobe }))?.kind)
       .toBe('wardrobe_match');
+    // Faz 4 S4: a neutral color now matches, so "no color match" needs two different chromatic colors.
     const noColorMatch = fullWardrobe.map(item => ({ ...item, colorSlugs: ['mor'] }));
-    expect(selectInsightChip(product('p'), context({ reasons, likeCount, wardrobe: noColorMatch }))?.kind)
+    expect(selectInsightChip(product('p', { colorSlugs: ['kirmizi'] }), context({ reasons, likeCount, wardrobe: noColorMatch }))?.kind)
       .toBe('completes_wardrobe');
     expect(selectInsightChip(product('p'), context({ reasons, likeCount }))?.kind).toBe('style_fit');
     expect(selectInsightChip(product('p'), context({ reasons: reasons.slice(0, 2), likeCount }))?.kind).toBe('budget');
@@ -99,8 +103,8 @@ describe('selectInsightChip', () => {
 
   it('does not claim the wardrobe is completed when the category is already owned', () => {
     const owned = [...fullWardrobe.map(item => ({ ...item, colorSlugs: ['mor'] })),
-      wardrobeItem('w4', { category: 'upper_body', colorSlugs: ['mor'] })];
-    expect(selectInsightChip(product('p'), context({ wardrobe: owned }))).toBeNull();
+      wardrobeItem('w4', { category: 'upper_body', subcategory: 'tisort', colorSlugs: ['mor'] })];
+    expect(selectInsightChip(product('p', { colorSlugs: ['kirmizi'] }), context({ wardrobe: owned }))).toBeNull();
   });
 
   it('marks wardrobe chips as animated-eye kinds and neutral chips as static', () => {

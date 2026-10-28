@@ -189,6 +189,20 @@ const NEUTRAL_COLORS: readonly string[] = ['siyah', 'beyaz', 'gri', 'bej', 'krem
 const colorSlugs = (item: PairItem): string[] =>
   (item.colors ?? []).map((slug) => slug.trim().toLocaleLowerCase('tr-TR')).filter((slug) => slug !== '');
 
+export type ColorCompatibility = 'compatible' | 'incompatible' | 'unknown';
+
+/**
+ * Compatible: a shared color or a neutral on either side (the catalog scorer's rule).
+ * Incompatible: both known, no shared color, no neutral. Unknown: either side has no color.
+ */
+export const colorCompatibility = (anchor: PairItem, candidate: PairItem): ColorCompatibility => {
+  const left = colorSlugs(anchor), right = colorSlugs(candidate);
+  if (left.length === 0 || right.length === 0) return 'unknown';
+  return right.some((slug) => left.includes(slug)) || [...left, ...right].some((slug) => NEUTRAL_COLORS.includes(slug))
+    ? 'compatible'
+    : 'incompatible';
+};
+
 /**
  * V3: counts the dimensions that are known on both items and compatible. Compatible color means a
  * shared color or a neutral on either side (the catalog scorer's rule); two different chromatic
@@ -217,12 +231,10 @@ const positiveEvidenceCheck = (
   };
   const formality = coarse<PairFormality>(evidencePolicy.formalityBySubtype);
   const season = coarse<PairSeason>(evidencePolicy.seasonBySubtype);
-  const left = colorSlugs(anchor), right = colorSlugs(candidate);
-  const color = left.length > 0 && right.length > 0
-    && (right.some((slug) => left.includes(slug)) || [...left, ...right].some((slug) => NEUTRAL_COLORS.includes(slug)));
+  const color = colorCompatibility(anchor, candidate) === 'compatible';
   add('formality', formality.compatible, formality.value);
   add('season', season.compatible, season.value);
-  add('color', color, color ? right[0] : null);
+  add('color', color, color ? colorSlugs(candidate)[0] ?? null : null);
   const count = evidence.filter((entry) => entry.reliable).length;
   return count >= rule.minDimensions
     ? { check: 'positive_evidence', status: 'pass', code: 'positive_evidence_sufficient', evidence }

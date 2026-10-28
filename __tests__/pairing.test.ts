@@ -199,7 +199,7 @@ describe('pairing boundary (Edge-compatible)', () => {
     }
   });
 
-  it('is reached by app code only through the gate adapter and the S3b catalog adapter', () => {
+  it('is reached by app code only through the gate adapter, the catalog adapter and the insight chip', () => {
     const sourceFiles = (path: string): string[] => readdirSync(path).flatMap(name => {
       const child = join(path, name);
       if (statSync(child).isDirectory()) return sourceFiles(child);
@@ -213,6 +213,7 @@ describe('pairing boundary (Edge-compatible)', () => {
       .map(path => relative(root, path).replace(/\\/g, '/'))
       .filter(path => !path.startsWith('src/intelligence/pairing/'));
     expect(importers).toEqual([
+      'lib/insightChip.ts',
       'src/intelligence/compatibility/compatibilityGate.ts',
       'src/intelligence/compatibility/compatibilityPolicy.ts',
       'src/intelligence/recommendations/catalogPairing.ts',

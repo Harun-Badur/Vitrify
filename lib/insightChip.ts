@@ -1,6 +1,13 @@
 import type { Product } from '../types/product';
+import { colorCompatibility, evaluatePair } from '../src/intelligence/pairing/pairing';
+import type { PairItem } from '../src/intelligence/pairing/pairingTypes';
+import { fromWardrobe } from '../src/intelligence/pairing/wardrobePairing';
+import { UPPER_SUBCATEGORY_ROLE } from '../src/intelligence/pairing/outfitRules';
+import { ACTIVE_CATALOG_PAIRING_POLICY, pairItemFromProduct } from '../src/intelligence/recommendations/catalogPairing';
 import { PRICE_BAND_REASON_LABEL } from './displayReason';
 import { INSIGHT_CHIP_COPY, WARDROBE_CATEGORY_LABEL_TR } from './insightChipTemplates';
+import { COLORS, isUnknownSubtype, isValidSubtype, subtypesForCategory } from './styleVocabulary';
+import { isGarmentCategory } from '../types/product';
 
 /** Öncelik sırasıyla; seçici bu sırayı izler. */
 export const INSIGHT_CHIP_PRIORITY = [
@@ -93,20 +100,31 @@ export const parseReasonSignals = (reasons: unknown): ReasonSignal[] => {
   return signals;
 };
 
-/** Kombinlenebilir kategori çiftleri; dolap kanıtı yalnız bunlardan sayılır. */
-const COMPLEMENTS: Record<string, readonly string[]> = {
-  upper_body: ['lower_body', 'shoes', 'bags'],
-  lower_body: ['upper_body', 'shoes', 'bags'],
-  dresses: ['shoes', 'bags', 'accessories'],
-  shoes: ['upper_body', 'lower_body', 'dresses'],
-  bags: ['upper_body', 'lower_body', 'dresses'],
-  hats: ['upper_body', 'dresses'],
-  accessories: ['upper_body', 'dresses'],
+/** Wardrobe subtype the user chose from the vocabulary; anything else is not trusted as evidence. */
+const reliableSubtype = (item: InsightWardrobeItem): string | null => {
+  const subtype = item.subcategory?.trim();
+  return subtype && isGarmentCategory(item.category) && isValidSubtype(item.category, subtype) && !isUnknownSubtype(subtype)
+    ? subtype : null;
+};
+
+const knownColors = (item: InsightWardrobeItem): string[] =>
+  (item.colorSlugs ?? []).map(slug => slug.trim().toLocaleLowerCase('tr-TR')).filter(slug => COLORS.some(color => color.slug === slug));
+
+/** "lacivert jean": written only when both a known color and a valid subtype are reliable. */
+const describeWardrobeItem = (item: InsightWardrobeItem): string => {
+  const subtype = reliableSubtype(item);
+  const slug = knownColors(item)[0];
+  const color = slug ? COLORS.find(entry => entry.slug === slug)?.label : undefined;
+  const label = subtype && isGarmentCategory(item.category)
+    ? subtypesForCategory(item.category).find(entry => entry.slug === subtype)?.label : undefined;
+  return color && label
+    ? `${color} ${label}`.toLocaleLowerCase('tr-TR')
+    : WARDROBE_CATEGORY_LABEL_TR[item.category] ?? item.category;
 };
 
 const wardrobeEvidence = (item: InsightWardrobeItem): InsightEvidence => ({
   id: item.id,
-  label: INSIGHT_CHIP_COPY.wardrobeEvidence(WARDROBE_CATEGORY_LABEL_TR[item.category] ?? item.category),
+  label: INSIGHT_CHIP_COPY.wardrobeEvidence(describeWardrobeItem(item)),
   source: 'wardrobe',
   imageUrl: item.imageUrl,
 });
@@ -126,14 +144,37 @@ const chip = (kind: InsightChipKind, evidence: InsightEvidence[], matchedItem?: 
   ...(matchedItem ? { matchedItem } : {}),
 });
 
+/** The product's pairing view; an upper-body product without a role gets one from its subtype only. */
+const chipSubject = (product: Product): PairItem => {
+  const item = pairItemFromProduct(product);
+  if (item.role.value !== null || product.category !== 'upper_body') return item;
+  const role = product.subcategory ? UPPER_SUBCATEGORY_ROLE[product.subcategory.trim().toLocaleLowerCase('tr-TR')] : undefined;
+  return role ? { ...item, role: { value: role, source: 'category_rule', confidence: 'high' } } : item;
+};
+
+const wardrobePair = (item: InsightWardrobeItem): PairItem =>
+  fromWardrobe({ ...item, subcategory: reliableSubtype(item), colorSlugs: knownColors(item) });
+
+/** Eligible by the pairing decision AND a complementary (distinct body slot) role relation. */
+const isComplementary = (subject: PairItem, partner: PairItem): boolean => {
+  if (subject.role.value === null) return false;
+  const decision = evaluatePair({ anchor: subject, candidate: partner, sessionGender: null, policy: ACTIVE_CATALOG_PAIRING_POLICY });
+  return decision.outcome === 'eligible'
+    && decision.checks.find(check => check.check === 'role')?.code === 'role_complementary';
+};
+
 const candidateChips = (product: Product, context: InsightChipContext): Map<InsightChipKind, () => InsightChip> => {
   const candidates = new Map<InsightChipKind, () => InsightChip>();
   const wardrobe = context.wardrobe;
   if (wardrobe.length >= MIN_WARDROBE_ITEMS_FOR_INSIGHT) {
-    const complements = COMPLEMENTS[product.category] ?? [];
-    const pairable = wardrobe.filter(item => complements.includes(item.category));
-    const productColors = new Set(product.colorSlugs ?? []);
-    const match = pairable.find(item => (item.colorSlugs ?? []).some(color => productColors.has(color)));
+    // The pairing module decides (Faz 4 S4): the chip needs an eligible pair whose roles are
+    // complementary and whose colors are both known. An unknown color or role means no chip.
+    const subject = chipSubject(product);
+    const pairable = wardrobe.filter(item => {
+      const partner = wardrobePair(item);
+      return colorCompatibility(subject, partner) !== 'unknown' && isComplementary(subject, partner);
+    });
+    const match = pairable.find(item => colorCompatibility(subject, wardrobePair(item)) === 'compatible');
     if (match) {
       candidates.set('wardrobe_match', () => chip('wardrobe_match', [wardrobeEvidence(match), productEvidence(product)], match));
     }
