@@ -265,7 +265,7 @@ export interface GenderInference {
   gender: GenderLabel;
   /** none = unknown; medium = URL path only; high = title word. */
   confidence: 'high' | 'medium' | 'low' | 'none';
-  /** title_token | title_child_token | title_conflict | url_token | url_conflict | <word>_default | default_conflict | accessory_neutral | none */
+  /** title_token | title_child_token | title_conflict | url_token | url_conflict | <word>_default | default_conflict | dress_default | dress_conflict | none */
   rule: string;
   /** The matched word, or '' when unknown. */
   key: string;
@@ -289,10 +289,7 @@ const WOMEN_DEFAULT_WORDS: ReadonlyArray<readonly [rule: string, key: string]> =
   ['blouse_default', 'bluz'],
   ['body_default', 'body'],
 ];
-// Whole words only ("Kemerli Pantolon" is not a belt); accessories with no gender word are neutral.
-const NEUTRAL_ACCESSORY_WORDS: readonly string[] = [
-  'kemer', 'kemeri', 'atkı', 'atki', 'atkısı', 'kolye', 'kolyesi', 'takı', 'taki', 'takısı',
-];
+// Rule v3: a belt, scarf or necklace with no gender word stays unknown; unisex needs an explicit word.
 
 const wordsOf = (text: string): string[] =>
   lowerTurkish(text).match(/[\p{L}\p{N}]+/gu) ?? [];
@@ -345,10 +342,6 @@ export const inferGenderDetail = (
       return { gender: 'bilinmiyor', confidence: 'none', rule: 'default_conflict', key: womenWord[1] };
     }
     return base;
-  }
-  if (category === 'accessories' && base.rule === 'none') {
-    const neutralWord = wordsOf(title).find(word => NEUTRAL_ACCESSORY_WORDS.includes(word));
-    if (neutralWord) return { gender: 'unisex', confidence: 'low', rule: 'accessory_neutral', key: neutralWord };
   }
   return base;
 };

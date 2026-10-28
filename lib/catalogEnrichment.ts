@@ -11,7 +11,10 @@ import {
 /** Written to products.attribute_source / attribute_version by the backfill. */
 export const ENRICHMENT_ATTRIBUTE_SOURCE = 'title_rules';
 /** Bump when an inference rule changes, so a rerun rewrites every row. */
-export const ENRICHMENT_ATTRIBUTE_VERSION = 2;
+export const ENRICHMENT_ATTRIBUTE_VERSION = 3;
+/** A person decided these attributes; the title backfill never rewrites such a row. */
+export const MANUAL_REVIEW_ATTRIBUTE_SOURCE = 'manual_review';
+export const MANUAL_REVIEW_ATTRIBUTE_VERSION = 1;
 
 export const FEED_CATEGORIES = ['upper_body', 'lower_body', 'dresses', 'shoes', 'bags', 'accessories', 'hats'] as const;
 export const FEED_GENDERS = ['kadin', 'erkek', 'unisex'] as const;
@@ -130,8 +133,8 @@ export const computeCatalogEnrichment = (
   const review: ReviewChange[] = [];
   const note = (field: ReviewField, result: MergeResult<unknown>) => { if (result.review) review.push({ field, ...result.review }); };
 
-  // Only an explicit title token (high confidence) may replace a stored gender. Medium (URL,
-  // womenswear/dress defaults) and low (accessory_neutral) rules fill an empty gender only.
+  // Only an explicit title token (high confidence) may replace a stored gender. Medium rules
+  // (URL, womenswear/dress defaults) fill an empty gender only.
   const storedGender = existingGender(product.gender, stored?.gender);
   const genderEvidence = inferGenderDetail(product.title, product.product_url, product.category);
   const gender = mergeAttribute<string>(storedGender,

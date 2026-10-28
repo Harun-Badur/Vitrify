@@ -3,6 +3,7 @@ import {
   ENRICHMENT_ATTRIBUTE_SOURCE,
   ENRICHMENT_ATTRIBUTE_VERSION,
   feedEligibilityMissing,
+  MANUAL_REVIEW_ATTRIBUTE_SOURCE,
 } from '../lib/catalogEnrichment';
 import {
   buildBackfillBackup,
@@ -55,6 +56,15 @@ describe('computeCatalogEnrichment', () => {
     expect(result.gender).toBeNull();
     expect(result.eligibilityMissing).toEqual(['gender']);
     expect(result.feedEligible).toBe(false);
+  });
+
+  it('leaves a belt or necklace with no gender word ungendered and out of the feed (rule v3)', () => {
+    expect(ENRICHMENT_ATTRIBUTE_VERSION).toBe(3);
+    for (const title of ['Arcade Ranger Adventure Kemer-SİYAH', 'Bo Takı ve Aksesuar Gümüş Renk Kolye']) {
+      const result = computeCatalogEnrichment(product({ title, category: 'accessories' }),
+        attributes({ colors: ['siyah'], subcategory: 'aksesuar' }));
+      expect(result).toMatchObject({ gender: null, feedEligible: false, eligibilityMissing: ['gender'] });
+    }
   });
 
   it('stores cocuk but keeps it out of the feed', () => {
@@ -143,6 +153,23 @@ describe('backfill plan and dry-run output', () => {
 
   it('rejects a backup with an unknown format', () => {
     expect(() => planCatalogRollback({ format: 'other' } as never)).toThrow('Yedek biçimi tanınmadı');
+  });
+});
+
+describe('manually reviewed rows', () => {
+  it('never re-plans a row whose attributes came from manual review', () => {
+    const reviewed = product({ id: 'manual', title: 'Kadın Siyah Kolye', category: 'accessories', gender: 'erkek',
+      feed_eligible: true, eligibility_missing: [], attribute_source: MANUAL_REVIEW_ATTRIBUTE_SOURCE, attribute_version: 1 });
+    const excluded = product({ id: 'excluded', title: 'Unisex Kemer', category: 'accessories', gender: null,
+      feed_eligible: false, eligibility_missing: ['gender'], attribute_source: MANUAL_REVIEW_ATTRIBUTE_SOURCE, attribute_version: 1 });
+    const plan = planCatalogBackfill([reviewed, excluded], [
+      attributes({ product_id: 'manual', colors: [], subcategory: null }),
+      attributes({ product_id: 'excluded', colors: [], subcategory: null }),
+    ]);
+    expect(plan.products).toEqual([]);
+    expect(plan.attributes).toEqual([]);
+    expect(plan.review).toEqual([]);
+    expect(plan.summary).toMatchObject({ total: 2, manualReview: 2, eligible: 1, ineligible: 1 });
   });
 });
 
