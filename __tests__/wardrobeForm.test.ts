@@ -7,6 +7,8 @@ import {
   selectCategory,
   selectColor,
   selectSubcategory,
+  wardrobeDetailText,
+  wardrobeMissingInfo,
 } from '../lib/wardrobeForm';
 import type { WardrobeItem } from '../types/wardrobe';
 
@@ -95,5 +97,22 @@ describe('form from an existing item', () => {
 
   it('drops stored values that are no longer valid for the category', () => {
     expect(formFromItem(item({ subcategory: 'sneaker', color: 'camel' }))).toMatchObject({ subcategory: '', color: '' });
+  });
+});
+
+describe('missing info and detail text', () => {
+  it('flags items missing subtype or color, including old items with undefined fields', () => {
+    expect(wardrobeMissingInfo(item())).toBe(true);
+    expect(wardrobeMissingInfo(item({ subcategory: 'gomlek' }))).toBe(true);
+    expect(wardrobeMissingInfo(item({ color: 'navy' }))).toBe(true);
+    expect(wardrobeMissingInfo(item({ subcategory: 'sneaker', color: 'navy' }))).toBe(true);
+    expect(wardrobeMissingInfo(item({ subcategory: 'gomlek', color: 'navy' }))).toBe(false);
+  });
+
+  it('shows subtype and color as small text and nothing when there is no data', () => {
+    expect(wardrobeDetailText(item({ subcategory: 'gomlek', color: 'beyaz' }))).toBe('Gömlek · Beyaz');
+    expect(wardrobeDetailText(item({ subcategory: 'gomlek' }))).toBe('Gömlek');
+    expect(wardrobeDetailText(item({ color: 'beyaz' }))).toBe('Beyaz');
+    expect(wardrobeDetailText(item())).toBeUndefined();
   });
 });

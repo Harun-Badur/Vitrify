@@ -43,6 +43,7 @@ import { colors, radius, shadows, spacing } from '../../lib/theme';
 import { openProductPage } from '../../services/deeplinkService';
 import { useAppStore } from '../../store/useAppStore';
 import { wardrobeProduct, type SavedOutfit, type WardrobeItem } from '../../types/wardrobe';
+import { wardrobeDetailText, wardrobeMissingInfo } from '../../lib/wardrobeForm';
 import {
   openOutfitCreator,
   openWardrobeEditor,
@@ -170,6 +171,10 @@ function LikedItem({
     ),
   }));
 
+  const wardrobeItem = wardrobe ? item.wardrobeItem : undefined;
+  const wardrobeDetail = wardrobeItem ? wardrobeDetailText(wardrobeItem) : undefined;
+  const missingInfo = wardrobeItem ? wardrobeMissingInfo(wardrobeItem) : false;
+
   const showActions = (): void => {
     if (wardrobe) {
       Alert.alert(product.title, undefined, [
@@ -237,13 +242,25 @@ function LikedItem({
               />
             )}
           </PressableScale>
+          {missingInfo ? (
+            <PressableScale
+              style={styles.missingInfo}
+              onPress={() => onTryOn(product)}
+              accessibilityRole="button"
+              accessibilityLabel={`${product.title} eksik bilgi, düzenle`}
+            >
+              <Text style={styles.missingInfoText}>Eksik bilgi</Text>
+            </PressableScale>
+          ) : null}
           <View style={[styles.meta, useFavoriteLayout && styles.favoriteMeta]}>
             <View style={styles.metaCopy}>
               <Text style={styles.title} numberOfLines={1}>
                 {favorite ? product.brand : product.title}
               </Text>
               <Text style={styles.category} numberOfLines={1}>
-                {favorite ? product.title : cutoutStatus?.text ?? categoryLabel(product.category)}
+                {favorite
+                  ? product.title
+                  : cutoutStatus?.text ?? wardrobeDetail ?? categoryLabel(product.category)}
               </Text>
             </View>
             <PressableScale
@@ -912,6 +929,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.glass,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  missingInfo: {
+    position: 'absolute',
+    top: spacing.xs,
+    left: spacing.xs,
+    paddingHorizontal: 8,
+    minHeight: 22,
+    borderRadius: radius.chip,
+    backgroundColor: colors.glass,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  missingInfoText: {
+    color: colors.accentDark,
+    fontSize: 10,
+    lineHeight: 13,
+    fontWeight: '700',
   },
   combineButton: {
     flexDirection: 'row',
