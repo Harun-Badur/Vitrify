@@ -1,0 +1,70 @@
+{
+  "projectRef": "hnujkabyyrlsxohjhxlg",
+  "function": "recs-feed",
+  "source": "Dashboard Code read-only clipboard",
+  "verifyJwt": true,
+  "files": [
+    {
+      "path": "supabase/functions/recs-feed/index.ts",
+      "bytes": 22590,
+      "sha256": "d427e9e0a570a8568baed07bac46f3ab1186461401b694e57fedbcbd23843ef1",
+      "normalizedSha256": "e55aa4ce7fbc204e04aae4fa98e4b4f3cdbfd262da828c057193bbb9182d4dfb"
+    },
+    {
+      "path": "lib/catalogMetadata.ts",
+      "bytes": 2199,
+      "sha256": "60d0ee72d152f3eaf99f54977fa43642bdf4d2fab9d80b568457d553580ca4b8",
+      "normalizedSha256": "ff9c65dd2aa0907f5bbd1d7a9e38aa1fd6b3eaf0f4573e3a62eaa35ce7ff681e"
+    },
+    {
+      "path": "supabase/functions/_shared/config.ts",
+      "bytes": 8038,
+      "sha256": "91873383e03bd19f5a6aae7ca187b4a829c1d34d437d4e1a879c22f018d0c17a",
+      "normalizedSha256": "d00e152aa6465f0c27da1b99c87605e1209a117961aa0b29b87940e5cf5a12af"
+    },
+    {
+      "path": "supabase/functions/_shared/scoring.ts",
+      "bytes": 14965,
+      "sha256": "0e117990ee8d38c9dfa05dbd4c72def945984966dba767ecd289cad2f982044b",
+      "normalizedSha256": "0fdfac40f68a2aec78dbedf99f9443e3f8128e432b9eba1f322e86c13e4817b5"
+    },
+    {
+      "path": "supabase/functions/_shared/diversity.ts",
+      "bytes": 7524,
+      "sha256": "6378e348d4ce4364dbe941185c5b61c8906be270b387e5361baa73f437fd5d4c",
+      "normalizedSha256": "7ea93e05a12d0a403fa0234e87b7601cc96f70cc4ae48f5ad95e586c760dfa34"
+    },
+    {
+      "path": "supabase/functions/_shared/reasons.ts",
+      "bytes": 3621,
+      "sha256": "2eac67b2e11491e72b1c6ae489f6d24871b15ca0efd2b6afeffc3701a5029386",
+      "normalizedSha256": "633a161d3d828b14aefc0b8c808e7bbd42ce1dcd75a5b83028c9b8d0093d23d8"
+    },
+    {
+      "path": "supabase/functions/_shared/feedFilter.ts",
+      "bytes": 7684,
+      "sha256": "588dbf25c7139ce94c2c85ff3b7b14c17f11eecfa6be703649c41c51aba0ef5b",
+      "normalizedSha256": "5eb14aeb5e4b79e3d698982024b725e0804e7b1227979ad0b1ff720f047c31b9"
+    },
+    {
+      "path": "supabase/functions/_shared/types.ts",
+      "bytes": 3766,
+      "sha256": "5091771069f8460bc7fae159624a090f645cc29eec982e60c98fbfbd4fb74f03",
+      "normalizedSha256": "f68024bd599ec99b86fb053f5184b957c9c971d12e8498cdb2fc63ea0ca6891e"
+    },
+    {
+      "path": "supabase/functions/deno.json",
+      "bytes": 285,
+      "sha256": "19262c565d74cd495abfc32a5398cb2fc1b71ff968c95d4ffb94bf99c3636fe7",
+      "normalizedSha256": "b3d69ad2ad8750068da9d3a58cf952235df6aac923cf451d3de81f261e7b7472"
+    }
+  ],
+  "supportFiles": [
+    {
+      "path": "supabase/functions/deno.lock",
+      "sha256": "885fc6ccb1dbf7b9fe8ea33fe8a1035e58adb70c46af9134b1971cfe5ddacf65",
+      "provenance": "Repository lock matched previous successful production deployment manifest; not obtained from Dashboard Code"
+    }
+  ],
+  "gatewayEvidence": "Previous live function metadata reported verify_jwt=true; not rechecked this turn"
+}
