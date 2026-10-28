@@ -9,8 +9,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PressableScale from './PressableScale';
+import ProductPrefOptions from './ProductPrefOptions';
 import { COLOR_CHIP_LABELS, type FeedQueryFilters } from '../lib/feedQuery';
+import { effectiveProductPref, type ProductPref } from '../lib/productPreference';
 import { colors, radius, spacing } from '../lib/theme';
+import { chooseProductPref } from '../services/productPrefSync';
+import { useAppStore } from '../store/useAppStore';
 import type { GarmentCategory } from '../types/product';
 
 const CATEGORY_CHIPS: { value: GarmentCategory; label: string }[] = [
@@ -59,6 +63,8 @@ interface FilterSheetProps {
   filters: FeedQueryFilters;
   onClose: () => void;
   onApply: (filters: FeedQueryFilters) => void;
+  /** Signed-in user; without one the product preference is shown but cannot change. */
+  userId?: string | null;
 }
 
 interface ChipGroupProps<T extends string> {
@@ -110,21 +116,29 @@ export default function FilterSheet({
   filters,
   onClose,
   onApply,
+  userId = null,
 }: FilterSheetProps) {
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState<FeedQueryFilters>(filters);
+  const productPref = useAppStore((state) => state.productPref);
+  // The preference is not a filter: it has its own draft and "Temizle" never touches it.
+  const [prefDraft, setPrefDraft] = useState<ProductPref>(effectiveProductPref(productPref));
 
   useEffect(() => {
     if (visible) {
       setDraft(filters);
+      setPrefDraft(effectiveProductPref(productPref));
     }
-  }, [filters, visible]);
+  }, [filters, visible, productPref]);
 
   const handleClear = (): void => {
     setDraft({});
   };
 
   const handleApply = (): void => {
+    if (userId && prefDraft !== effectiveProductPref(productPref)) {
+      void chooseProductPref(userId, prefDraft);
+    }
     onApply(draft);
     onClose();
   };
@@ -186,6 +200,10 @@ export default function FilterSheet({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.options}
           >
+            <View style={styles.group}>
+              <Text style={styles.groupLabel}>Ürün tercihi</Text>
+              <ProductPrefOptions value={prefDraft} onSelect={setPrefDraft} disabled={!userId} />
+            </View>
             <ChipGroup
               label="Kategori"
               options={CATEGORY_CHIPS}

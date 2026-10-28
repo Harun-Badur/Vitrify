@@ -998,6 +998,7 @@ export default function FeedScreen() {
         filters={feedQuery.filters}
         onClose={() => setIsFilterOpen(false)}
         onApply={handleApplyFilters}
+        userId={userId}
       />
       <VirtualTryOnModal
         visible={tryOnProduct !== null}

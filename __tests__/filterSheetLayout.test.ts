@@ -6,6 +6,9 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 24, bottom: 34, left: 12, right: 12 }),
 }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
+jest.mock('lucide-react-native', () => ({ Check: 'Icon' }));
+jest.mock('expo-file-system/legacy', () => ({ documentDirectory: 'file:///docs/', cacheDirectory: 'file:///cache/' }));
+jest.mock('../lib/supabase', () => ({ getRequiredSupabaseClient: jest.fn() }));
 const renderer = jest.requireActual('react-test-renderer');
 
 test('keeps filter options scrollable and actions clear of the system gesture area', async () => {
