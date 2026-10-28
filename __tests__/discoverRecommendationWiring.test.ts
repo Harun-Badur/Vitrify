@@ -15,6 +15,7 @@ import { getProductRepository } from '../services/productRepository';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import type { Product } from '../types/product';
 
+const createdSessions = (jest.requireMock('../lib/discoverRecommendationCache') as { __created: { catalogIds: string[]; productPref: unknown }[] }).__created;
 const mockLoadFeed = jest.fn();
 const mockLoadMoreFeed = jest.fn();
 const mockSwipeLeft = jest.fn();
@@ -31,6 +32,7 @@ const mockState = {
   passedProductIds: [],
   passedStack: [],
   feedMode: 'personal',
+  productPref: null as string | null,
   feedFallback: false,
   feedRelaxed: [],
   loadFeed: mockLoadFeed,
@@ -120,6 +122,17 @@ jest.mock('../components/SwipeCard', () => ({
   SWIPE_CARD_HEIGHT: 300,
   SWIPE_CARD_WIDTH: 320,
 }));
+jest.mock('../lib/discoverRecommendationCache', () => {
+  const actual = jest.requireActual<typeof import('../lib/discoverRecommendationCache')>('../lib/discoverRecommendationCache');
+  const created: { catalogIds: string[]; productPref: unknown }[] = [];
+  class CountingSession extends actual.DiscoverRecommendationCache {
+    constructor(...args: ConstructorParameters<typeof actual.DiscoverRecommendationCache>) {
+      super(...args);
+      created.push({ catalogIds: args[0].map(product => product.id), productPref: args[3] });
+    }
+  }
+  return { ...actual, DiscoverRecommendationCache: CountingSession, __created: created };
+});
 jest.mock('../components/FeedModeSegment', () => 'FeedModeSegment');
 jest.mock('../components/PressableScale', () => 'PressableScale');
 jest.mock('../components/FilterSheet', () => 'FilterSheet');
@@ -179,6 +192,7 @@ describe('Discover recommendation wiring', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    createdSessions.length = 0;
     jest.mocked(loadDiscoverRecommendationPacket).mockImplementation(async (request, _owner, signal, publish) => {
       const exposure = new Map(request.exposure);
       const entries = [];
@@ -203,6 +217,7 @@ describe('Discover recommendation wiring', () => {
     mockUser = null;
     mockState.sessionUserId = null; mockState.sessionSyncStatus = 'idle';
     mockState.feedStatus = 'success';
+    mockState.productPref = null;
     mockState.hasMore = false;
     mockState.isFetchingNext = false;
     mockState.currentProducts = catalog;
@@ -515,6 +530,66 @@ describe('Discover recommendation wiring', () => {
     expect(card.props.dragOffset).toBeDefined();
     expect(section.props.dragOffset).toBeUndefined();
     expect(section.props.pageHeight).toBeUndefined();
+  });
+
+  describe('product preference change', () => {
+    const erkekTop = { ...top, id: 'erkek-top' };
+    const erkekBottom = { ...bottom, id: 'erkek-bottom' };
+    const kadinTop = { ...top, id: 'kadin-top' };
+    const kadinBottom = { ...bottom, id: 'kadin-bottom' };
+    const change = async (view: NonNullable<typeof tree>, pref: string | null) => {
+      mockState.productPref = pref;
+      await renderer.act(async () => { view.update(createElement(FeedScreen)); await Promise.resolve(); });
+    };
+    const settle = async () => { await renderer.act(async () => { for (let i = 0; i < 4; i++) await Promise.resolve(); }); await flushIdle(); };
+
+    it('builds exactly one new session, only once the new pool is ready, and never with an empty pool', async () => {
+      mockState.currentProducts = [kadinTop, kadinBottom];
+      jest.mocked(fetchRecommendationCatalog).mockResolvedValue([kadinTop, kadinBottom]);
+      const view = await mount();
+      const before = createdSessions.length;
+      let release!: (products: Product[]) => void;
+      jest.mocked(fetchRecommendationCatalog).mockImplementation(() => new Promise(resolve => { release = resolve; }));
+      mockState.currentProducts = [erkekTop, erkekBottom];
+      await change(view, 'erkek');
+      await settle();
+      expect(createdSessions.length).toBe(before);
+      await renderer.act(async () => { release([erkekTop, erkekBottom]); await Promise.resolve(); });
+      await settle();
+      expect(createdSessions.length).toBe(before + 1);
+      expect(createdSessions[before]).toEqual({ catalogIds: ['erkek-top', 'erkek-bottom'], productPref: 'erkek' });
+      expect(createdSessions.slice(before).some(session => session.catalogIds.length === 0)).toBe(false);
+    });
+
+    it('never shows the old preference products while the new pool is pending', async () => {
+      mockState.currentProducts = [kadinTop, kadinBottom];
+      jest.mocked(fetchRecommendationCatalog).mockResolvedValue([kadinTop, kadinBottom]);
+      const view = await mount();
+      expect(view.root.findByType('DiscoverRecommendations').props.recommendations).not.toBeUndefined();
+      jest.mocked(fetchRecommendationCatalog).mockImplementation(() => new Promise(() => {}));
+      await change(view, 'erkek');
+      await settle();
+      const shown = view.root.findAllByType('SwipeCard')[0].props.recommendations as unknown;
+      expect(shown === undefined || (Array.isArray(shown) && shown.length === 0)).toBe(true);
+    });
+
+    it('lets only the last of two quick changes win; a late result of the first is ignored', async () => {
+      mockState.currentProducts = [kadinTop, kadinBottom];
+      const view = await mount();
+      const resolvers: Record<string, (products: Product[]) => void> = {};
+      jest.mocked(fetchRecommendationCatalog).mockImplementation(pref => new Promise(resolve => { resolvers[String(pref)] = resolve; }));
+      mockState.currentProducts = [erkekTop, erkekBottom];
+      await change(view, 'erkek');
+      await change(view, 'hepsi');
+      await renderer.act(async () => { resolvers.hepsi([erkekTop, erkekBottom]); await Promise.resolve(); });
+      await settle();
+      const after = createdSessions.length;
+      expect(createdSessions[after - 1]).toEqual({ catalogIds: ['erkek-top', 'erkek-bottom'], productPref: 'hepsi' });
+      await renderer.act(async () => { resolvers.erkek([{ ...kadinTop, id: 'stale-erkek' }]); await Promise.resolve(); });
+      await settle();
+      expect(createdSessions.length).toBe(after);
+      expect(createdSessions.some(session => session.catalogIds.includes('stale-erkek'))).toBe(false);
+    });
   });
 
   it('shows the empty state for B when its recommendation is unavailable, never A cards', async () => {

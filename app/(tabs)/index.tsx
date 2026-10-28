@@ -248,8 +248,8 @@ export default function FeedScreen() {
     productPref: productPref as ProductPref,
   }));
   // A pool read under another preference is never handed to a session, even before the refetch lands.
-  const recommendationCatalog = recommendationCatalogState.productPref === productPref
-    ? recommendationCatalogState.products : EMPTY_RECOMMENDATION_CATALOG;
+  const poolReady = recommendationCatalogState.productPref === productPref;
+  const recommendationCatalog = poolReady ? recommendationCatalogState.products : EMPTY_RECOMMENDATION_CATALOG;
   const [failedRecommendationSession, setFailedRecommendationSession] = useState<string | null>(null);
 
   useFocusEffect(
@@ -290,8 +290,15 @@ export default function FeedScreen() {
 
   // Discover complements are catalog-only; wardrobe loading and edits cannot
   // delay preparation or invalidate its ranking/prefetch session.
-  const recommendationSession = useMemo(() => new DiscoverRecommendationCache(recommendationCatalog,
-    [], userId, productPref), [recommendationCatalog, userId, productPref]);
+  // After a preference change the session is rebuilt once, when the new pool lands. Until then the
+  // previous session stays (it is never asked for cards, see poolReady below), so no empty-pool session exists.
+  const heldSession = useRef<{ session: DiscoverRecommendationCache; userId: string | null } | null>(null);
+  const recommendationSession = useMemo(() => {
+    const held = heldSession.current;
+    if (!poolReady && held && held.userId === userId) return held.session;
+    return new DiscoverRecommendationCache(recommendationCatalog, [], userId, productPref);
+  }, [recommendationCatalog, poolReady, userId, productPref]);
+  heldSession.current = { session: recommendationSession, userId };
   const [recommendationRevision, publishRecommendations] = useState(0);
   const recommendationFocused = useRef(false);
   const preparationInputs = useRef({ session: recommendationSession, products: currentProducts, feedStatus, feedPreparationRevision });
@@ -326,7 +333,7 @@ export default function FeedScreen() {
           signalAborted: controller.signal.aborted,
         });
       }
-      if (feedStatus === 'success' && recommendationSession.catalog.length > 0) {
+      if (feedStatus === 'success' && poolReady && recommendationSession.catalog.length > 0) {
         const anchors = [...latest.products];
         if (anchors.length > 0) {
           workerRequested = true;
@@ -387,7 +394,7 @@ export default function FeedScreen() {
     // Context/focus own the request. Appending feed anchors does not invalidate it.
     // Window promotion only reprioritizes
     // its existing preparation queue; exposure refresh reuses prepared ranking.
-  }, [recommendationSession, feedStatus, userId]));
+  }, [recommendationSession, feedStatus, userId, poolReady]));
   useEffect(() => {
     if (__DEV__) discoverPrefetchTrace(recommendationSession).productsObserved(currentProducts, feedPreparationRevision);
   }, [recommendationSession, currentProducts, feedPreparationRevision]);
@@ -951,7 +958,8 @@ export default function FeedScreen() {
           >
             <View style={styles.deck}>
               {deckPages.map(({ product, pageIndex }) => {
-                const recommendations = recommendationSession.lookup(product);
+                // The held session belongs to the previous preference: nothing it holds may reach the deck meanwhile.
+                const recommendations = poolReady ? recommendationSession.lookup(product) : undefined;
                 const recommendationStatus = recommendations !== undefined
                   ? 'ready'
                   : recommendationCatalogState.status === 'error' || failedRecommendationSession === recommendationSession.sessionId
