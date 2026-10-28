@@ -50,6 +50,20 @@ Onaylı ilkelere ("bilinmeyen ≠ uyumlu/uyumsuz", "kanıt yoksa iddia yok") ayk
 | C4 | Renk slug'ları normalize edilmeden karşılaştırılıyor | S4 |
 | C5 | Renk kanıtı olmadan dolap chip'i üretiliyor | S4 / Faz 5 (renk boşsa chip yok kararı) |
 
+### Telefon bulguları (canlı katalog, 349 ürün, 2026-10-28 salt-okunur GET)
+
+Ürün kimlikleri canlı katalogdan; B0′ setinde olmayabilirler. "Olası" = başlıktan eşlendi, telefondaki kartla birebir doğrulanmadı.
+
+| # | Bulgu | Canlı katalog eşleşmesi | Eşleşen satır / neden | Düzeltileceği adım |
+| --- | --- | --- | --- | --- |
+| T1 | Takım elbise + kargo şort | `trendyol-929681071` (Takım Elbise, alt tür blazer) + `lcw-5489450` (Kargo Şort) | Yeni: resmiyet çelişkisi; bugün hiçbir mekanizma resmiyete bakmıyor | S3b (`formality_conflict`) |
+| T2 | Takım elbise + kadın inci kolye (cinsiyet) | `trendyol-929681071` + olası `trendyol-1086036215` (İnci Kolye; attribute cinsiyeti null, akışta `unisex`) | D5 + T7: cinsiyet bilinmiyor ama unisex sayılıyor; başlıkta "kadın" yok | S2 (kanıt) / S3 |
+| T3 | Erkek şort + klasik deri kemer | Erkek şortlar (ör. `lcw-5242565`) + deri kemerler (ör. `lcw-5534588`, `flo-201646296`) | Yeni: resmiyet çelişkisi (iki taraf da erkek; D1 değil) | S3b (`formality_conflict`) |
+| T4 | Kışlık mont + şort | Mont/şişme (ör. `trendyol-896837377`, `defacto-3315755`) + şort | Yeni: mevsim çelişkisi | S3b (`season_conflict`) |
+| T5 | Lacivert blazer + şort | Katalogda "blazer" başlıklı lacivert ürün yok; olası `boyner-15837511` (Lacivert Slim Fit Ceket) | Yeni: resmiyet çelişkisi; başlık/alt tür kalıbı: lacivert ceket/blazer + şort | S3b (`formality_conflict`) |
+| T6 | Kadın mini elbise + spor şapka | `lcw-5602143` (Mini Elbise) + olası `flo-102232389` / `flo-102496478` (adidas cap; attribute cinsiyeti null, akışta `unisex`) | D5 (cinsiyet bilinmiyor) + yeni: resmiyet/stil çelişkisi | S3b (`formality_conflict`) |
+| T7 | Erkek tercihinde kadın takısı (kolye) tamamlayıcıda ve akışta | `trendyol-1086036215`, `trendyol-943974640`, `trendyol-952669343`, `trendyol-990425210`: dördü de akışta `unisex`, attribute cinsiyeti null | Yeni (D5'e bağlı): kanıtsız `unisex` etiketi erkek tercih filtresini geçiyor (`allowedGendersFor('erkek')` = erkek + unisex) | S2 (kaynak/güven kanıtı); filtre değişikliği ürün kararı |
+
 ## Kabul kuralları (S2–S4)
 
 - S2 (modül, tüketici değişmez) ve S3 (motor modüle geçer): B0′ testinde **sıfır fark**; puanlar 1e-9 toleransla.
@@ -61,4 +75,5 @@ Onaylı ilkelere ("bilinmeyen ≠ uyumlu/uyumsuz", "kanıt yoksa iddia yok") ayk
 - **Dolap chip'i:** dolap parçasında renk boşsa chip üretilmez (uncertain); rol düzeyinde etiket yok. Eksik bilgi rozeti kullanıcıyı parçayı tamamlamaya yönlendirir. (C5 bu kararla S4/Faz 5'te değişecek.)
 - **S2:** pairing modülü `compatibilityGate`'i özümser ve yerini alır; üçüncü paralel mekanizma bırakılmaz.
 - **S2 — mevsim ve resmiyet boyutları:** `PairItem` şemasına mevsim ve resmiyet `Signal`'leri eklenir (kaynak/güven ile; bugün alt türden türetildikleri için `derived_from_subtype`). S2'de karar üretmezler, yalnız kanıt olarak raporlanırlar; B0′ farkı sıfır kalır.
+- **S3b kabul kriteri — mevsim/resmiyet kararı:** `season_conflict` ve `formality_conflict` S3b'de **karar** olur (`ineligible`). Yalnız kaba çelişki sayılır (ör. kışlık mont + şort, takım elbise + kargo şort) ve kanıt kaynağı `derived_from_subtype` olarak gerekçe listesinde görünür. S2 ve S3'te bu iki boyut yalnız kanıttır, kararı etkilemez (B0′ farkı sıfır). S3b'nin B0′ farkları tek tek listelenip onaya sunulur; T1, T3, T4, T5 ve T6'nın resmiyet kısmı bu adımla kapanmalı.
 - **S3b — 0 parçada bölümü gizle:** tamamlayıcı ürün sayısı 0 olduğunda (B0′'de 1 çapa) tamamlayıcı bölümü gösterilmez; boş başlık/iskelet kalmaz.
