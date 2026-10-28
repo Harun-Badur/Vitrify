@@ -5,8 +5,12 @@
   },
   "build": {
     "development": {
+      "node": "24.13.0",
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_WARDROBE_ON_DEVICE_CUTOUT": "true"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -23,6 +27,7 @@
       "environment": "preview"
     },
     "production": {
+      "node": "24.13.0",
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
