@@ -8,6 +8,7 @@ import type { DeletionAdapter, DeletionLayer } from '../lib/accountDeletionFound
 import { readOwnedFileLedger, safeOwnedCachePath, otherDeviceFileReferences } from './ownedDeviceFiles';
 import { preferenceRequestStorageKeys } from '../lib/preferenceRequestJournal';
 import { cutoutV2DeviceInventory } from './wardrobeCutoutV2';
+import { productPrefStorageKey } from '../lib/productPreference';
 
 export interface LocalDeletionInventory {
   subjectId: string;
@@ -29,7 +30,8 @@ export function deviceDeletionAdapters(inventory: LocalDeletionInventory, clearM
   const keys = [vtonHistoryStorageKey(inventory.subjectId), historyCleanupStorageKey(inventory.subjectId),
     `vitrify.wardrobe.v1.${encodeURIComponent(inventory.subjectId)}`,
     `vitrify.wardrobe.sync.v1.${encodeURIComponent(inventory.subjectId)}`,
-    `vitrify.wardrobe.sync.v1.${encodeURIComponent(inventory.subjectId)}.legacy`, ...inventory.extraOwnedKeys];
+    `vitrify.wardrobe.sync.v1.${encodeURIComponent(inventory.subjectId)}.legacy`,
+    productPrefStorageKey(inventory.subjectId), ...inventory.extraOwnedKeys];
   const scopedDirectory = FileSystem.documentDirectory &&
     `${FileSystem.documentDirectory}wardrobe/${encodeURIComponent(inventory.subjectId)}/`;
   let trackedPaths = new Set<string>();
