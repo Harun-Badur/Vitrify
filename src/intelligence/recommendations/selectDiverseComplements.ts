@@ -1,7 +1,7 @@
 import { normalizedRecommendationToken } from '../../../lib/recommendationMemo';
 import type { Product, OutfitRole } from '../../../types/product';
 import type { WardrobeItemForCandidate } from '../outfits/outfitCandidate';
-import { hasCoreFootwear } from '../outfits/outfitCandidate';
+import { hasCoreFootwear } from '../pairing/outfitRules.ts';
 import type { RankedOutfitCandidate } from '../outfits/outfitRanking';
 import { catalogCompatibility, catalogSemanticKey, sameCatalogProduct } from '../outfits/catalogCompatibility';
 import { isVerifiedHumanIncompatibility } from './verifiedHumanIncompatibilities';

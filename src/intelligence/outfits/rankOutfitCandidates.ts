@@ -7,7 +7,7 @@ import {
   type RankedOutfitCandidate,
 } from './outfitRanking';
 import type { OutfitCandidate, OutfitCandidateItem, WardrobeItemForCandidate } from './outfitCandidate';
-import { hasCoreFootwear } from './outfitCandidate';
+import { hasCoreFootwear } from '../pairing/outfitRules.ts';
 import type { Product } from '../../../types/product';
 import { catalogCompatibility, catalogSemanticKey } from './catalogCompatibility';
 import { cooperativeSort, runCooperatively, runSynchronously, type CooperativeWorkOptions } from '../cooperativeWork';

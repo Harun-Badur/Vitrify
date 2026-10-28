@@ -5,6 +5,8 @@ import {
   hasCoreFootwear,
   isCatalogRoleCompatible,
   isValidOutfitItems,
+} from '../pairing/outfitRules.ts';
+import {
   OUTFIT_ROLE_ORDER,
   resolveWardrobeRole,
   type OutfitCandidate,

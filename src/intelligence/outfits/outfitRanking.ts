@@ -1,7 +1,7 @@
 import type { OutfitRole } from '../../../types/product';
 import { recommendationMemoValue, normalizedRecommendationToken } from '../../../lib/recommendationMemo';
+import { isValidOutfitItems } from '../pairing/outfitRules.ts';
 import {
-  isValidOutfitItems,
   type OutfitCandidate,
   type OutfitCandidateItem,
   type WardrobeItemForCandidate,
