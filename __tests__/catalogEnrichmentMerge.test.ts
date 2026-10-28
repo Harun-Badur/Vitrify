@@ -124,10 +124,11 @@ describe('the 15 stored genders the old preview turned into bilinmiyor', () => {
     expect(reviewed).toEqual([]);
   });
 
-  it('low and medium rules fill an empty gender but never replace a stored one; high replaces and is flagged', () => {
+  it('medium rules fill an empty gender but never replace a stored one; a silent accessory stays unknown', () => {
     const kemer = product({ title: 'Mara Tokalı Kemer Kahverengi', category: 'accessories' });
     expect(computeCatalogEnrichment(kemer, stored({ gender: 'women' }))).toMatchObject({ gender: 'kadin', review: [] });
-    expect(computeCatalogEnrichment(kemer, stored())).toMatchObject({ gender: 'unisex', review: [] });
+    // Rule v3: no gender word means no gender; unisex is never assumed.
+    expect(computeCatalogEnrichment(kemer, stored())).toMatchObject({ gender: null, review: [], feedEligible: false });
     const etek = product({ title: 'Saten Etek', category: 'lower_body' });
     expect(computeCatalogEnrichment(etek, stored({ gender: 'men' })).gender).toBe('erkek');
     expect(computeCatalogEnrichment(etek, stored()).gender).toBe('kadin');

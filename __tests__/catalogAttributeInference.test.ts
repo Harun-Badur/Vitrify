@@ -129,12 +129,14 @@ describe('inferGenderDetail', () => {
     expect(inferGenderDetail('Kadın Etek', null, 'lower_body')).toMatchObject({ gender: 'kadin', rule: 'title_token' });
   });
 
-  it('keeps gender-neutral belts, scarves, necklaces and jewellery as unisex with low confidence', () => {
-    expect(inferGenderDetail('Mara Tokalı Kemer Kahverengi', null, 'accessories'))
-      .toEqual({ gender: 'unisex', confidence: 'low', rule: 'accessory_neutral', key: 'kemer' });
-    for (const title of ['Yün Atkı', 'Altın Kaplama Kolye', 'Çelik Takı Seti']) {
-      expect(inferGenderDetail(title, null, 'accessories')).toMatchObject({ gender: 'unisex', rule: 'accessory_neutral' });
+  it('gives belts, scarves, necklaces and jewellery no gender without an explicit word (rule v3)', () => {
+    for (const title of ['Mara Tokalı Kemer Kahverengi', 'Yün Atkı', 'Altın Kaplama Kolye', 'Çelik Takı Seti',
+      'Taşmir 925 Ayar Gümüş Inci Kolye Bileklik Set']) {
+      expect(inferGenderDetail(title, null, 'accessories'))
+        .toEqual({ gender: 'bilinmiyor', confidence: 'none', rule: 'none', key: '' });
     }
+    expect(inferGenderDetail('Unisex Deri Kemer', null, 'accessories'))
+      .toMatchObject({ gender: 'unisex', confidence: 'high', rule: 'title_token' });
     expect(inferGenderDetail('Erkek Deri Kemer', null, 'accessories')).toMatchObject({ gender: 'erkek', rule: 'title_token' });
     expect(inferGenderDetail('Kemerli Pantolon', null, 'lower_body').gender).toBe('bilinmiyor');
   });

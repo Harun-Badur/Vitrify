@@ -1,5 +1,6 @@
 import {
   computeCatalogEnrichment,
+  MANUAL_REVIEW_ATTRIBUTE_SOURCE,
   type EligibilityField,
   type EnrichmentProductInput,
   type ReviewChange,
@@ -62,6 +63,8 @@ export interface BackfillPlan {
     gender: Record<string, number>;
     reviewProducts: number;
     reviewFields: number;
+    /** Rows a person decided (attribute_source manual_review); counted, never re-planned. */
+    manualReview: number;
     productChanges: number;
     attributeUpdates: number;
     attributeInserts: number;
@@ -95,9 +98,15 @@ export const planCatalogBackfill = (
   const storedById = new Map(attributes.map(row => [row.product_id, row]));
   const plan: BackfillPlan = { products: [], attributes: [], review: [], summary: {
     total: products.length, eligible: 0, ineligible: 0, missing: {}, gender: {},
-    reviewProducts: 0, reviewFields: 0, productChanges: 0, attributeUpdates: 0, attributeInserts: 0 } };
+    reviewProducts: 0, reviewFields: 0, manualReview: 0, productChanges: 0, attributeUpdates: 0, attributeInserts: 0 } };
 
   for (const product of products) {
+    if (product.attribute_source === MANUAL_REVIEW_ATTRIBUTE_SOURCE) {
+      plan.summary.manualReview++;
+      if (product.feed_eligible === true) plan.summary.eligible++;
+      else plan.summary.ineligible++;
+      continue;
+    }
     const stored = storedById.get(product.id);
     const result = computeCatalogEnrichment(product, stored);
     const before: ProductEnrichmentColumns = {
@@ -160,6 +169,7 @@ export const formatBackfillPlan = (plan: BackfillPlan, args: BackfillArgs): stri
     args.apply ? 'APPLY: aşağıdaki değişiklikler yazılacak.' : 'DRY-RUN: veritabanına hiçbir şey yazılmadı.',
     `Ürün: ${summary.total}; feed_eligible=true: ${summary.eligible}; elenen: ${summary.ineligible}.`,
     `Eksik alan: ${counts(summary.missing)}. Gender: ${counts(summary.gender)}.`,
+    `Elle incelenmiş (dokunulmaz): ${summary.manualReview}.`,
     `İncelenecek: ${summary.reviewProducts} ürün (${summary.reviewFields} alan): dolu bir değer başlıktaki farklı bir değerle değişir.`,
     `products güncellemesi: ${summary.productChanges}; product_attributes güncelleme: ${summary.attributeUpdates}, yeni satır: ${summary.attributeInserts}.`,
   ];
