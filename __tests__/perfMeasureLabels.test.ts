@@ -37,7 +37,7 @@ describe('catalog load measurement', () => {
       from: () => {
         const query = {
           select: () => query, eq: () => query, order: () => query, not: () => query,
-          in: () => Promise.resolve({ data: [], error: null }),
+          in: (column: string) => column === 'gender' ? query : Promise.resolve({ data: [], error: null }),
           range: (start: number, end: number) => {
             ranges.push(start);
             return Promise.resolve({ data: rows.slice(start, end + 1), error: null });

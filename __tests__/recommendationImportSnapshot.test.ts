@@ -47,7 +47,7 @@ function backend() {
       not: (_column: string, _operator: string, value: string) => {
         excluded = new Set(value.match(/product-\d+/g) ?? []); return query;
       },
-      in: (_column: string, ids: string[]) => Promise.resolve({ data: attributes.filter(row => ids.includes(row.product_id)), error: null }),
+      in: (column: string, ids: string[]) => column === 'gender' ? query : Promise.resolve({ data: attributes.filter(row => ids.includes(row.product_id)), error: null }),
       range: (start: number, end: number) => {
         expect(table).toBe('products');
         // Fixture is independently in the server's created_at / id order.

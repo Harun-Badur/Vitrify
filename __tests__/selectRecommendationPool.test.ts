@@ -116,7 +116,7 @@ describe('fetchRecommendationCatalog coverage', () => {
           eq: () => query,
           order: () => query,
           not: () => query,
-          in: (_column: string, ids: string[]) => Promise.resolve({
+          in: (column: string, ids: string[]) => column === 'gender' ? query : Promise.resolve({
             data: table === 'product_attributes' ? attributes.filter((row) => ids.includes(row.product_id)) : [],
             error: null,
           }),
@@ -155,7 +155,7 @@ describe('fetchRecommendationCatalog coverage', () => {
           eq: () => query,
           order: () => query,
           not: () => query,
-          in: (_column: string, ids: string[]) => Promise.resolve({
+          in: (column: string, ids: string[]) => column === 'gender' ? query : Promise.resolve({
             data: table === 'product_attributes' ? attributes.filter((row) => ids.includes(row.product_id)) : [],
             error: null,
           }),

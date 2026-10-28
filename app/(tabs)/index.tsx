@@ -67,6 +67,7 @@ import {
   openProductPage,
 } from '../../services/deeplinkService';
 import { fetchRecommendationCatalog } from '../../services/productService';
+import { effectiveProductPref, type ProductPref } from '../../lib/productPreferenceRules';
 import { DiscoverRecommendationCache } from '../../lib/discoverRecommendationCache';
 import { fingerprint } from '../../src/recommendationCache/fingerprint';
 import { discoverPrefetchTrace } from '../../lib/discoverPrefetchInstrumentation';
@@ -91,6 +92,7 @@ const SEARCH_TRACK_DEBOUNCE_MS = 500;
 /** Header, clip sınırında kesilen kartın üstünde kalır. */
 const HEADER_Z_INDEX = 7;
 const EMPTY_RECOMMENDATIONS: readonly DiscoverRecommendation[] = [];
+const EMPTY_RECOMMENDATION_CATALOG: Product[] = [];
 // Discover dolap girdisi bilerek boş; dolap kanıtlı chip'ler şimdilik üretilmez.
 const EMPTY_INSIGHT_WARDROBE: readonly InsightWardrobeItem[] = [];
 const NO_HIDDEN_INSIGHT_KINDS: ReadonlySet<InsightChipKind> = new Set();
@@ -237,13 +239,17 @@ export default function FeedScreen() {
 
   const userId = user?.id ?? null;
   const canLike = user !== null;
+  const productPref = useAppStore((state) => effectiveProductPref(state.productPref));
   const preparationDiagnosticState = useRef({ catalogReady: false });
   const [recommendationCatalogState, setRecommendationCatalogState] = useState(() => ({
     products: [] as Product[],
     fingerprint: fingerprint([]),
     status: 'loading' as 'loading' | 'ready' | 'error',
+    productPref: productPref as ProductPref,
   }));
-  const recommendationCatalog = recommendationCatalogState.products;
+  // A pool read under another preference is never handed to a session, even before the refetch lands.
+  const recommendationCatalog = recommendationCatalogState.productPref === productPref
+    ? recommendationCatalogState.products : EMPTY_RECOMMENDATION_CATALOG;
   const [failedRecommendationSession, setFailedRecommendationSession] = useState<string | null>(null);
 
   useFocusEffect(
@@ -252,7 +258,7 @@ export default function FeedScreen() {
       if (feedStatus !== 'success') return;
       let active = true;
       if (__DEV__) preparationDiagnosticState.current.catalogReady = false;
-      void fetchRecommendationCatalog()
+      void fetchRecommendationCatalog(productPref)
         .then((products) => {
           if (active) {
             if (__DEV__) preparationDiagnosticState.current.catalogReady = true;
@@ -261,10 +267,10 @@ export default function FeedScreen() {
             // Store the snapshot key separately: the repository can mutate products in place.
             const key = fingerprint(products);
             setRecommendationCatalogState(previous => {
-              if (previous.fingerprint === key) {
+              if (previous.fingerprint === key && previous.productPref === productPref) {
                 return previous.status === 'ready' ? previous : { ...previous, status: 'ready' };
               }
-              return { products: [...products], fingerprint: key, status: 'ready' };
+              return { products: [...products], fingerprint: key, status: 'ready', productPref };
             });
           }
         })
@@ -279,13 +285,13 @@ export default function FeedScreen() {
       return () => {
         active = false;
       };
-    }, [feedStatus]),
+    }, [feedStatus, productPref]),
   );
 
   // Discover complements are catalog-only; wardrobe loading and edits cannot
   // delay preparation or invalidate its ranking/prefetch session.
   const recommendationSession = useMemo(() => new DiscoverRecommendationCache(recommendationCatalog,
-    [], userId), [recommendationCatalog, userId]);
+    [], userId, productPref), [recommendationCatalog, userId, productPref]);
   const [recommendationRevision, publishRecommendations] = useState(0);
   const recommendationFocused = useRef(false);
   const preparationInputs = useRef({ session: recommendationSession, products: currentProducts, feedStatus, feedPreparationRevision });

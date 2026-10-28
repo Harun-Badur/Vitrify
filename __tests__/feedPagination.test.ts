@@ -37,6 +37,7 @@ let mockQueryDelay = 0;
 const mockRanges: [number, number][] = [];
 const mockAttributeIds: string[][] = [];
 const mockEqFilters: [string, string, unknown][] = [];
+const mockGenderFilters: string[][] = [];
 const mockBackend = {
   auth: { getSession: jest.fn(async () => ({ data: { session: null as { access_token: string } | null }, error: null })) },
   from: (table: string) => {
@@ -49,7 +50,9 @@ const mockBackend = {
         excluded = new Set(value.match(/product-\d+/g) ?? []);
         return query;
       },
-      in: (_column: string, ids: string[]) => {
+      in: (column: string, ids: string[]) => {
+        // products.gender is part of the chained catalog query; attributes end at in().
+        if (table === 'products' && column === 'gender') { mockGenderFilters.push(ids); return query; }
         mockAttributeIds.push(ids);
         return Promise.resolve({ data: [], error: null });
       },
@@ -172,6 +175,8 @@ describe('Discover pagination using the existing service and store', () => {
       expect(feed.products.map(product => product.id)).toEqual(rows.slice(3, 23).map(row => row.id));
       expect(catalog.some(product => hidden.includes(product.id))).toBe(false);
       expect(mockEqFilters).toContainEqual(['products', 'feed_eligible', true]);
+      // A NULL product preference reads the full hepsi set, as recs-feed does.
+      expect(mockGenderFilters).toContainEqual(['kadin', 'erkek', 'unisex']);
     } finally {
       ineligible.forEach(row => { row.feed_eligible = true; });
     }

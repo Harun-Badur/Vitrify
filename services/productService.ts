@@ -8,6 +8,7 @@ import { getProductRepository, productsById } from './productRepository';
 import { track } from '../lib/analytics';
 import { hasAnyFilter, type FeedQueryFilters } from '../lib/feedQuery';
 import { logger } from '../lib/logger';
+import { allowedGendersFor, effectiveProductPref, type ProductPref } from '../lib/productPreferenceRules';
 import { fetchRecsConfig, fetchStyleProfileSnapshot } from '../lib/recsConfig';
 import { setLastFeedMode, setLastRecommendationId } from '../lib/recsFeedState';
 import { emptySessionIntent } from '../lib/scoring';
@@ -202,6 +203,7 @@ interface CatalogPage {
 }
 
 const queryCatalogPage = async (
+  productPref: ProductPref,
   excludeIds: readonly string[] = [],
   offset = 0,
   deferEnrichment = false,
@@ -221,6 +223,7 @@ const queryCatalogPage = async (
   const productSelectLegacy =
     'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible';
 
+  const genders = allowedGendersFor(productPref);
   let productsResult: {
     data: unknown[] | null;
     error: { message: string } | null;
@@ -228,11 +231,12 @@ const queryCatalogPage = async (
 
   function catalogQuery(columns: string) {
     const serverExclusions = excludeIds.slice(0, CATALOG_PAGE_SIZE);
-    const key = JSON.stringify([columns, [...serverExclusions].sort(), offset]);
+    const key = JSON.stringify([columns, genders, [...serverExclusions].sort(), offset]);
     const cached = catalogPages.get(key);
     if (cached && Date.now() - cached.at < CATALOG_CACHE_MS) { recordDiscoverStage('catalog.cache', 0); return cached.result; }
     // Fail closed: a missing column is an error, never an unfiltered catalog.
-    let query = client!.from('products').select(columns).eq(FEED_ELIGIBLE_COLUMN, true)
+    // Same hard gender filter as recs-feed; 'hepsi' is the full kadin/erkek/unisex set.
+    let query = client!.from('products').select(columns).eq(FEED_ELIGIBLE_COLUMN, true).in('gender', [...genders])
       .order('created_at', { ascending: true }).order('id');
     if (excludeIds.length > 0) {
       // Bound the GET URL: a long session of UUIDs can exceed gateway URL limits.
@@ -334,24 +338,35 @@ const queryCatalogPage = async (
   return { products, hasMore: (productsResult.data?.length ?? 0) > CATALOG_PAGE_SIZE };
 };
 
-let initialCatalogRequest: Promise<{ products: Product[]; hasMore: boolean }> | null = null;
-const fetchCatalogPage = (excludeIds: readonly string[] = [], offset = 0, deferEnrichment = false) => {
+let initialCatalogRequest: { productPref: ProductPref; result: Promise<{ products: Product[]; hasMore: boolean }> } | null = null;
+const fetchCatalogPage = (productPref: ProductPref, excludeIds: readonly string[] = [], offset = 0, deferEnrichment = false) => {
   // SQL page promises are still shared; lightweight records never enter feed-page requests.
-  if (deferEnrichment) return queryCatalogPage(excludeIds, offset, true);
-  if (excludeIds.length > 0 || offset > 0) return queryCatalogPage(excludeIds, offset);
-  if (!initialCatalogRequest) {
-    initialCatalogRequest = queryCatalogPage().finally(() => { initialCatalogRequest = null; });
+  if (deferEnrichment) return queryCatalogPage(productPref, excludeIds, offset, true);
+  if (excludeIds.length > 0 || offset > 0) return queryCatalogPage(productPref, excludeIds, offset);
+  if (initialCatalogRequest?.productPref !== productPref) {
+    const request = { productPref, result: queryCatalogPage(productPref).finally(() => {
+      if (initialCatalogRequest === request) initialCatalogRequest = null;
+    }) };
+    initialCatalogRequest = request;
   }
-  return initialCatalogRequest;
+  return initialCatalogRequest.result;
 };
 
 // The swipe feed still reads the oldest page. Recommendations need later imports too,
 // then a bounded pool so outfit search does not combine the whole catalog.
-let recommendationPool: { products: Product[]; at: number } | null = null;
+let recommendationPool: { products: Product[]; at: number; productPref: ProductPref } | null = null;
 let recommendationPoolClient: ReturnType<typeof getSupabaseClient>;
-let recommendationRequest: Promise<Product[]> | null = null;
+let recommendationRequest: { productPref: ProductPref; result: Promise<Product[]> } | null = null;
 
-const loadRecommendationCatalog = async (): Promise<Product[]> => {
+/** Drops the preference-scoped catalog caches; prepared product records are preference-free and stay. */
+export const resetProductPrefCatalogCaches = (): void => {
+  catalogPages.clear();
+  initialCatalogRequest = null;
+  recommendationPool = null;
+  recommendationRequest = null;
+};
+
+const loadRecommendationCatalog = async (productPref: ProductPref): Promise<Product[]> => {
   const client = getSupabaseClient();
   const collected: Product[] = [];
   let offset = 0;
@@ -360,7 +375,7 @@ const loadRecommendationCatalog = async (): Promise<Product[]> => {
     collected.push(...page.products);
     for (const [id, value] of page.deferred ?? []) deferred.set(id, value);
   };
-  let page = await fetchCatalogPage([], offset, true);
+  let page = await fetchCatalogPage(productPref, [], offset, true);
   collect(page);
   let pages = 1;
   while (page.hasMore && pages < MAX_RECOMMENDATION_CATALOG_PAGES) {
@@ -368,7 +383,7 @@ const loadRecommendationCatalog = async (): Promise<Product[]> => {
     // a terminal page may cause at most one speculative empty read.
     const batchSize = Math.min(2, MAX_RECOMMENDATION_CATALOG_PAGES - pages);
     const batch = await Promise.all(Array.from({ length: batchSize }, (_, index) =>
-      fetchCatalogPage([], offset + (index + 1) * CATALOG_PAGE_SIZE, true)));
+      fetchCatalogPage(productPref, [], offset + (index + 1) * CATALOG_PAGE_SIZE, true)));
     for (const next of batch) {
       collect(next);
       page = next;
@@ -399,25 +414,29 @@ const loadRecommendationCatalog = async (): Promise<Product[]> => {
   }
   const products = await measureDiscoverStage('catalog.prepare', () => runCooperatively(enrichSelected(), { diagnosticStage: 'catalog' }));
   if (getSupabaseClient() === client) {
-    recommendationPool = { products, at: Date.now() };
+    recommendationPool = { products, at: Date.now(), productPref };
     recommendationPoolClient = client;
   }
   return products;
 };
 
-export const fetchRecommendationCatalog = (): Promise<Product[]> => {
+/** NULL preference is 'hepsi'. Each preference has its own pool; another preference's pool is never served. */
+export const fetchRecommendationCatalog = (preference: ProductPref | null = null): Promise<Product[]> => {
+  const productPref = effectiveProductPref(preference);
   const client = getSupabaseClient();
   // Page cache may already have switched clients during a feed read.
   // Compare against the pool's own source, not the page cache's source.
   if (recommendationPoolClient !== client) recommendationPool = null;
-  if (recommendationPool && Date.now() - recommendationPool.at < 60_000) {
+  if (recommendationPool?.productPref === productPref && Date.now() - recommendationPool.at < 60_000) {
     recordDiscoverStage('catalog.cache', 0);
     return Promise.resolve(recommendationPool.products);
   }
-  if (!recommendationRequest) {
-    recommendationRequest = measureDiscoverStage('catalog.total', () => span('catalog_load', loadRecommendationCatalog)).finally(() => { recommendationRequest = null; });
+  if (recommendationRequest?.productPref !== productPref) {
+    const request = { productPref, result: measureDiscoverStage('catalog.total', () => span('catalog_load', () => loadRecommendationCatalog(productPref)))
+      .finally(() => { if (recommendationRequest === request) recommendationRequest = null; }) };
+    recommendationRequest = request;
   }
-  return recommendationRequest;
+  return recommendationRequest.result;
 };
 
 const rankLocally = async (
@@ -443,6 +462,7 @@ const fetchEdgeFeed = async (
   mode: FeedMode,
   filters: FeedQueryFilters = {},
   excludeIds: readonly string[] = [],
+  productPref: ProductPref = 'hepsi',
 ): Promise<RecsFeedResponse | null> => {
   const url = getRecsFeedUrl();
   const client = getSupabaseClient();
@@ -475,6 +495,7 @@ const fetchEdgeFeed = async (
         mode,
         filters: hasAnyFilter(filters) ? filters : undefined,
         exclude_ids: excludeIds,
+        gender_pref: productPref,
       }),
       signal: controller.signal,
     });
@@ -515,8 +536,11 @@ const fetchFeedProductsUntraced = async (
   filters: FeedQueryFilters = {},
   telemetryMode?: 'personal' | 'trend' | 'search',
   excludeIds: readonly string[] = [],
+  preference: ProductPref | null = null,
 ): Promise<FetchFeedProductsResult> => {
   const startedAt = Date.now();
+  // NULL (not chosen) is sent and filtered as 'hepsi'.
+  const productPref = effectiveProductPref(preference);
   const intent = userId ? buildIntent() : emptySessionIntent();
   if (filters.category && !intent.constraints.category) {
     intent.constraints.category = filters.category;
@@ -525,7 +549,7 @@ const fetchFeedProductsUntraced = async (
   setLastFeedMode(telemetryMode ?? mode);
 
   if (userId) {
-    const edge = await span('feed_edge_rank', () => fetchEdgeFeed(userId, intent, limit, mode, filters, excludeIds));
+    const edge = await span('feed_edge_rank', () => fetchEdgeFeed(userId, intent, limit, mode, filters, excludeIds, productPref));
     const excluded = new Set(excludeIds);
     if (edge && edge.has_more === true && !edge.items.some(item => !excluded.has(item.product.id))) {
       throw new FeedServiceError('FEED_RESPONSE');
@@ -560,11 +584,11 @@ const fetchFeedProductsUntraced = async (
   }
 
   let offset = 0;
-  let page = await fetchCatalogPage(excludeIds, offset);
+  let page = await fetchCatalogPage(productPref, excludeIds, offset);
   const poolRows = [...page.products];
   while (poolRows.length < CATALOG_PAGE_SIZE && page.hasMore) {
     offset += CATALOG_PAGE_SIZE;
-    page = await fetchCatalogPage(excludeIds, offset);
+    page = await fetchCatalogPage(productPref, excludeIds, offset);
     poolRows.push(...page.products);
   }
   // Keep the original bounded ranking workload; later products remain available for future batches.

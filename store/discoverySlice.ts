@@ -8,7 +8,7 @@ import { logger } from '../lib/logger';
 import { setLastFeedMode } from '../lib/recsFeedState';
 import { recordSessionProductAction } from '../lib/sessionIntent';
 import { deletePassedProduct, insertPassedProduct } from '../services/likeService';
-import { fetchFeedProducts, FeedServiceError, type FeedSource } from '../services/productService';
+import { fetchFeedProducts, FeedServiceError, resetProductPrefCatalogCaches, type FeedSource } from '../services/productService';
 import type { Product } from '../types/product';
 import { DEFAULT_FEED_MODE, type FeedMode } from '../types/recommendation';
 import type { AppState } from './useAppStore';
@@ -41,6 +41,12 @@ export interface DiscoverySlice {
   /** Re-ranks the cards behind the visible window; never shows a loading state. */
   refreshFeedPreservingCurrent: () => Promise<void>;
   setFeedMode: (mode: FeedMode) => void;
+  /**
+   * Only setProductPref calls this. Drops the deck, undo stack, paging and the recs-feed
+   * exclusion list built under the previous preference, then reloads the last query.
+   * Likes and passes are kept.
+   */
+  resetFeedForProductPref: () => void;
   swipeLeft: (product: Product) => void;
   undoPass: () => boolean | Promise<boolean>;
 }
@@ -120,6 +126,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           filters,
           searchMode ? 'search' : get().feedMode,
           [...new Set([...get().likedProducts.map(item => item.product.id), ...get().passedProductIds])],
+          get().productPref,
         );
         const result = await (userId ? trackOwnerWork(userId, request) : request);
         if (!current() || requestGeneration !== generation) return;
@@ -167,7 +174,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       set({ isFetchingNext: true });
       try {
         const request = fetchFeedProducts(FEED_LIMIT, userId, get().feedMode, filters,
-          searchMode ? 'search' : get().feedMode, excluded);
+          searchMode ? 'search' : get().feedMode, excluded, get().productPref);
         const result = await (userId ? trackOwnerWork(userId, request) : request);
         if (!current() || requestGeneration !== generation) return;
         const alreadyDelivered = new Set(excluded);
@@ -207,6 +214,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           filters,
           searchMode ? 'search' : get().feedMode,
           [...new Set([...get().likedProducts.map(item => item.product.id), ...get().passedProductIds])],
+          get().productPref,
         );
         const result = await (userId ? trackOwnerWork(userId, request) : request);
         // A reload, newer refresh, or in-flight page append owns the deck; give up quietly.
@@ -238,6 +246,16 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
     setFeedMode: (mode): void => {
       setLastFeedMode(mode);
       set({ feedMode: mode });
+    },
+    resetFeedForProductPref: (): void => {
+      resetProductPrefCatalogCaches();
+      const previous = context;
+      // Invalidates in-flight loads/pages/refreshes so no batch read under the old preference lands.
+      generation++; refreshGeneration++;
+      context = null; deliveredIds = new Set();
+      set(state => ({ currentProducts: [], passedStack: [], hasMore: true, isFetchingNext: false,
+        feedPreparationRevision: state.feedPreparationRevision + 1 }));
+      if (previous) void get().loadFeed(previous.userId, { filters: previous.filters, searchMode: previous.searchMode });
     },
     swipeLeft: (product): void => {
       const userId = get().sessionUserId;

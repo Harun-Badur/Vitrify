@@ -7,6 +7,7 @@ import { complementaryProductsForDisplay } from '../src/intelligence/recommendat
 import { hydrateFinal } from '../src/recommendationCache/codec';
 import { fingerprint, RECOMMENDATION_ENGINE_VERSION } from '../src/recommendationCache/fingerprint';
 import { anchorContext, type FeedPacketRequest, type RecommendationFeedPacket } from '../src/recommendationCache/feedPacket';
+import { effectiveProductPref, type ProductPref } from './productPreferenceRules';
 
 interface Entry { product: Product; result: readonly OutfitDiscoverRecommendation[]; exposure: ReadonlyMap<string, number> }
 let nextSession = 0;
@@ -21,6 +22,8 @@ export class DiscoverRecommendationCache {
   private window: readonly Product[] = [];
   private readonly preparationListeners = new Set<() => void>();
   readonly contextFingerprint: string;
+  /** Effective preference the catalog pool was read with; NULL is 'hepsi'. */
+  readonly productPref: ProductPref;
   private closed = false;
   private catalogValue: readonly Product[];
   private wardrobeValue: readonly WardrobeItemForCandidate[];
@@ -37,9 +40,13 @@ export class DiscoverRecommendationCache {
     this.exposure.clear(); this.shown.clear(); this.window = []; this.catalogValue = []; this.wardrobeValue = [];
     forgetDiscoverPrefetchTrace(this);
   }
-  constructor(catalog: readonly Product[], wardrobe: readonly WardrobeItemForCandidate[], owner: string | null) {
+  constructor(catalog: readonly Product[], wardrobe: readonly WardrobeItemForCandidate[], owner: string | null,
+    productPref: ProductPref | null = null) {
     this.catalogValue = [...catalog]; this.wardrobeValue = [...wardrobe];
-    this.contextFingerprint = fingerprint([owner, RECOMMENDATION_ENGINE_VERSION, catalog, wardrobe]);
+    this.productPref = effectiveProductPref(productPref);
+    // 'hepsi' keeps the pre-preference key; any other preference never shares a session context with it.
+    const context = [owner, RECOMMENDATION_ENGINE_VERSION, catalog, wardrobe];
+    this.contextFingerprint = fingerprint(this.productPref === 'hepsi' ? context : [...context, this.productPref]);
     if (owner) registerOwnerResource(owner, { stop: () => this.dispose(), empty: () => this.closed && this.wardrobeValue.length === 0 && this.entries.size === 0 });
   }
   request(anchors: readonly Product[], generation: number): FeedPacketRequest {
@@ -47,7 +54,7 @@ export class DiscoverRecommendationCache {
     this.generation = generation;
     return { sessionId: this.sessionId, generation, contextFingerprint: this.contextFingerprint,
       candidatePool: this.catalog, wardrobeItems: this.wardrobe, anchors: [...anchors],
-      exposure: [...this.exposure], shownAnchorIds: [...this.shown],
+      exposure: [...this.exposure], shownAnchorIds: [...this.shown], productPref: this.productPref,
       reusableAnchorIds: anchors.filter(product => this.pinned.get(product.id)?.product === product).map(product => product.id) };
   }
   get preparationWindow(): readonly Product[] { return this.window; }
