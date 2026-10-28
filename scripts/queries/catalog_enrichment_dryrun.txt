@@ -1,8 +1,8 @@
 UYARI: migration henüz uygulanmamış; mevcut değerler boş kabul edildi.
 DRY-RUN: veritabanına hiçbir şey yazılmadı.
 Ürün: 349; feed_eligible=true: 342; elenen: 7.
-Eksik alan: gender 7. Gender: kadin 190, erkek 132, unisex 20, NULL 5, cocuk 2.
-İncelenecek: 10 ürün (10 alan): dolu bir değer başlıktaki farklı bir değerle değişir.
+Eksik alan: gender 7. Gender: kadin 191, erkek 132, unisex 19, NULL 5, cocuk 2.
+İncelenecek: 9 ürün (9 alan): dolu bir değer başlıktaki farklı bir değerle değişir.
 products güncellemesi: 349; product_attributes güncelleme: 293, yeni satır: 0.
 boyner-1294233: gender ∅→erkek; feed_eligible false→true; eksik ∅
 boyner-15343326: gender ∅→cocuk; feed_eligible false→false; eksik [gender]
@@ -36,7 +36,6 @@ defacto-3195702: gender ∅→erkek; feed_eligible false→true; eksik ∅
   lcw-5078073 | 7002 Unisex Sırt Çantası Laptop Çantası Evrak Çantası Siyah | gender: erkek → unisex
   lcw-5113630 | Bar 3 Reflective Stripes Unisex Siyah Sırt Çantası | gender: erkek → unisex
   lcw-5142098 | Bej 2063 Vegan Vizon Kahverengi Deri El Portföy Çanta | renk: bej → bej|kahverengi
-  lcw-5592980 | Mara Tokalı Kemer Kahverengi | gender: kadin → unisex
   trendyol-353730430 | Luminos Butik Kışlık Sıcak Yumuşak Geniş Püsküllü Atkı - Kremsi Beyaz Siyah Gri Çizgili Atkı Sal1270 | renk: siyah|beyaz|gri|bej → siyah|beyaz|gri
   trendyol-929647864 | W Collection GRİ KAZAK | alt tür: tisort → kazak
   trendyol-951326392 | Tudors Kadın Standart Fit Kısa Kollu Yarım Balıkçı Yaka Siyah Bluz | alt tür: tisort → bluz

@@ -130,8 +130,12 @@ export const computeCatalogEnrichment = (
   const review: ReviewChange[] = [];
   const note = (field: ReviewField, result: MergeResult<unknown>) => { if (result.review) review.push({ field, ...result.review }); };
 
-  const gender = mergeAttribute<string>(existingGender(product.gender, stored?.gender),
-    inferGenderDetail(product.title, product.product_url, product.category).gender);
+  // Only an explicit title token (high confidence) may replace a stored gender. Medium (URL,
+  // womenswear/dress defaults) and low (accessory_neutral) rules fill an empty gender only.
+  const storedGender = existingGender(product.gender, stored?.gender);
+  const genderEvidence = inferGenderDetail(product.title, product.product_url, product.category);
+  const gender = mergeAttribute<string>(storedGender,
+    genderEvidence.confidence === 'high' || storedGender === null ? genderEvidence.gender : null);
   note('gender', gender);
 
   const storedColors = cleanDeclaredCatalogColors(product.id, stored?.colors);

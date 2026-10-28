@@ -99,7 +99,7 @@ describe('the 15 stored genders the old preview turned into bilinmiyor', () => {
     'lcw-5215694': 'kadin',
     'lcw-5495414': 'erkek',
     'lcw-5534040': 'kadin', // baget çanta
-    'lcw-5592980': 'unisex', // accessory_neutral, stored kadin -> review
+    'lcw-5592980': 'kadin', // accessory_neutral is low confidence: stored kadin stays
     'trendyol-929681071': 'erkek', // Takım Elbise: stored erkek survives
   };
 
@@ -117,11 +117,20 @@ describe('the 15 stored genders the old preview turned into bilinmiyor', () => {
     expect(result.gender).toBe(expected[row.id]);
   });
 
-  it('flags only the genuinely changed one for review', () => {
+  it('flags none of them for review: only a high-confidence title token may change a stored gender', () => {
     const reviewed = audit.rows.filter(row => computeCatalogEnrichment(
       product({ id: row.id, title: row.title, category: row.category }), stored({ gender: row.storedGender }),
     ).review.some(entry => entry.field === 'gender')).map(row => row.id);
-    expect(reviewed).toEqual(['lcw-5592980']);
+    expect(reviewed).toEqual([]);
+  });
+
+  it('low and medium rules fill an empty gender but never replace a stored one; high replaces and is flagged', () => {
+    const kemer = product({ title: 'Mara Tokalı Kemer Kahverengi', category: 'accessories' });
+    expect(computeCatalogEnrichment(kemer, stored({ gender: 'women' }))).toMatchObject({ gender: 'kadin', review: [] });
+    expect(computeCatalogEnrichment(kemer, stored())).toMatchObject({ gender: 'unisex', review: [] });
+    const etek = product({ title: 'Saten Etek', category: 'lower_body' });
+    expect(computeCatalogEnrichment(etek, stored({ gender: 'men' })).gender).toBe('erkek');
+    expect(computeCatalogEnrichment(etek, stored()).gender).toBe('kadin');
   });
 });
 

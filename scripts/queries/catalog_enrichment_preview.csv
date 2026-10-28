@@ -1,11 +1,11 @@
 ﻿# Salt okunur önizleme: veritabanına YAZILMADI, skorlamaya BAĞLANMADI. Yeniden üretmek için: npx tsx scripts/previewCatalogEnrichment.ts
 # Birleştirme (lib/catalogEnrichment.ts): çıkarım bilinmiyor/boşsa MEVCUT değer korunur; çıkarım doluysa ve farklıysa çıkarılan değer geçer ve "incelenecek" olur. Dolu değer bilinmeyene çevrilmez.
-# Ürün: 349. birlesik_* değeri mevcut değerden farklı olan ürün: 300. İncelenecek: 10 ürün (10 alan; liste catalog_enrichment_review.md).
+# Ürün: 349. birlesik_* değeri mevcut değerden farklı olan ürün: 300. İncelenecek: 9 ürün (9 alan; liste catalog_enrichment_review.md).
 # Birleştirmeden sonra hâlâ bilinmeyen (tüm ürünler üzerinden): renk 0, alt tür 0, kalıp 138 (yalnız giyimde), gender 5; en az bir alanı bilinmeyen ürün: 143.
 # sozluk_* sütunları (formalite/stil ailesi/sezon) yalnız gösterim: birleşik alt türün lib/styleVocabulary.ts karşılığı; 262 üründe karşılık var, boşsa alt tür sözlükte yok (genel ayakkabi/canta/aksesuar/sapka) veya bilinmiyor.
 # Feed uygunluğu (birleşik değerlerle; kategori, gender kadin/erkek/unisex, alt tür, renk, fiyat, görsel hepsi bilinmeli; kalıp isteğe bağlı): uygun 342, elenen 7.
 # Elenme nedeni (bir ürün birden çok alanda eksik olabilir): gender 7. Kaynak: trendyol 4, boyner 3. Marka (ilk 8): (marka yok) 2, Hammer Jack 1, Interview 1, Nike 1, adL 1, COLNY 1.
-# Uygun, kadın feed'i (kadin+unisex) 210: upper_body 78, lower_body 23, dresses 22, shoes 42, bags 23, accessories 17, hats 5. Erkek feed'i (erkek+unisex) 152: upper_body 67, lower_body 26, dresses 0, shoes 21, bags 14, accessories 20, hats 4. Yalnız unisex 20: upper_body 1, lower_body 0, dresses 0, shoes 3, bags 2, accessories 12, hats 2.
+# Uygun, kadın feed'i (kadin+unisex) 210: upper_body 78, lower_body 23, dresses 22, shoes 42, bags 23, accessories 17, hats 5. Erkek feed'i (erkek+unisex) 151: upper_body 67, lower_body 26, dresses 0, shoes 21, bags 14, accessories 19, hats 4. Yalnız unisex 19: upper_body 1, lower_body 0, dresses 0, shoes 3, bags 2, accessories 11, hats 2.
 # 100'ün altındaki kategori — kadın: upper_body, lower_body, dresses, shoes, bags, accessories, hats; erkek: upper_body, lower_body, dresses, shoes, bags, accessories, hats.
 # kural: sub:title_keyword|category_default|unknown; gender:<kural>(<anahtar>) (yalnız çıkarım). degisti_mi: birleşik değer mevcuttan farklıysa evet.
 id,baslik,kaynak,kategori,mevcut_renk,mevcut_alt_tur,mevcut_kalip,mevcut_gender,cikarilan_renk,cikarilan_alt_tur,cikarilan_kalip,cikarilan_gender,kural,gender_guven,birlesik_renk,birlesik_alt_tur,birlesik_kalip,birlesik_gender,degisti_mi,incelenecek,incelenecek_degisiklik,belirsiz_alanlar,sozluk_formalite(1-5),sozluk_stil_ailesi,sozluk_sezon,feed_eligible,eksik_alan
@@ -299,7 +299,7 @@ lcw-5573808,Antrasit Dik Yaka Kadın Body,lcw,upper_body,,,,kadin,gri,body,,kadi
 lcw-5578860,Siyah Baskılı Erkek Sırt Çantası,lcw,bags,siyah,,,erkek,siyah,canta,,erkek,sub:category_default;gender:title_token(erkek),high,siyah,canta,,erkek,evet,hayir,,yok,3,gunluk,tumu,evet,
 lcw-5578878,Haki Baskılı Erkek Spor Çanta,lcw,bags,,,,erkek,yesil,canta,,erkek,sub:category_default;gender:title_token(erkek),high,yesil,canta,,erkek,evet,hayir,,yok,3,gunluk,tumu,evet,
 lcw-5590316,Siyah Regular Fit Erkek Pantolon,lcw,lower_body,,,,erkek,siyah,pantolon,regular,erkek,sub:title_keyword;gender:title_token(erkek),high,siyah,pantolon,regular,erkek,evet,hayir,,yok,3,klasik,tumu,evet,
-lcw-5592980,Mara Tokalı Kemer Kahverengi,lcw,accessories,,,,kadin,kahverengi,aksesuar,,unisex,sub:category_default;gender:accessory_neutral(kemer),low,kahverengi,aksesuar,,unisex,evet,evet,gender: kadin → unisex,yok,,,,evet,
+lcw-5592980,Mara Tokalı Kemer Kahverengi,lcw,accessories,,,,kadin,kahverengi,aksesuar,,unisex,sub:category_default;gender:accessory_neutral(kemer),low,kahverengi,aksesuar,,kadin,evet,hayir,,yok,,,,evet,
 lcw-5595915,Bordo Bağlama Detaylı Çizgili Elbise,lcw,dresses,bordo,,,kadin,bordo,elbise,,kadin,sub:title_keyword;gender:dress_default,medium,bordo,elbise,,kadin,evet,hayir,,kalip,3,gunluk,tumu,evet,
 lcw-5599420,Haki Büyük Beden Kontrast Yaka Kadın Trençkot,lcw,upper_body,,,,kadin,yesil,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,yesil,ceket,,kadin,evet,hayir,,kalip,3,gunluk,tumu,evet,
 lcw-5599421,Bej Büyük Beden Kontrast Yaka Kadın Trençkot,lcw,upper_body,bej,,,kadin,bej,ceket,,kadin,sub:title_keyword;gender:title_token(kadın),high,bej,ceket,,kadin,evet,hayir,,kalip,3,gunluk,tumu,evet,
