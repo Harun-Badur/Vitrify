@@ -185,6 +185,50 @@ const humanDecisionCheck = (anchor: PairItem, candidate: PairItem, decisions: Hu
     : { check: 'human_decision', status: 'pass', code: 'human_decision_none', evidence };
 };
 
+const NEUTRAL_COLORS: readonly string[] = ['siyah', 'beyaz', 'gri', 'bej', 'krem', 'navy'];
+const colorSlugs = (item: PairItem): string[] =>
+  (item.colors ?? []).map((slug) => slug.trim().toLocaleLowerCase('tr-TR')).filter((slug) => slug !== '');
+
+/**
+ * V3: counts the dimensions that are known on both items and compatible. Compatible color means a
+ * shared color or a neutral on either side (the catalog scorer's rule); two different chromatic
+ * colors are no evidence, not a conflict. Formality and season come from reliable subtypes only.
+ */
+const positiveEvidenceCheck = (
+  anchor: PairItem,
+  candidate: PairItem,
+  policy: CompatibilityPolicy,
+  evidencePolicy: PairEvidencePolicy,
+  rule: NonNullable<CompatibilityPolicy['positiveEvidence']>,
+): CompatibilityCheck => {
+  const evidence: CompatibilityEvidence[] = [];
+  const add = (field: 'formality' | 'season' | 'color', compatible: boolean, value: string | null) => {
+    if (rule.dimensions.includes(field)) {
+      evidence.push({ subject: 'candidate', field, value, source: field === 'color' ? 'product_snapshot' : 'derived_from_subtype',
+        confidence: compatible ? 'high' : 'unknown', reliable: compatible });
+    }
+  };
+  const coarse = <T extends string>(table: Readonly<Record<string, T>>) => {
+    const left = fromSubtype(anchor, table), right = fromSubtype(candidate, table);
+    const usable = left.value !== null && right.value !== null
+      && isReliable(anchor.subtype, affectsSubtype(anchor.conflicts), policy)
+      && isReliable(candidate.subtype, affectsSubtype(candidate.conflicts), policy);
+    return { compatible: usable && left.value === right.value, value: usable ? left.value : null };
+  };
+  const formality = coarse<PairFormality>(evidencePolicy.formalityBySubtype);
+  const season = coarse<PairSeason>(evidencePolicy.seasonBySubtype);
+  const left = colorSlugs(anchor), right = colorSlugs(candidate);
+  const color = left.length > 0 && right.length > 0
+    && (right.some((slug) => left.includes(slug)) || [...left, ...right].some((slug) => NEUTRAL_COLORS.includes(slug)));
+  add('formality', formality.compatible, formality.value);
+  add('season', season.compatible, season.value);
+  add('color', color, color ? right[0] : null);
+  const count = evidence.filter((entry) => entry.reliable).length;
+  return count >= rule.minDimensions
+    ? { check: 'positive_evidence', status: 'pass', code: 'positive_evidence_sufficient', evidence }
+    : { check: 'positive_evidence', status: 'insufficient', code: 'positive_evidence_insufficient', evidence };
+};
+
 const outcomeOf = (checks: readonly CompatibilityCheck[]): CompatibilityOutcome => {
   if (checks.some((check) => check.status === 'reject')) return 'rejected';
   if (checks.some((check) => check.status === 'insufficient')) return 'insufficient_evidence';
@@ -243,6 +287,9 @@ export const evaluatePair = ({
     );
   }
   if (policy.s3b?.humanDecisions) checks.push(humanDecisionCheck(anchor, candidate, humanDecisions));
+  if (policy.positiveEvidence) {
+    checks.push(positiveEvidenceCheck(anchor, candidate, policy, evidencePolicy, policy.positiveEvidence));
+  }
   const outcome = outcomeOf(checks);
   const deciding = outcome === 'rejected' ? 'reject' : outcome === 'insufficient_evidence' ? 'insufficient' : 'pass';
   const sides = [['anchor', anchor], ['candidate', candidate]] as const;

@@ -55,6 +55,8 @@ export interface PairItem {
   gender: PairSignal<PairGender>;
   subtype: PairSignal<string>;
   conflicts: readonly PairConflict[];
+  /** Color slugs; absent or empty means unknown color evidence. */
+  colors?: readonly string[];
 }
 
 /** `insufficient_evidence` is never a rejection; it only means the pair could not be decided. */
@@ -71,6 +73,13 @@ export type RoleRelationRationale = 'distinct_slots' | 'single_body_slot' | 'lay
 export interface RoleRelationRule {
   relation: RoleRelation;
   rationale: RoleRelationRationale;
+}
+
+/** Faz 4 V3: how many of the listed dimensions must be known and compatible on both items. */
+export interface PositiveEvidencePolicy {
+  version: number;
+  minDimensions: number;
+  dimensions: readonly ('formality' | 'season' | 'color')[];
 }
 
 export interface CompatibilityPolicy {
@@ -91,9 +100,11 @@ export interface CompatibilityPolicy {
     /** Versioned human reviewer decisions reject their pair. */
     humanDecisions: true;
   };
+  /** Faz 4 V3; absent in V1 and V2. Unknown dimensions are not evidence. */
+  positiveEvidence?: PositiveEvidencePolicy;
 }
 
-export const COMPATIBILITY_CHECKS = ['identity', 'role', 'gender', 'session_gender', 'season', 'formality', 'human_decision'] as const;
+export const COMPATIBILITY_CHECKS = ['identity', 'role', 'gender', 'session_gender', 'season', 'formality', 'human_decision', 'positive_evidence'] as const;
 
 export type CompatibilityCheckName = (typeof COMPATIBILITY_CHECKS)[number];
 
@@ -132,13 +143,16 @@ export const COMPATIBILITY_REASON_CODES = [
   'formality_conflict_unverified',
   'human_decision_none',
   'human_incompatible',
+  // Faz 4 V3.
+  'positive_evidence_sufficient',
+  'positive_evidence_insufficient',
 ] as const;
 
 export type CompatibilityReasonCode = (typeof COMPATIBILITY_REASON_CODES)[number];
 
 export interface CompatibilityEvidence {
   subject: 'anchor' | 'candidate' | 'session';
-  field: 'id' | 'role' | 'gender' | 'season' | 'formality' | 'human_decision';
+  field: 'id' | 'role' | 'gender' | 'season' | 'formality' | 'color' | 'human_decision';
   value: string | null;
   source: PairSignalSource | 'catalog_product' | 'session_filter';
   confidence: PairConfidence;

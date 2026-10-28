@@ -1,6 +1,7 @@
 import type {
   CompatibilityPolicy,
   PairEvidencePolicy,
+  PositiveEvidencePolicy,
   PairRole,
   RoleRelationRule,
 } from './pairingTypes.ts';
@@ -71,6 +72,23 @@ export const PAIRING_POLICY_V2: CompatibilityPolicy = Object.freeze({
   ...PAIRING_POLICY_V1,
   version: 2,
   s3b: Object.freeze({ uncertainGender: true, coarseSeasonFormality: true, humanDecisions: true } as const),
+});
+
+/** V3 threshold: at least two of formality, season and color must be known and compatible. */
+export const POSITIVE_EVIDENCE_V1: PositiveEvidencePolicy = Object.freeze({
+  version: 1,
+  minDimensions: 2,
+  dimensions: Object.freeze(['formality', 'season', 'color'] as const),
+});
+
+/**
+ * Faz 4 V3 ("positive evidence required"): V2 plus a minimum of compatible known dimensions.
+ * It can only turn an eligible V2 pair into an uncertain one. Not the default (see catalogPairing).
+ */
+export const PAIRING_POLICY_V3: CompatibilityPolicy = Object.freeze({
+  ...PAIRING_POLICY_V2,
+  version: 3,
+  positiveEvidence: POSITIVE_EVIDENCE_V1,
 });
 
 /**
