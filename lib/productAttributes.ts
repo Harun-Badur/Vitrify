@@ -1,4 +1,4 @@
-import { normalizedRecommendationToken } from './recommendationMemo';
+import { normalizedRecommendationToken } from './recommendationMemo.ts';
 
 // Exact raw-string key and the existing bounded cache preserve Turkish casing,
 // whitespace and missing evidence while avoiding repeated ICU work on Android.

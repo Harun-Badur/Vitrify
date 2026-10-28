@@ -1,7 +1,7 @@
-import { isFeedProductRow, mapFeedRow } from '../services/catalogProductAdapter';
-import { catalogStyleSignal } from '../src/intelligence/outfits/catalogCompatibility';
-import { resolveCatalogAppearance, type ProductAttributeRow } from '../src/intelligence/style/productStyle';
-import { isFeedProvider, isGarmentCategory, type Product } from '../types/product';
+import { isFeedProductRow, mapFeedRow } from '../services/catalogProductAdapter.ts';
+import { catalogStyleSignal } from '../src/intelligence/outfits/catalogCompatibility.ts';
+import { resolveCatalogAppearance, type ProductAttributeRow } from '../src/intelligence/style/productStyle.ts';
+import { isFeedProvider, isGarmentCategory, type Product } from '../types/product.ts';
 
 /**
  * Active-catalog gate. Usable color is the stored attribute color or the

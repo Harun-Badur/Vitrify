@@ -1,5 +1,5 @@
-import { catalogMetadataRepair, cleanDeclaredCatalogColors, declaredCatalogFit, declaredCatalogGender } from '../../../lib/catalogMetadata';
-import { inferProductAttributes, type InferredProductAttributes } from '../../../lib/productAttributes';
+import { catalogMetadataRepair, cleanDeclaredCatalogColors, declaredCatalogFit, declaredCatalogGender } from '../../../lib/catalogMetadata.ts';
+import { inferProductAttributes, type InferredProductAttributes } from '../../../lib/productAttributes.ts';
 import {
   getDisplayPrice,
   isOutfitRole,
@@ -7,7 +7,7 @@ import {
   type OutfitRole,
   type Product,
   type ProductGender,
-} from '../../../types/product';
+} from '../../../types/product.ts';
 
 export interface ProductAttributeRow {
   product_id: string;
@@ -94,4 +94,4 @@ export const enrichProduct = (
   return enriched;
 };
 
-export { inferGenderFromTitle } from '../../../lib/productAttributes';
+export { inferGenderFromTitle } from '../../../lib/productAttributes.ts';

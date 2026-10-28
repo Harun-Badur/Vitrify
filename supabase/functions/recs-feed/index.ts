@@ -37,6 +37,9 @@ import type {
 } from '../_shared/types.ts';
 import { isFeedMode } from '../_shared/types.ts';
 
+// The shared app libraries (lib/logger.ts) read React Native's __DEV__; the Edge runtime is never dev.
+Object.assign(globalThis, { __DEV__: false });
+
 const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, content-type',

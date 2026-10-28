@@ -1,5 +1,5 @@
-import { logger } from './logger';
-import type { FeedProvider } from '../types/product';
+import { logger } from './logger.ts';
+import type { FeedProvider } from '../types/product.ts';
 
 export type { FeedProvider };
 

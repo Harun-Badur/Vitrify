@@ -1,5 +1,5 @@
-import type { Product } from '../../../types/product';
-import { recommendationMemoValue, normalizedRecommendationToken } from '../../../lib/recommendationMemo';
+import type { Product } from '../../../types/product.ts';
+import { recommendationMemoValue, normalizedRecommendationToken } from '../../../lib/recommendationMemo.ts';
 
 export interface CatalogCompatibility {
   score: number;

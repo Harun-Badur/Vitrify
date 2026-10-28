@@ -103,7 +103,7 @@ const emit = (
 
   if (level === 'error') {
     if (!__DEV__) {
-      void import('./sentry').then((sentry) => {
+      void import('./sentry.ts').then((sentry) => {
         sentry.captureLoggedError(message, payload);
       });
     }

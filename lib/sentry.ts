@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react-native';
-import type { LogContext } from './logger';
+import type { LogContext } from './logger.ts';
 
 let sentryReady = false;
 

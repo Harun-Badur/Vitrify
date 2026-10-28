@@ -1,8 +1,8 @@
 // Shared, unchanged Discover row mapping. No fetching, ranking or feed selection.
-import { buildAffiliateUrl } from '../lib/deeplink';
-import { parseOptionalNumeric } from '../lib/price';
-import type { ProductAttributeRow } from '../src/intelligence/style/productStyle';
-import { isGarmentCategory, isFeedProvider, type FeedProductRow, type Product, type ProductColor } from '../types/product';
+import { buildAffiliateUrl } from '../lib/deeplink.ts';
+import { parseOptionalNumeric } from '../lib/price.ts';
+import type { ProductAttributeRow } from '../src/intelligence/style/productStyle.ts';
+import { isGarmentCategory, isFeedProvider, type FeedProductRow, type Product, type ProductColor } from '../types/product.ts';
 
 export const DISCOVER_CATALOG_PAGE_SIZE = 80;
 
