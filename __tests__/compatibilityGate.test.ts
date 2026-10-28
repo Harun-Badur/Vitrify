@@ -259,7 +259,8 @@ describe('Compatibility Gate boundary', () => {
       .flatMap(sourceFiles)
       .filter(path => /compatibilityGate|compatibilityPolicy|types\/compatibility/.test(readFileSync(path, 'utf8')))
       .map(path => relative(root, path).replace(/\\/g, '/'));
-    expect(importers).toEqual(['src/intelligence/compatibility/compatibilityGate.ts', 'src/intelligence/compatibility/compatibilityPolicy.ts']);
+    // The policy file re-exports the pairing module's policy; the pairing boundary test covers that module.
+    expect(importers).toEqual(['src/intelligence/compatibility/compatibilityGate.ts']);
   });
 
   it('imports no ranking, selection, session state, store or backend modules', () => {
