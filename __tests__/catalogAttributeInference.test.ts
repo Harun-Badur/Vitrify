@@ -28,6 +28,14 @@ describe('subcategory inference: word boundaries', () => {
     expect(inferSubcategory('Gömlek Desenli Çanta', 'bags')).toBe('canta');
   });
 
+  it('reads a suit as blazer, a dress as elbise, plus kazak and hirka keys', () => {
+    expect(matchSubcategoryFromTitle('Lacivert Takım Elbise', 'upper_body')).toBe('blazer');
+    expect(matchSubcategoryFromTitle('Çiçekli Midi Elbise', 'dresses')).toBe('elbise');
+    expect(matchSubcategoryFromTitle('Bej Erkek Hırka', 'upper_body')).toBe('hirka');
+    expect(matchSubcategoryFromTitle('Triko Kazak', 'upper_body')).toBe('kazak');
+    expect(matchSubcategoryFromTitle('Kazak Desenli Çanta', 'bags')).toBe('');
+  });
+
   it('reads t-shirt as tisort, not as gomlek via the "shirt" substring', () => {
     expect(matchSubcategoryFromTitle('Erkek Siyah T-Shirt', 'upper_body')).toBe('tisort');
     expect(matchSubcategoryFromTitle('Erkek Beyaz Shirt Yaka', 'upper_body')).toBe('gomlek');
@@ -36,9 +44,11 @@ describe('subcategory inference: word boundaries', () => {
 
 describe('subcategory inference: unknown stays unknown', () => {
   it.each(audit.upperBodyWithoutTitleKeyword)('$id upper_body has no silent tisort fallback', (row) => {
-    expect(inferSubcategory(row.title, row.category)).toBeUndefined();
+    // Kazak/hırka titles now match their own keyword; everything else stays unknown.
+    const expected = /kazak/i.test(row.title) ? 'kazak' : /hırka/i.test(row.title) ? 'hirka' : undefined;
+    expect(inferSubcategory(row.title, row.category)).toBe(expected);
     const inferred = inferProductAttributes({ title: row.title, brand: null, price: 100, category: row.category });
-    expect(inferred.subcategory).toBeUndefined();
+    expect(inferred.subcategory).toBe(expected);
   });
 
   it('keeps category-defined fallbacks for non-upper categories', () => {
@@ -89,5 +99,21 @@ describe('inferGenderDetail', () => {
     });
     expect(inferGenderDetail('Kadın Siyah Tişört', url)).toMatchObject({ gender: 'kadin', rule: 'title_token' });
     expect(inferGenderDetail('Siyah Tişört', 'not a url').gender).toBe('bilinmiyor');
+  });
+});
+
+describe('inferGenderDetail: dresses', () => {
+  it('defaults an evidence-free dress to kadin with medium confidence', () => {
+    expect(inferGenderDetail('Siyah Midi Elbise', null, 'dresses')).toEqual({
+      gender: 'kadin', confidence: 'medium', rule: 'dress_default', key: '',
+    });
+    expect(inferGenderDetail('Siyah Midi Elbise').gender).toBe('bilinmiyor');
+    expect(inferGenderDetail('Siyah Pantolon', null, 'lower_body').gender).toBe('bilinmiyor');
+  });
+
+  it('keeps explicit evidence and turns a mens word on a dress into bilinmiyor', () => {
+    expect(inferGenderDetail('Kadın Midi Elbise', null, 'dresses')).toMatchObject({ gender: 'kadin', rule: 'title_token' });
+    expect(inferGenderDetail('Kız Çocuk Elbise', null, 'dresses').gender).toBe('cocuk');
+    expect(inferGenderDetail('Erkek Elbise', null, 'dresses')).toMatchObject({ gender: 'bilinmiyor', rule: 'dress_conflict' });
   });
 });

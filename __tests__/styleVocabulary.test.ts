@@ -147,11 +147,11 @@ describe('catalog mapping tables', () => {
     }
   });
 
-  it('maps every vocabulary subtype (mont -> ceket, kazak/hirka -> null)', () => {
+  it('maps every vocabulary subtype (mont -> ceket, kazak/hirka have own slugs now that unmatched upper_body is unknown)', () => {
     for (const [category, subtype] of pairs) expect(toCatalogSubtype(category, subtype)).not.toBeUndefined();
     expect(toCatalogSubtype('upper_body', 'mont')).toBe('ceket');
-    expect(toCatalogSubtype('upper_body', 'kazak')).toBeNull();
-    expect(toCatalogSubtype('upper_body', 'hirka')).toBeNull();
+    expect(toCatalogSubtype('upper_body', 'kazak')).toBe('kazak');
+    expect(toCatalogSubtype('upper_body', 'hirka')).toBe('hirka');
     expect(toCatalogSubtype('shoes', 'nope')).toBeNull();
   });
 

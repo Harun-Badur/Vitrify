@@ -73,11 +73,15 @@ interface SubcategoryRule {
 }
 
 const SUBCATEGORY_RULES: readonly SubcategoryRule[] = [
+  // A suit (takım elbise) is a blazer set, not a dress: try the phrase before the bare 'elbise' key.
+  { slug: 'blazer', keys: ['takım elbise', 'takim elbise'] },
   { slug: 'elbise', keys: ['elbise', 'dress', 'midi elbise'] },
-  { slug: 'blazer', keys: ['blazer', 'kruvaze', 'takım elbise', 'takim elbise'] },
+  { slug: 'blazer', keys: ['blazer', 'kruvaze'] },
   { slug: 'ceket', keys: ['ceket', 'jacket', 'mont', 'kaban', 'trençkot', 'trenckot', 'trench'] },
   { slug: 'hoodie', keys: ['hoodie', 'kapüşon', 'kapuson'] },
   { slug: 'sweatshirt', keys: ['sweatshirt', 'sweat'] },
+  { slug: 'kazak', keys: ['kazak', 'süveter', 'suveter'] },
+  { slug: 'hirka', keys: ['hırka', 'hirka', 'cardigan'] },
   { slug: 'gomlek', keys: ['gömlek', 'gomlek', 'shirt'] },
   { slug: 'polo', keys: ['polo'] },
   { slug: 'tisort', keys: ['tişört', 'tisort', 't-shirt', 'tshirt', 't shirt'] },
@@ -300,7 +304,22 @@ const genderFromWords = (words: string[], rulePrefix: 'title' | 'url'): GenderIn
  * Pure gender evidence from whole words in the title, then (title silent only) the
  * product URL path. Ambiguous or conflicting evidence is 'bilinmiyor', never a guess.
  */
-export const inferGenderDetail = (title: string, productUrl?: string | null): GenderInference => {
+export const inferGenderDetail = (
+  title: string,
+  productUrl?: string | null,
+  category?: string,
+): GenderInference => {
+  const base = inferGenderEvidence(title, productUrl);
+  if (category !== 'dresses') return base;
+  // Dresses are sold as womenswear; a men's word on one is contradictory, so stay unknown.
+  if (base.gender === 'erkek') {
+    return { gender: 'bilinmiyor', confidence: 'none', rule: 'dress_conflict', key: base.key };
+  }
+  if (base.rule === 'none') return { gender: 'kadin', confidence: 'medium', rule: 'dress_default', key: '' };
+  return base;
+};
+
+const inferGenderEvidence = (title: string, productUrl?: string | null): GenderInference => {
   const fromTitle = genderFromWords(wordsOf(title), 'title');
   if (fromTitle) return fromTitle;
   if (productUrl) {

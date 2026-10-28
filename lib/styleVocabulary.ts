@@ -159,11 +159,11 @@ export const buildAutoTitle = (
 
 // --- Catalog mapping (data only; nothing reads these yet) -------------------------------------
 // Rule: map to the slug the catalog already assigns to the same kind of product. Several wardrobe
-// subtypes may share one catalog slug (mont -> ceket); null where the catalog has no honest slug
-// (its only candidate would misclassify, e.g. kazak would fall back to 'tisort').
+// subtypes may share one catalog slug (mont -> ceket); null where the catalog has no honest slug.
+// kazak/hirka have their own catalog slugs now that unmatched upper_body is unknown, not 'tisort'.
 const CATALOG_SUBTYPES: Readonly<Record<GarmentCategory, Readonly<Record<string, string | null>>>> = {
   upper_body: {
-    tisort: 'tisort', gomlek: 'gomlek', polo: 'polo', kazak: null, hirka: null, sweatshirt: 'sweatshirt',
+    tisort: 'tisort', gomlek: 'gomlek', polo: 'polo', kazak: 'kazak', hirka: 'hirka', sweatshirt: 'sweatshirt',
     hoodie: 'hoodie', ceket: 'ceket', blazer: 'blazer', mont: 'ceket',
   },
   dresses: { elbise: 'elbise' },

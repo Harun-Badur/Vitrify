@@ -76,7 +76,7 @@ const main = async () => {
     const newSub = inferSubcategory(product.title, product.category) ?? '';
     const subRule = keyword ? 'title_keyword' : newSub ? 'category_default' : 'unknown';
     const newFit = inferFitFromTitle(product.title);
-    const gender = inferGenderDetail(product.title, product.product_url);
+    const gender = inferGenderDetail(product.title, product.product_url, product.category);
 
     const diffs = [
       [curColors, newColors], [curSub, newSub], [curFit, newFit],

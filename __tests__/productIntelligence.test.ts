@@ -181,15 +181,11 @@ describe('buildProductIntelligence: suit / blazer ambiguity', () => {
     expect(result.conflicts).toContainEqual({ field: 'subtype', code: 'suit_blazer_ambiguity', values: ['blazer'] });
   });
 
-  it('preserves the existing elbise match on an uncurated suit and reports every contradiction', () => {
+  it('reads an uncurated suit as blazer, not as a dress, and still reports the ambiguity', () => {
     const result = buildProductIntelligence({ product: product('p1', 'Lacivert Takım Elbise') });
-    expect(result.subtype).toMatchObject({ value: 'elbise', source: 'title_inferred', confidence: 'low' });
-    expect(result.role.value).toBe('top');
-    expect(result.conflicts).toEqual([
-      { field: 'subtype', code: 'subtype_category_mismatch', values: ['elbise', 'upper_body'] },
-      { field: 'role', code: 'role_subtype_mismatch', values: ['top', 'elbise'] },
-      { field: 'subtype', code: 'suit_blazer_ambiguity', values: ['elbise'] },
-    ]);
+    expect(result.subtype).toMatchObject({ value: 'blazer', source: 'title_inferred' });
+    expect(result.conflicts).toContainEqual({ field: 'subtype', code: 'suit_blazer_ambiguity', values: ['blazer'] });
+    expect(result.conflicts).not.toContainEqual(expect.objectContaining({ values: ['elbise', 'upper_body'] }));
   });
 
   it('keeps a declared blazer subtype on a suit title', () => {
