@@ -70,8 +70,10 @@ const COLOR_TOKEN_RULES = COLOR_ALIASES.map(alias => ({
 interface SubcategoryRule {
   slug: string;
   keys: readonly string[];
-  /** Keys must be whole words (no suffix, no embedded match); high-confidence rules only. */
+  /** Keys must be whole words, optionally with one of `suffixes`; high-confidence rules only. */
   wholeWord?: boolean;
+  /** Closed list of possessive/case/plural suffixes (vowel harmony) that keep the key's meaning. */
+  suffixes?: readonly string[];
   /** Skipped when the category is known and is not upper_body. */
   upperBodyOnly?: boolean;
 }
@@ -83,9 +85,9 @@ const SUBCATEGORY_RULES: readonly SubcategoryRule[] = [
   { slug: 'blazer', keys: ['blazer', 'kruvaze'] },
   // Rule v4: outerwear types that used to fold into `ceket`. A suffixed or embedded form
   // ("montlu") still falls through to the uncertain `ceket` rule below.
-  { slug: 'mont', keys: ['mont'], wholeWord: true, upperBodyOnly: true },
-  { slug: 'kaban', keys: ['kaban'], wholeWord: true, upperBodyOnly: true },
-  { slug: 'trenckot', keys: ['trençkot', 'trenckot', 'trench'], wholeWord: true, upperBodyOnly: true },
+  { slug: 'mont', keys: ['mont'], wholeWord: true, suffixes: ['u', 'unu', 'un', 'a', 'da', 'dan', 'lar', 'ları'], upperBodyOnly: true },
+  { slug: 'kaban', keys: ['kaban'], wholeWord: true, suffixes: ['ı', 'ını', 'ın', 'a', 'da', 'dan', 'lar', 'ları'], upperBodyOnly: true },
+  { slug: 'trenckot', keys: ['trençkot', 'trenckot', 'trench'], wholeWord: true, suffixes: ['u', 'unu', 'un', 'a', 'da', 'dan', 'lar', 'ları'], upperBodyOnly: true },
   { slug: 'ceket', keys: ['ceket', 'jacket', 'mont', 'kaban', 'trençkot', 'trenckot', 'trench', 'softshell'] },
   { slug: 'hoodie', keys: ['hoodie', 'kapüşon', 'kapuson'] },
   { slug: 'sweatshirt', keys: ['sweatshirt', 'sweat'] },
@@ -219,9 +221,13 @@ const startsAWord = (haystack: string, key: string): boolean => {
   return false;
 };
 
-const isWholeWord = (haystack: string, key: string): boolean => {
+// The key as a whole word, or followed by exactly one listed suffix and then a word boundary.
+const isWholeWord = (haystack: string, key: string, suffixes: readonly string[]): boolean => {
   for (let from = haystack.indexOf(key); from >= 0; from = haystack.indexOf(key, from + 1)) {
-    if (!isWordChar(haystack[from - 1]) && !isWordChar(haystack[from + key.length])) return true;
+    if (isWordChar(haystack[from - 1])) continue;
+    const end = from + key.length;
+    if (!isWordChar(haystack[end])) return true;
+    if (suffixes.some(suffix => haystack.startsWith(suffix, end) && !isWordChar(haystack[end + suffix.length]))) return true;
   }
   return false;
 };
@@ -230,6 +236,7 @@ const SUBCATEGORY_KEYS = SUBCATEGORY_RULES.map(rule => ({
   slug: rule.slug,
   keys: rule.keys.map(key => lowerTurkish(key)),
   wholeWord: rule.wholeWord === true,
+  suffixes: (rule.suffixes ?? []).map(suffix => lowerTurkish(suffix)),
   upperBodyOnly: rule.upperBodyOnly === true,
 }));
 
@@ -244,7 +251,7 @@ export const matchSubcategoryFromTitle = (title: string, category?: string): str
   for (const rule of SUBCATEGORY_KEYS) {
     if (restricted && !NON_GARMENT_SUBCATEGORY_SLUGS.includes(rule.slug)) continue;
     if (rule.upperBodyOnly && category !== undefined && category !== 'upper_body') continue;
-    if (rule.keys.some((key) => (rule.wholeWord ? isWholeWord(haystack, key) : startsAWord(haystack, key)))) {
+    if (rule.keys.some((key) => (rule.wholeWord ? isWholeWord(haystack, key, rule.suffixes) : startsAWord(haystack, key)))) {
       return rule.slug;
     }
   }

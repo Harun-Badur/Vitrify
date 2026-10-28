@@ -48,10 +48,31 @@ describe('title rules for the refined outerwear subtypes', () => {
     expect(upper('Trençkotlu Üst')).not.toBe('trenckot');
   });
 
+  it('reads possessive and case suffixes of the exact words (montu, montunu, kabanı, trençkotu)', () => {
+    expect(upper('Haki Erkek Usb Isıtıcılı Kayak Montu')).toBe('mont');
+    expect(upper('Kadın Montunu Seç')).toBe('mont');
+    expect(upper('Erkek Kabanı Lacivert')).toBe('kaban');
+    expect(upper('Bej Kadın Trençkotu')).toBe('trenckot');
+    expect(upper('Erkek Mont’u')).toBe('mont');
+  });
+
+  it('does not read other words that start with the key (montaj, montlu, kabanoz, trençkotlu)', () => {
+    for (const title of ['Montaj Detaylı Üst', 'Montlu Kadın Üst', 'Kabanoz Üst', 'Trençkotlu Üst', 'Montessori Tişört']) {
+      expect(['mont', 'kaban', 'trenckot']).not.toContain(upper(title));
+    }
+  });
+
+  it('does not read a possessive form on a non-upper_body product (Mont Detaylı Pantolon)', () => {
+    for (const title of ['Mont Detaylı Pantolon', 'Kayak Montu Desenli Çanta']) {
+      for (const category of ['lower_body', 'bags']) {
+        expect(['mont', 'kaban', 'trenckot']).not.toContain(matchSubcategoryFromTitle(title, category));
+      }
+    }
+  });
+
   it('keeps the legacy start-of-word match as the uncertain `ceket`, never as unknown', () => {
     expect(upper('Montlu Kadın Üst')).toBe('ceket');
     expect(upper('Kabanlı Üst')).toBe('ceket');
-    expect(upper('Trençkotu Kadın')).toBe('ceket');
   });
 
   it('does not read the new outerwear words in non-garment or lower-body titles', () => {
