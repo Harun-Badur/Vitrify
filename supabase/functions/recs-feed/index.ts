@@ -1,4 +1,5 @@
 import { isActiveCatalogRecord } from '../../../lib/catalogEligibility.ts';
+import { FEED_ELIGIBLE_COLUMN, isFeedEligibleRow } from '../../../lib/feedEligibility.ts';
 import { catalogMetadataRepair, cleanDeclaredCatalogColors, declaredCatalogFit, declaredCatalogGender } from '../../../lib/catalogMetadata.ts';
 import { styleProfileFreshness } from '../_shared/styleProfileFreshness.ts';
 // VITRIVIA Recs V1 — feed ranking Edge Function.
@@ -396,8 +397,9 @@ Deno.serve(async (request: Request): Promise<Response> => {
         admin
           .from('products')
           .select(
-            'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at',
-          ),
+            'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible',
+          )
+          .eq(FEED_ELIGIBLE_COLUMN, true),
         admin
           .from('product_attributes')
           .select(
@@ -473,6 +475,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         continue;
       }
       if (excludedIds.has(row.id)) continue;
+      if (!isFeedEligibleRow(row)) continue;
       if (typeof row.category !== 'string' || !isGarmentCategory(row.category)) {
         continue;
       }

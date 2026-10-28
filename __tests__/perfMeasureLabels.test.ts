@@ -30,13 +30,13 @@ describe('catalog load measurement', () => {
       id: `p-${index}`, provider: 'trendyol', external_id: String(index), title: `Siyah Gömlek ${index}`,
       brand: 'Trendyol', price: 100, currency: 'TRY', image_url: 'https://example.com/p.jpg',
       product_url: `https://example.com/p-${index}`, category: 'upper_body', affiliate_url: null,
-      created_at: '2026-01-01T00:00:00.000Z',
+      created_at: '2026-01-01T00:00:00.000Z', feed_eligible: true,
     }));
     const ranges: number[] = [];
     const client = {
       from: () => {
         const query = {
-          select: () => query, order: () => query, not: () => query,
+          select: () => query, eq: () => query, order: () => query, not: () => query,
           in: () => Promise.resolve({ data: [], error: null }),
           range: (start: number, end: number) => {
             ranges.push(start);

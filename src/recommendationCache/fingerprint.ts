@@ -3,7 +3,7 @@ import type { WardrobeItemForCandidate } from '../intelligence/outfits/outfitCan
 
 export const RECOMMENDATION_CACHE_SCHEMA_VERSION = 1;
 /** Bump when engine rules, constants or normalization change. */
-export const RECOMMENDATION_ENGINE_VERSION = 'discover-engine-v1';
+export const RECOMMENDATION_ENGINE_VERSION = 'discover-engine-v2';
 
 /** Exact canonical keys, not a lossy hash. Array order and missing vs undefined survive. */
 export function fingerprint(value: unknown): string {

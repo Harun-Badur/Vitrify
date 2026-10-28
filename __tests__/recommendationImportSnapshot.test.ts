@@ -30,7 +30,7 @@ const rows = Array.from({ length: 278 }, (_, i) => ({
   product_url: 'https://example.com/product', affiliate_url: i % 2 === 0 ? 'https://example.com/affiliate' : null,
   category: i % 2 === 0 ? 'upper_body' : 'lower_body',
   colors: [{ name: 'Siyah', hex: '#000000' }, null], sizes: ['M', '', null],
-  created_at: i === 277 ? null : '2026-09-01T00:00:00.000000Z',
+  created_at: i === 277 ? null : '2026-09-01T00:00:00.000000Z', feed_eligible: true,
 }));
 const attributes = rows.filter((_, i) => i % 3 === 0).map(row => ({ product_id: row.id, gender: 'women',
   colors: ['siyah'], fit: 'regular', subcategory: 'basic', brand_slug: 'defacto', price_band: 'mid', outfit_role: 'top' }));
@@ -42,6 +42,7 @@ function backend() {
     let excluded = new Set<string>();
     const query = {
       select: () => query,
+      eq: () => query,
       order: (...args: unknown[]) => { orders.push(args); return query; },
       not: (_column: string, _operator: string, value: string) => {
         excluded = new Set(value.match(/product-\d+/g) ?? []); return query;

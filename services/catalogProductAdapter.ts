@@ -119,5 +119,7 @@ export const mapFeedRow = (row: FeedProductRow): Product | null => {
     externalId: row.external_id,
     colors: parseColors(readRowField(row, 'colors')),
     sizes: parseSizes(readRowField(row, 'sizes')),
+    // Rows read without the column (likes/history) carry no flag at all.
+    ...(typeof row.feed_eligible === 'boolean' ? { feedEligible: row.feed_eligible } : {}),
   };
 };

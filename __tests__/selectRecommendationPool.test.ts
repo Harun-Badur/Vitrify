@@ -113,6 +113,7 @@ describe('fetchRecommendationCatalog coverage', () => {
       from: (table: string) => {
         const query = {
           select: () => query,
+          eq: () => query,
           order: () => query,
           not: () => query,
           in: (_column: string, ids: string[]) => Promise.resolve({
@@ -120,7 +121,7 @@ describe('fetchRecommendationCatalog coverage', () => {
             error: null,
           }),
           range: (start: number, end: number) => Promise.resolve({
-            data: rows.slice(start, end + 1),
+            data: rows.slice(start, end + 1).map(row => ({ ...row, feed_eligible: true })),
             error: null,
           }),
         };
@@ -151,6 +152,7 @@ describe('fetchRecommendationCatalog coverage', () => {
       from: (table: string) => {
         const query = {
           select: () => query,
+          eq: () => query,
           order: () => query,
           not: () => query,
           in: (_column: string, ids: string[]) => Promise.resolve({
@@ -158,7 +160,7 @@ describe('fetchRecommendationCatalog coverage', () => {
             error: null,
           }),
           range: (start: number, end: number) => Promise.resolve({
-            data: catalog.slice(start, end + 1),
+            data: catalog.slice(start, end + 1).map(row => ({ ...row, feed_eligible: true })),
             error: null,
           }),
         };

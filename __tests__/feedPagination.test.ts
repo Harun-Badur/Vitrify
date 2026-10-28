@@ -29,19 +29,21 @@ const rows = Array.from({ length: 278 }, (_, index) => ({
   brand: 'DeFacto', price: 100, currency: 'TRY',
   image_url: MOCK_PRODUCTS[0].imageUrl, images: [MOCK_PRODUCTS[0].imageUrl],
   product_url: 'https://example.com/product', affiliate_url: null,
-  category: 'upper_body', created_at: '2026-01-01',
+  category: 'upper_body', created_at: '2026-01-01', feed_eligible: true,
 }));
 
 let mockFailQuery = false;
 let mockQueryDelay = 0;
 const mockRanges: [number, number][] = [];
 const mockAttributeIds: string[][] = [];
+const mockEqFilters: [string, string, unknown][] = [];
 const mockBackend = {
   auth: { getSession: jest.fn(async () => ({ data: { session: null as { access_token: string } | null }, error: null })) },
   from: (table: string) => {
     let excluded = new Set<string>();
     const query = {
       select: () => query,
+      eq: (column: string, value: unknown) => { mockEqFilters.push([table, column, value]); return query; },
       order: () => query,
       not: (_column: string, _operator: string, value: string) => {
         excluded = new Set(value.match(/product-\d+/g) ?? []);
@@ -155,6 +157,24 @@ describe('Discover pagination using the existing service and store', () => {
     });
     await useAppStore.getState().loadFeed(null);
     expect(useAppStore.getState().currentProducts.map(product => product.id)).toEqual(rows.slice(10, 30).map(row => row.id));
+  });
+
+  it('queries only feed_eligible rows and drops any ineligible row the backend still returns', async () => {
+    // The mock ignores eq(), so this also covers the row-level gate behind the server filter.
+    const ineligible = rows.slice(0, 3) as unknown as Array<{ id: string; feed_eligible?: boolean | null }>;
+    ineligible[0].feed_eligible = false;
+    ineligible[1].feed_eligible = null;
+    delete ineligible[2].feed_eligible;
+    try {
+      const [feed, catalog] = await Promise.all([fetchFeedProducts(20, null), fetchRecommendationCatalog()]);
+      const hidden = ineligible.map(row => row.id);
+      expect(feed.products).toHaveLength(20);
+      expect(feed.products.map(product => product.id)).toEqual(rows.slice(3, 23).map(row => row.id));
+      expect(catalog.some(product => hidden.includes(product.id))).toBe(false);
+      expect(mockEqFilters).toContainEqual(['products', 'feed_eligible', true]);
+    } finally {
+      ineligible.forEach(row => { row.feed_eligible = true; });
+    }
   });
 
   it('keeps the first feed page while the recommendation pool reads later pages', async () => {

@@ -1,5 +1,6 @@
 import { isActiveCatalogRecord } from '../lib/catalogEligibility';
 import { catalogMetadataRepair } from '../lib/catalogMetadata';
+import { FEED_ELIGIBLE_COLUMN, isFeedEligibleProduct, isFeedEligibleRow } from '../lib/feedEligibility';
 import { measureDiscoverStage, measureDiscoverStageSync, recordDiscoverStage } from '../lib/discoverStageTiming';
 import { DISCOVER_CATALOG_PAGE_SIZE, isRecord, isFeedProductRow, isAttributeRow, mapFeedRow } from './catalogProductAdapter';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
@@ -216,9 +217,9 @@ const queryCatalogPage = async (
   }
 
   const productSelectWithImages =
-    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at';
+    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible';
   const productSelectLegacy =
-    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, product_url, category, affiliate_url, colors, sizes, created_at';
+    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible';
 
   let productsResult: {
     data: unknown[] | null;
@@ -230,7 +231,9 @@ const queryCatalogPage = async (
     const key = JSON.stringify([columns, [...serverExclusions].sort(), offset]);
     const cached = catalogPages.get(key);
     if (cached && Date.now() - cached.at < CATALOG_CACHE_MS) { recordDiscoverStage('catalog.cache', 0); return cached.result; }
-    let query = client!.from('products').select(columns).order('created_at', { ascending: true }).order('id');
+    // Fail closed: a missing column is an error, never an unfiltered catalog.
+    let query = client!.from('products').select(columns).eq(FEED_ELIGIBLE_COLUMN, true)
+      .order('created_at', { ascending: true }).order('id');
     if (excludeIds.length > 0) {
       // Bound the GET URL: a long session of UUIDs can exceed gateway URL limits.
       query = query.not('id', 'in', `(${excludeIds.slice(0, CATALOG_PAGE_SIZE).map(id => `"${id.replace(/["\\]/g, '')}"`).join(',')})`);
@@ -256,7 +259,7 @@ const queryCatalogPage = async (
   const excluded = new Set(excludeIds);
   const rows = (productsResult.data ?? []).slice(0, CATALOG_PAGE_SIZE)
     .filter(row => !isRecord(row) || typeof row.id !== 'string' || !excluded.has(row.id));
-  const validRows = rows.filter(isFeedProductRow);
+  const validRows = rows.filter(isFeedProductRow).filter(isFeedEligibleRow);
   const cachedProducts = new Map<string, Product>();
   const ids: string[] = [];
   for (const row of validRows) {
@@ -539,7 +542,7 @@ const fetchFeedProductsUntraced = async (
       const edgeProducts = edge.items.map((item) => item.product).filter(product => {
         if (excluded.has(product.id)) return false;
         excluded.add(product.id);
-        return isActiveCatalogRecord(product);
+        return isFeedEligibleProduct(product) && isActiveCatalogRecord(product);
       });
       return {
         hasMore: edge.has_more ?? true,

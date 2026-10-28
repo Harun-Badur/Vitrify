@@ -105,6 +105,9 @@ venv/
 /scripts/data/pdf_catalog_valid.csv
 /pdf-catalog-source.txt
 
+# Catalog enrichment backfill backups (previous DB values)
+/scripts/backups/
+
 # Local toolchain, release logs, and machine-specific artifacts
 .tmp/
 /reports/

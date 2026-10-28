@@ -83,6 +83,8 @@ export interface Product {
   reason?: string;
   /** recs-feed reasons dizisi; insight chip seçicisinin girdisi. Eski kayıtlarda olmayabilir. */
   reasons?: string[];
+  /** products.feed_eligible when the row was read with it; only feed paths require true. */
+  feedEligible?: boolean;
 }
 
 export interface LikedProduct {
@@ -108,6 +110,7 @@ export interface FeedProductRow {
   category: string;
   affiliate_url: string | null;
   created_at?: string | null;
+  feed_eligible?: boolean | null;
 }
 
 export const GARMENT_CATEGORY_LABEL: Record<GarmentCategory, string> = {

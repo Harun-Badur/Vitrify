@@ -8,6 +8,7 @@
 import { config as loadEnv } from 'dotenv';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+import { FEED_CATEGORIES, feedEligibilityMissing } from '../lib/catalogEnrichment';
 import { cleanDeclaredCatalogColors, declaredCatalogFit } from '../lib/catalogMetadata';
 import {
   inferColorsFromText,
@@ -46,8 +47,7 @@ const fetchAll = async <T>(table: string, select: string, order: string): Promis
   }
 };
 
-const CATEGORY_ORDER = ['upper_body', 'lower_body', 'dresses', 'shoes', 'bags', 'accessories', 'hats'];
-const FEED_GENDERS = ['kadin', 'erkek', 'unisex'];
+const CATEGORY_ORDER: readonly string[] = FEED_CATEGORIES;
 const bump = (map: Map<string, number>, key: string) => map.set(key, (map.get(key) ?? 0) + 1);
 const sorted = (map: Map<string, number>) => [...map].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ');
 
@@ -101,16 +101,12 @@ const main = async () => {
       gender.gender === 'bilinmiyor' && 'gender',
     ].filter(Boolean) as string[];
 
-    // Feed rule: category, gender, subtype, color, price and image must ALL be known; fit is optional.
-    const price = Number(product.current_price ?? product.price);
-    const missing = [
-      !CATEGORY_ORDER.includes(product.category) && 'kategori',
-      !FEED_GENDERS.includes(gender.gender) && 'gender',
-      newSub === '' && 'alt_tur',
-      newColors === '' && 'renk',
-      !(price > 0) && 'fiyat',
-      !product.image_url?.trim() && 'gorsel',
-    ].filter(Boolean) as string[];
+    // Shared feed rule (lib/catalogEnrichment.ts), judged here on the title inference alone.
+    const missing = feedEligibilityMissing({
+      category: product.category, gender: gender.gender, subcategory: newSub,
+      colors: newColors ? newColors.split('|') : [],
+      price: Number(product.current_price ?? product.price), imageUrl: product.image_url,
+    });
     const eligible = missing.length === 0;
     if (eligible) {
       eligibleCount++;

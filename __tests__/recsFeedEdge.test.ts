@@ -13,7 +13,7 @@ function fixture(options: { empty?: boolean; errors?: Record<string, string>; th
       id: `fixture-${index}`, provider: 'flo', external_id: `fixture-${index}`,
       title: `Siyah Fixture ${index}`, brand: 'Fixture', price: 100, currency: 'TRY',
       image_url: 'https://example.invalid/image.jpg', product_url: 'https://example.invalid/product',
-      category: 'shoes', affiliate_url: null, created_at: '2026-10-12T00:00:00Z',
+      category: 'shoes', affiliate_url: null, created_at: '2026-10-12T00:00:00Z', feed_eligible: true,
     })),
     ...(options.extraProducts ?? []),
   ];
@@ -71,17 +71,33 @@ test('rows with no usable color stay out of ranking and do not change the eligib
     { id: 'missing-color', provider: 'flo', external_id: 'missing-color', title: 'Duz Model',
       brand: 'Fixture', price: 100, currency: 'TRY', image_url: 'https://example.invalid/image.jpg',
       product_url: 'https://example.invalid/product', category: 'shoes', affiliate_url: null,
-      created_at: '2026-10-12T00:00:00Z' },
+      created_at: '2026-10-12T00:00:00Z', feed_eligible: true },
     { id: 'missing-category', provider: 'flo', external_id: 'missing-category', title: 'Siyah No Category',
       brand: 'Fixture', price: 100, currency: 'TRY', image_url: 'https://example.invalid/image.jpg',
       product_url: 'https://example.invalid/product', category: 'not-a-category', affiliate_url: null,
-      created_at: '2026-10-12T00:00:00Z' },
+      created_at: '2026-10-12T00:00:00Z', feed_eligible: true },
   ] });
   const response = await f.handler(request({ limit: 20 }));
   expect(response.status).toBe(200);
   const body = await response.json();
   expect(body.items.map((item: { product: { id: string } }) => item.product.id)).toEqual(baselineIds);
   expect(body.items).toHaveLength(20);
+});
+
+test('only stored feed_eligible=true rows are ranked; the query filters on the flag', async () => {
+  const ineligible = (id: string, flag: unknown) => ({ id, provider: 'flo', external_id: id, title: 'Siyah Fixture',
+    brand: 'Fixture', price: 100, currency: 'TRY', image_url: 'https://example.invalid/image.jpg',
+    product_url: 'https://example.invalid/product', category: 'shoes', affiliate_url: null,
+    created_at: '2026-10-12T00:00:00Z', feed_eligible: flag });
+  const f = fixture({ extraProducts: [ineligible('flag-false', false), ineligible('flag-null', null),
+    { ...ineligible('flag-missing', undefined), feed_eligible: undefined }] });
+  const response = await f.handler(request({ limit: 50 }));
+  expect(response.status).toBe(200);
+  const ids = (await response.json()).items.map((item: { product: { id: string } }) => item.product.id);
+  expect(ids).toHaveLength(20);
+  expect(ids).not.toEqual(expect.arrayContaining(['flag-false']));
+  expect(ids.filter((id: string) => id.startsWith('flag-'))).toEqual([]);
+  expect(f.filters).toContainEqual(['products', 'feed_eligible', true]);
 });
 
 test('real handler retains 200 response shape and can rank 20 FLO rows without profile', async () => {
