@@ -5,6 +5,7 @@
   },
   "build": {
     "development": {
+      "node": "24.13.0",
       "developmentClient": true,
       "distribution": "internal",
       "env": {
@@ -26,6 +27,7 @@
       "environment": "preview"
     },
     "production": {
+      "node": "24.13.0",
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
