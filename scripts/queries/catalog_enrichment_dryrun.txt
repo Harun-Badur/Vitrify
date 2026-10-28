@@ -1,0 +1,44 @@
+UYARI: migration henüz uygulanmamış; mevcut değerler boş kabul edildi.
+DRY-RUN: veritabanına hiçbir şey yazılmadı.
+Ürün: 349; feed_eligible=true: 342; elenen: 7.
+Eksik alan: gender 7. Gender: kadin 190, erkek 132, unisex 20, NULL 5, cocuk 2.
+İncelenecek: 10 ürün (10 alan): dolu bir değer başlıktaki farklı bir değerle değişir.
+products güncellemesi: 349; product_attributes güncelleme: 293, yeni satır: 0.
+boyner-1294233: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-15343326: gender ∅→cocuk; feed_eligible false→false; eksik [gender]
+boyner-15383784: gender ∅→∅; feed_eligible false→false; eksik [gender]
+boyner-15512075: gender ∅→kadin; feed_eligible false→true; eksik ∅
+boyner-15605761: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-15647412: gender ∅→kadin; feed_eligible false→true; eksik ∅
+boyner-15690117: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-15691146: gender ∅→kadin; feed_eligible false→true; eksik ∅
+boyner-15709212: gender ∅→kadin; feed_eligible false→true; eksik ∅
+boyner-15714044: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-15775199: gender ∅→kadin; feed_eligible false→true; eksik ∅
+boyner-15815058: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-15837511: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-15891188: gender ∅→kadin; feed_eligible false→true; eksik ∅
+boyner-15896249: gender ∅→kadin; feed_eligible false→true; eksik ∅
+boyner-15927675: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-15969332: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-1656182: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-1716227: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-1771558: gender ∅→erkek; feed_eligible false→true; eksik ∅
+boyner-1775564: gender ∅→cocuk; feed_eligible false→false; eksik [gender]
+defacto-2857264: gender ∅→erkek; feed_eligible false→true; eksik ∅
+defacto-3141043: gender ∅→erkek; feed_eligible false→true; eksik ∅
+defacto-3159839: gender ∅→erkek; feed_eligible false→true; eksik ∅
+defacto-3195702: gender ∅→erkek; feed_eligible false→true; eksik ∅
+İncelenecek listesi (id | başlık | alan: eski → yeni):
+  boyner-15343326 | Hammer Jack Su Geçirmez Vectör Siyah Lacivert Erkek Çocuk Outdoor Bot | gender: erkek → cocuk
+  boyner-15647412 | Bej Kadın Çizgili Hırka NEN19AH25RRS | alt tür: tisort → hirka
+  boyner-1656182 | Fabrika Bej Erkek Hırka F3WM-HRK154 | alt tür: tisort → hirka
+  lcw-5078073 | 7002 Unisex Sırt Çantası Laptop Çantası Evrak Çantası Siyah | gender: erkek → unisex
+  lcw-5113630 | Bar 3 Reflective Stripes Unisex Siyah Sırt Çantası | gender: erkek → unisex
+  lcw-5142098 | Bej 2063 Vegan Vizon Kahverengi Deri El Portföy Çanta | renk: bej → bej|kahverengi
+  lcw-5592980 | Mara Tokalı Kemer Kahverengi | gender: kadin → unisex
+  trendyol-353730430 | Luminos Butik Kışlık Sıcak Yumuşak Geniş Püsküllü Atkı - Kremsi Beyaz Siyah Gri Çizgili Atkı Sal1270 | renk: siyah|beyaz|gri|bej → siyah|beyaz|gri
+  trendyol-929647864 | W Collection GRİ KAZAK | alt tür: tisort → kazak
+  trendyol-951326392 | Tudors Kadın Standart Fit Kısa Kollu Yarım Balıkçı Yaka Siyah Bluz | alt tür: tisort → bluz
+… 617 satır daha (tamamı için --verbose).
+Gerçek yazma için --apply ile çalıştırın (önce yedek alınır).

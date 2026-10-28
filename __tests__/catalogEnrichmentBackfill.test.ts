@@ -145,3 +145,45 @@ describe('backfill plan and dry-run output', () => {
     expect(() => planCatalogRollback({ format: 'other' } as never)).toThrow('Yedek biçimi tanınmadı');
   });
 });
+
+describe('merge rule in the backfill plan', () => {
+  const rows = [
+    // Title is silent: every stored value (including legacy gender) survives, nothing is blanked.
+    product({ id: 'keep', title: 'Basic Ürün' }),
+    // Title contradicts a stored gender and subtype: the title wins and it is listed for review.
+    product({ id: 'contradict', title: 'Kadın Siyah Bluz' }),
+    product({ id: 'fill', title: 'Erkek Lacivert Pantolon', category: 'lower_body' }),
+  ];
+  const stored = [
+    attributes({ product_id: 'keep', gender: 'men', colors: ['bej'], fit: 'slim', subcategory: 'tisort' }),
+    attributes({ product_id: 'contradict', gender: 'men', colors: ['siyah'], subcategory: 'tisort' }),
+    attributes({ product_id: 'fill' }),
+  ];
+
+  it('starts products.gender from the legacy attribute and never writes an empty attribute value', () => {
+    const plan = planCatalogBackfill(rows, stored);
+    expect(plan.products.find(change => change.id === 'keep')?.after.gender).toBe('erkek');
+    for (const write of plan.attributes) {
+      for (const value of Object.values(write.patch)) {
+        expect(value === null || value === '' || (Array.isArray(value) && value.length === 0)).toBe(false);
+      }
+    }
+    expect(plan.attributes.find(write => write.product_id === 'keep')).toBeUndefined();
+  });
+
+  it('counts and lists the changes that need review: id, title, old → new', () => {
+    const plan = planCatalogBackfill(rows, stored);
+    expect(plan.review).toEqual([
+      { id: 'contradict', title: 'Kadın Siyah Bluz', field: 'gender', from: 'erkek', to: 'kadin' },
+      { id: 'contradict', title: 'Kadın Siyah Bluz', field: 'alt_tur', from: 'tisort', to: 'bluz' },
+    ]);
+    expect(plan.summary).toMatchObject({ reviewProducts: 1, reviewFields: 2 });
+  });
+
+  it('prints the review count and list in the dry-run output', () => {
+    const text = formatBackfillPlan(planCatalogBackfill(rows, stored), { apply: false, verbose: false }).join('\n');
+    expect(text).toContain('İncelenecek: 1 ürün (2 alan)');
+    expect(text).toContain('contradict | Kadın Siyah Bluz | gender: erkek → kadin');
+    expect(text).toContain('contradict | Kadın Siyah Bluz | alt tür: tisort → bluz');
+  });
+});

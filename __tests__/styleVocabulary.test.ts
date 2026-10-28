@@ -28,7 +28,7 @@ describe('categories and subtypes', () => {
 
   it('lists the agreed subtypes per category', () => {
     const slugs = (category: GarmentCategory) => subtypesForCategory(category).map(item => item.slug);
-    expect(slugs('upper_body')).toEqual(['tisort', 'gomlek', 'polo', 'kazak', 'hirka', 'sweatshirt', 'hoodie', 'ceket', 'blazer', 'mont']);
+    expect(slugs('upper_body')).toEqual(['tisort', 'gomlek', 'bluz', 'body', 'polo', 'kazak', 'hirka', 'sweatshirt', 'hoodie', 'ceket', 'blazer', 'mont']);
     expect(slugs('lower_body')).toEqual(['pantolon', 'jean', 'kargo', 'esofman', 'sort', 'etek']);
     expect(slugs('dresses')).toEqual(['elbise']);
     expect(slugs('shoes')).toEqual(['sneaker', 'bot', 'topuklu', 'sandalet', 'loafer', 'babet', 'diger']);
@@ -152,6 +152,8 @@ describe('catalog mapping tables', () => {
     expect(toCatalogSubtype('upper_body', 'mont')).toBe('ceket');
     expect(toCatalogSubtype('upper_body', 'kazak')).toBe('kazak');
     expect(toCatalogSubtype('upper_body', 'hirka')).toBe('hirka');
+    expect(toCatalogSubtype('upper_body', 'bluz')).toBe('bluz');
+    expect(toCatalogSubtype('upper_body', 'body')).toBe('body');
     expect(toCatalogSubtype('shoes', 'nope')).toBeNull();
   });
 

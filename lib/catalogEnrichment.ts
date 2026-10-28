@@ -4,19 +4,21 @@ import {
   inferFitFromTitle,
   inferGenderDetail,
   inferSubcategory,
+  matchSubcategoryFromTitle,
   type GenderLabel,
 } from './productAttributes';
 
 /** Written to products.attribute_source / attribute_version by the backfill. */
 export const ENRICHMENT_ATTRIBUTE_SOURCE = 'title_rules';
 /** Bump when an inference rule changes, so a rerun rewrites every row. */
-export const ENRICHMENT_ATTRIBUTE_VERSION = 1;
+export const ENRICHMENT_ATTRIBUTE_VERSION = 2;
 
 export const FEED_CATEGORIES = ['upper_body', 'lower_body', 'dresses', 'shoes', 'bags', 'accessories', 'hats'] as const;
 export const FEED_GENDERS = ['kadin', 'erkek', 'unisex'] as const;
 
 export type StoredGender = Exclude<GenderLabel, 'bilinmiyor'>;
 export type EligibilityField = 'kategori' | 'gender' | 'alt_tur' | 'renk' | 'fiyat' | 'gorsel';
+export type ReviewField = 'gender' | 'alt_tur' | 'renk' | 'kalip';
 
 export interface FeedEligibilityInput {
   category: string;
@@ -37,6 +39,35 @@ export const feedEligibilityMissing = (input: FeedEligibilityInput): Eligibility
   !input.imageUrl?.trim() && 'gorsel',
 ].filter((field): field is EligibilityField => field !== false);
 
+const isEmpty = (value: unknown): boolean =>
+  value === null || value === undefined || value === '' || value === 'bilinmiyor'
+  || (Array.isArray(value) && value.length === 0);
+
+const asKey = (value: unknown): string =>
+  Array.isArray(value) ? [...value].sort().join('|') : String(value);
+const asText = (value: unknown): string => Array.isArray(value) ? value.join('|') : String(value);
+
+export interface MergeResult<T> {
+  value: T | null;
+  /** Set only when a known stored value was replaced by a different inference. */
+  review: { from: string; to: string } | null;
+}
+
+/**
+ * The one merge rule. An unknown/empty inference never changes a stored value; a filled
+ * inference fills an empty value; a filled inference that differs from a stored value wins
+ * and is marked for review. A known value is never turned into unknown.
+ */
+export const mergeAttribute = <T extends string | readonly string[]>(
+  existing: T | null | undefined,
+  inferred: T | null | undefined,
+): MergeResult<T> => {
+  if (isEmpty(inferred)) return { value: isEmpty(existing) ? null : existing as T, review: null };
+  if (isEmpty(existing)) return { value: inferred as T, review: null };
+  if (asKey(existing) === asKey(inferred)) return { value: existing as T, review: null };
+  return { value: inferred as T, review: { from: asText(existing), to: asText(inferred) } };
+};
+
 export interface EnrichmentProductInput {
   id: string;
   title: string;
@@ -46,53 +77,100 @@ export interface EnrichmentProductInput {
   price: number | string | null;
   current_price: number | string | null;
   image_url: string | null;
+  /** products.gender when already written (kadin/erkek/unisex/cocuk). */
+  gender?: string | null;
 }
 
 export interface EnrichmentStoredAttributes {
   colors: unknown;
   fit: string | null;
   subcategory: string | null;
+  /** Legacy product_attributes.gender (women/men/unisex): the starting value for products.gender. */
+  gender?: string | null;
 }
+
+export interface ReviewChange { field: ReviewField; from: string; to: string }
 
 export interface CatalogEnrichment {
   gender: StoredGender | null;
-  /** Inferred value, else the stored one; this is what eligibility is judged on. */
   colors: string[];
   subcategory: string | null;
   fit: string | null;
-  /** Title-rule output alone; empty means no evidence. */
-  inferred: { colors: string[]; subcategory: string; fit: string };
+  /** Which merged values came from the title and differ from what was stored. */
+  changed: { colors: boolean; subcategory: boolean; fit: boolean };
+  /** Known stored values the title contradicts; the title value wins and is listed here. */
+  review: ReviewChange[];
   feedEligible: boolean;
   eligibilityMissing: EligibilityField[];
   attributeSource: typeof ENRICHMENT_ATTRIBUTE_SOURCE;
   attributeVersion: typeof ENRICHMENT_ATTRIBUTE_VERSION;
 }
 
+const LEGACY_GENDER: Readonly<Record<string, StoredGender>> = { women: 'kadin', men: 'erkek', unisex: 'unisex' };
+const STORED_GENDERS: readonly string[] = ['kadin', 'erkek', 'unisex', 'cocuk'];
+
+/** products.gender first, else the legacy product_attributes.gender mapped to the new vocabulary. */
+export const existingGender = (productGender: string | null | undefined, legacy: string | null | undefined): StoredGender | null => {
+  if (productGender && STORED_GENDERS.includes(productGender)) return productGender as StoredGender;
+  return LEGACY_GENDER[legacy ?? ''] ?? null;
+};
+
+const isMaviBrand = (brand: string | null): boolean =>
+  (brand ?? '').toLocaleLowerCase('tr-TR').match(/[\p{L}\p{N}]+/gu)?.includes('mavi') ?? false;
+
 /**
- * The single enrichment code path: the same title rules as the preview, then the
- * feed rule over the values that will be stored. A stored value is kept when the
- * title gives no evidence; an unknown gender is stored as NULL, never guessed.
+ * The single enrichment code path (preview, dry-run, --apply and tests). Title rules
+ * give an inference per attribute; mergeAttribute combines it with the stored value, and
+ * feed eligibility is judged on the merged values.
  */
 export const computeCatalogEnrichment = (
   product: EnrichmentProductInput,
   stored: EnrichmentStoredAttributes | undefined,
 ): CatalogEnrichment => {
-  const inferred = {
-    colors: inferColorsFromText(product.title, product.brand),
-    subcategory: inferSubcategory(product.title, product.category) ?? '',
-    fit: inferFitFromTitle(product.title),
-  };
-  const detail = inferGenderDetail(product.title, product.product_url, product.category);
-  const gender = detail.gender === 'bilinmiyor' ? null : detail.gender;
-  const colors = inferred.colors.length > 0 ? inferred.colors : cleanDeclaredCatalogColors(product.id, stored?.colors);
-  const subcategory = inferred.subcategory || stored?.subcategory?.trim() || null;
-  const fit = inferred.fit || declaredCatalogFit(stored?.fit) || null;
+  const review: ReviewChange[] = [];
+  const note = (field: ReviewField, result: MergeResult<unknown>) => { if (result.review) review.push({ field, ...result.review }); };
+
+  const gender = mergeAttribute<string>(existingGender(product.gender, stored?.gender),
+    inferGenderDetail(product.title, product.product_url, product.category).gender);
+  note('gender', gender);
+
+  const storedColors = cleanDeclaredCatalogColors(product.id, stored?.colors);
+  let inferredColors = inferColorsFromText(product.title, product.brand);
+  // The title cannot confirm or deny blue on a Mavi product (the word is the brand), so a stored one stands.
+  if (isMaviBrand(product.brand) && storedColors.includes('mavi') && !inferredColors.includes('mavi')) {
+    inferredColors = inferredColors.length > 0 ? [...inferredColors, 'mavi'] : [];
+  }
+  const colors = mergeAttribute<readonly string[]>(storedColors, inferredColors);
+  note('renk', colors);
+
+  // A category default is not title evidence: it may fill an empty subtype but never replace one.
+  const storedSubcategory = stored?.subcategory?.trim() || null;
+  const keyword = matchSubcategoryFromTitle(product.title, product.category);
+  const subcategory = keyword
+    ? mergeAttribute<string>(storedSubcategory, keyword)
+    : mergeAttribute<string>(storedSubcategory, storedSubcategory ? null : inferSubcategory(product.title, product.category));
+  note('alt_tur', subcategory);
+
+  const storedFit = declaredCatalogFit(stored?.fit) || null;
+  const fit = mergeAttribute<string>(storedFit, inferFitFromTitle(product.title));
+  note('kalip', fit);
+
+  const mergedColors = [...(colors.value ?? [])];
   const missing = feedEligibilityMissing({
-    category: product.category, gender, subcategory, colors,
+    category: product.category, gender: gender.value, subcategory: subcategory.value, colors: mergedColors,
     price: Number(product.current_price ?? product.price), imageUrl: product.image_url,
   });
   return {
-    gender, colors, subcategory, fit, inferred,
+    gender: gender.value as StoredGender | null,
+    colors: mergedColors,
+    subcategory: subcategory.value,
+    fit: fit.value,
+    changed: {
+      colors: asKey(mergedColors) !== asKey(storedColors),
+      subcategory: subcategory.value !== storedSubcategory,
+      fit: fit.value !== storedFit,
+    },
+    review,
     feedEligible: missing.length === 0,
     eligibilityMissing: missing,
     attributeSource: ENRICHMENT_ATTRIBUTE_SOURCE,

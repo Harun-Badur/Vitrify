@@ -1,0 +1,95 @@
+{
+ "note": "Rows where the old preview inferred bilinmiyor over a stored product_attributes.gender (scripts/queries/catalog_enrichment_preview.csv, 2026-10-28). Live catalog titles; no user data.",
+ "rows": [
+  {
+   "id": "hepsiburada-HBCV0000CYITMK",
+   "title": "Slogan Baskılı Basic Beyaz T-Shirt",
+   "category": "upper_body",
+   "storedGender": "unisex"
+  },
+  {
+   "id": "hepsiburada-HBCV0000FG17PA",
+   "title": "Kahverengi ve Siyah Tül Pareo 2'li Set",
+   "category": "lower_body",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-4868475",
+   "title": "Lacivert Beli Bağlamalı Saten Etek",
+   "category": "lower_body",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-4885993",
+   "title": "Lacivert Beli Lastikli A Kesim Saten Etek",
+   "category": "lower_body",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-5114921",
+   "title": "Bordo Beli Fermuarlı Kloş Etek",
+   "category": "lower_body",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-5130015",
+   "title": "Bej Kısa İnce Topuklu Abiye Ayakkabı 357188 Z",
+   "category": "shoes",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-5141124",
+   "title": "2063 Vegan Kahverengi Baskılı Deri El Portföy Çanta",
+   "category": "bags",
+   "storedGender": "men"
+  },
+  {
+   "id": "lcw-5141130",
+   "title": "2063 Vegan Kahverengi Deri El Portföy Çanta",
+   "category": "bags",
+   "storedGender": "men"
+  },
+  {
+   "id": "lcw-5142098",
+   "title": "Bej 2063 Vegan Vizon Kahverengi Deri El Portföy Çanta",
+   "category": "bags",
+   "storedGender": "men"
+  },
+  {
+   "id": "lcw-5182282",
+   "title": "Kahverengi Beli Fermuarlı Zincir Detaylı Şort Etek",
+   "category": "lower_body",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-5215694",
+   "title": "Kahverengi Beli Fermuarlı Dokulu Tüvit Şort Etek",
+   "category": "lower_body",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-5495414",
+   "title": "Academy Aop Siyah Sırt Çantası",
+   "category": "bags",
+   "storedGender": "men"
+  },
+  {
+   "id": "lcw-5534040",
+   "title": "Alya Fular Detaylı Baget Çanta Siyah",
+   "category": "bags",
+   "storedGender": "women"
+  },
+  {
+   "id": "lcw-5592980",
+   "title": "Mara Tokalı Kemer Kahverengi",
+   "category": "accessories",
+   "storedGender": "women"
+  },
+  {
+   "id": "trendyol-929681071",
+   "title": "Gri Çizgili Kruvaze Takım Elbise",
+   "category": "upper_body",
+   "storedGender": "men"
+  }
+ ]
+}

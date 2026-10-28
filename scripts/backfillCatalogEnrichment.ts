@@ -46,8 +46,8 @@ const main = async () => {
   const args = parseBackfillArgs(process.argv.slice(2));
   const url = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  // Dry-run can read with the public anon key; writes need the service role.
-  const key = args.apply ? serviceKey : serviceKey ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  // Dry-run reads with the public anon key (GET only); writes need the service role.
+  const key = args.apply ? serviceKey : process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? serviceKey;
   if (!url) throw new Error('SUPABASE_URL / EXPO_PUBLIC_SUPABASE_URL tanımlı değil');
   if (!key) throw new Error(args.apply ? '--apply için SUPABASE_SERVICE_ROLE_KEY ortam değişkeni gerekli' : 'Okuma anahtarı tanımlı değil');
   const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -61,7 +61,7 @@ const main = async () => {
     products = (await fetchAll<BackfillProductRow>(client, 'products', BASE_COLUMNS, 'id')).map(row => ({
       ...row, gender: null, feed_eligible: false, eligibility_missing: null, attribute_source: null, attribute_version: null }));
   }
-  const attributes = await fetchAll<BackfillAttributeRow>(client, 'product_attributes', 'product_id,colors,fit,subcategory', 'product_id');
+  const attributes = await fetchAll<BackfillAttributeRow>(client, 'product_attributes', 'product_id,gender,colors,fit,subcategory', 'product_id');
   const plan = planCatalogBackfill(products, attributes);
   formatBackfillPlan(plan, args).forEach(line => console.log(line));
   if (!args.apply) return;

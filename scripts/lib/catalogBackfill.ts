@@ -1,4 +1,9 @@
-import { computeCatalogEnrichment, type EligibilityField, type EnrichmentProductInput } from '../../lib/catalogEnrichment';
+import {
+  computeCatalogEnrichment,
+  type EligibilityField,
+  type EnrichmentProductInput,
+  type ReviewChange,
+} from '../../lib/catalogEnrichment';
 
 /** Pure planning for scripts/backfillCatalogEnrichment.ts and its rollback. No I/O here. */
 
@@ -22,6 +27,14 @@ export interface AttributeColumns {
 
 export interface BackfillAttributeRow extends AttributeColumns {
   product_id: string;
+  /** Legacy product_attributes.gender; the starting value for products.gender. Never written. */
+  gender?: string | null;
+}
+
+/** A known stored value the title contradicts. The title value is applied; a person should look. */
+export interface ReviewEntry extends ReviewChange {
+  id: string;
+  title: string;
 }
 
 export interface PlannedProductChange {
@@ -40,12 +53,15 @@ export interface PlannedAttributeWrite {
 export interface BackfillPlan {
   products: PlannedProductChange[];
   attributes: PlannedAttributeWrite[];
+  review: ReviewEntry[];
   summary: {
     total: number;
     eligible: number;
     ineligible: number;
     missing: Partial<Record<EligibilityField, number>>;
     gender: Record<string, number>;
+    reviewProducts: number;
+    reviewFields: number;
     productChanges: number;
     attributeUpdates: number;
     attributeInserts: number;
@@ -72,17 +88,14 @@ const sameColumns = (left: ProductEnrichmentColumns, right: ProductEnrichmentCol
   && sameArray(left.eligibility_missing, right.eligibility_missing)
   && left.attribute_source === right.attribute_source && left.attribute_version === right.attribute_version;
 
-const textArray = (value: unknown): string[] =>
-  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-
 export const planCatalogBackfill = (
   products: readonly BackfillProductRow[],
   attributes: readonly BackfillAttributeRow[],
 ): BackfillPlan => {
   const storedById = new Map(attributes.map(row => [row.product_id, row]));
-  const plan: BackfillPlan = { products: [], attributes: [], summary: {
+  const plan: BackfillPlan = { products: [], attributes: [], review: [], summary: {
     total: products.length, eligible: 0, ineligible: 0, missing: {}, gender: {},
-    productChanges: 0, attributeUpdates: 0, attributeInserts: 0 } };
+    reviewProducts: 0, reviewFields: 0, productChanges: 0, attributeUpdates: 0, attributeInserts: 0 } };
 
   for (const product of products) {
     const stored = storedById.get(product.id);
@@ -98,21 +111,21 @@ export const planCatalogBackfill = (
     };
     if (!sameColumns(before, after)) plan.products.push({ id: product.id, before, after });
 
-    // Only title evidence is written; a stored value is never replaced by "unknown".
+    // Merged values only, and only where they came from the title. A stored value is never
+    // overwritten with an empty one: an unknown inference changes nothing.
     const patch: Partial<AttributeColumns> = {};
-    if (result.inferred.colors.length > 0 && !sameArray(textArray(stored?.colors), result.inferred.colors)) {
-      patch.colors = result.inferred.colors;
-    }
-    if (result.inferred.subcategory && stored?.subcategory !== result.inferred.subcategory) {
-      patch.subcategory = result.inferred.subcategory;
-    }
-    if (result.inferred.fit && stored?.fit !== result.inferred.fit) patch.fit = result.inferred.fit;
+    if (result.changed.colors && result.colors.length > 0) patch.colors = result.colors;
+    if (result.changed.subcategory && result.subcategory) patch.subcategory = result.subcategory;
+    if (result.changed.fit && result.fit) patch.fit = result.fit;
     if (Object.keys(patch).length > 0) {
       plan.attributes.push({ product_id: product.id, mode: stored ? 'update' : 'insert',
         before: stored ? { colors: stored.colors, fit: stored.fit, subcategory: stored.subcategory } : null, patch });
     }
 
     const { summary } = plan;
+    for (const change of result.review) plan.review.push({ id: product.id, title: product.title, ...change });
+    if (result.review.length > 0) summary.reviewProducts++;
+    summary.reviewFields += result.review.length;
     if (result.feedEligible) summary.eligible++;
     else summary.ineligible++;
     for (const field of result.eligibilityMissing) summary.missing[field] = (summary.missing[field] ?? 0) + 1;
@@ -130,6 +143,14 @@ const show = (value: unknown): string =>
 
 const SAMPLE_LINES = 25;
 
+const FIELD_LABEL: Record<ReviewChange['field'], string> = { gender: 'gender', alt_tur: 'alt tür', renk: 'renk', kalip: 'kalıp' };
+
+/** The full review list, one line per changed field: id, title, old → new. */
+export const reviewLines = (review: readonly ReviewEntry[]): string[] => review.length === 0 ? [] : [
+  'İncelenecek listesi (id | başlık | alan: eski → yeni):',
+  ...review.map(entry => `  ${entry.id} | ${entry.title} | ${FIELD_LABEL[entry.field]}: ${entry.from} → ${entry.to}`),
+];
+
 /** Summary and planned changes. Never includes credentials or environment values. */
 export const formatBackfillPlan = (plan: BackfillPlan, args: BackfillArgs): string[] => {
   const { summary } = plan;
@@ -139,6 +160,7 @@ export const formatBackfillPlan = (plan: BackfillPlan, args: BackfillArgs): stri
     args.apply ? 'APPLY: aşağıdaki değişiklikler yazılacak.' : 'DRY-RUN: veritabanına hiçbir şey yazılmadı.',
     `Ürün: ${summary.total}; feed_eligible=true: ${summary.eligible}; elenen: ${summary.ineligible}.`,
     `Eksik alan: ${counts(summary.missing)}. Gender: ${counts(summary.gender)}.`,
+    `İncelenecek: ${summary.reviewProducts} ürün (${summary.reviewFields} alan): dolu bir değer başlıktaki farklı bir değerle değişir.`,
     `products güncellemesi: ${summary.productChanges}; product_attributes güncelleme: ${summary.attributeUpdates}, yeni satır: ${summary.attributeInserts}.`,
   ];
   const changes = [
@@ -148,6 +170,7 @@ export const formatBackfillPlan = (plan: BackfillPlan, args: BackfillArgs): stri
       .map(([key, value]) => `${key} ${show(write.before?.[key as keyof AttributeColumns])}→${show(value)}`).join('; ')}`),
   ];
   lines.push(...(args.verbose ? changes : changes.slice(0, SAMPLE_LINES)));
+  lines.push(...reviewLines(plan.review));
   if (!args.verbose && changes.length > SAMPLE_LINES) lines.push(`… ${changes.length - SAMPLE_LINES} satır daha (tamamı için --verbose).`);
   if (!args.apply) lines.push('Gerçek yazma için --apply ile çalıştırın (önce yedek alınır).');
   return lines;

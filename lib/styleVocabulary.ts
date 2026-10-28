@@ -75,6 +75,8 @@ export const SUBTYPES: Readonly<Record<GarmentCategory, readonly VocabularySubty
   upper_body: [
     subtype('tisort', 'Tişört', 'ust', 1, 'gunluk', 'sicak', 'casual'),
     subtype('gomlek', 'Gömlek', 'ust', 3, 'klasik', 'tumu', 'tailored'),
+    subtype('bluz', 'Bluz', 'ust', 3, 'klasik', 'tumu'),
+    subtype('body', 'Body', 'ust', 2, 'minimal', 'tumu'),
     subtype('polo', 'Polo', 'ust', 2, 'gunluk', 'sicak', 'casual'),
     subtype('kazak', 'Kazak', 'ust', 2, 'minimal', 'soguk'),
     subtype('hirka', 'Hırka', 'dis_giyim', 2, 'minimal', 'soguk'),
@@ -163,7 +165,7 @@ export const buildAutoTitle = (
 // kazak/hirka have their own catalog slugs now that unmatched upper_body is unknown, not 'tisort'.
 const CATALOG_SUBTYPES: Readonly<Record<GarmentCategory, Readonly<Record<string, string | null>>>> = {
   upper_body: {
-    tisort: 'tisort', gomlek: 'gomlek', polo: 'polo', kazak: 'kazak', hirka: 'hirka', sweatshirt: 'sweatshirt',
+    tisort: 'tisort', gomlek: 'gomlek', bluz: 'bluz', body: 'body', polo: 'polo', kazak: 'kazak', hirka: 'hirka', sweatshirt: 'sweatshirt',
     hoodie: 'hoodie', ceket: 'ceket', blazer: 'blazer', mont: 'ceket',
   },
   dresses: { elbise: 'elbise' },

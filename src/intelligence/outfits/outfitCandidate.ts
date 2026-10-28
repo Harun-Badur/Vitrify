@@ -54,6 +54,7 @@ const UPPER_SUBCATEGORY_ROLE: Readonly<Record<string, 'top' | 'outerwear'>> = {
   gomlek: 'top',
   'gömlek': 'top',
   bluz: 'top',
+  body: 'top',
   kazak: 'top',
   hoodie: 'top',
   sweatshirt: 'top',

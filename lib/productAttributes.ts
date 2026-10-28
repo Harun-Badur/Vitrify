@@ -77,14 +77,16 @@ const SUBCATEGORY_RULES: readonly SubcategoryRule[] = [
   { slug: 'blazer', keys: ['takım elbise', 'takim elbise'] },
   { slug: 'elbise', keys: ['elbise', 'dress', 'midi elbise'] },
   { slug: 'blazer', keys: ['blazer', 'kruvaze'] },
-  { slug: 'ceket', keys: ['ceket', 'jacket', 'mont', 'kaban', 'trençkot', 'trenckot', 'trench'] },
+  { slug: 'ceket', keys: ['ceket', 'jacket', 'mont', 'kaban', 'trençkot', 'trenckot', 'trench', 'softshell'] },
   { slug: 'hoodie', keys: ['hoodie', 'kapüşon', 'kapuson'] },
   { slug: 'sweatshirt', keys: ['sweatshirt', 'sweat'] },
   { slug: 'kazak', keys: ['kazak', 'süveter', 'suveter'] },
   { slug: 'hirka', keys: ['hırka', 'hirka', 'cardigan'] },
+  { slug: 'bluz', keys: ['bluz', 'blouse'] },
   { slug: 'gomlek', keys: ['gömlek', 'gomlek', 'shirt'] },
   { slug: 'polo', keys: ['polo'] },
   { slug: 'tisort', keys: ['tişört', 'tisort', 't-shirt', 'tshirt', 't shirt'] },
+  { slug: 'body', keys: ['body', 'bodysuit'] },
   { slug: 'jean', keys: ['jean', 'kot', 'denim'] },
   { slug: 'kargo', keys: ['kargo', 'cargo'] },
   { slug: 'esofman', keys: ['eşofman', 'esofman', 'jogger'] },
@@ -146,12 +148,14 @@ export const inferGenderFromTitle = (title: string): ProductGender | undefined =
 /** Exact Unicode words only; patterns and brand tokens are not color evidence. */
 export const inferColorsFromText = (text: string, brand?: string | null): string[] => {
   const tokens = haystackOf(text).replace(/ı/g, 'i').match(/[\p{L}\p{N}]+/gu) ?? [];
-  const brandTokens = brand ? haystackOf(brand).replace(/ı/g, 'i').match(/[\p{L}\p{N}]+/gu) ?? [] : [];
+  const brandTokens: string[] = brand ? haystackOf(brand).replace(/ı/g, 'i').match(/[\p{L}\p{N}]+/gu) ?? [] : [];
   const words = new Set<string>();
+  // On a Mavi product the word is the brand, wherever it sits in the title; it is not the color blue.
+  const brandIsMavi = brandTokens.includes('mavi');
   for (let index = 0; index < tokens.length; index++) {
     if (brandTokens.length > 0 && brandTokens.every((token, offset) => tokens[index + offset] === token)) {
       index += brandTokens.length - 1;
-    } else words.add(tokens[index]);
+    } else if (!(brandIsMavi && tokens[index] === 'mavi')) words.add(tokens[index]);
   }
   const slugs: string[] = [];
   for (const alias of COLOR_TOKEN_RULES) {
@@ -260,8 +264,8 @@ export type GenderLabel = 'kadin' | 'erkek' | 'cocuk' | 'unisex' | 'bilinmiyor';
 export interface GenderInference {
   gender: GenderLabel;
   /** none = unknown; medium = URL path only; high = title word. */
-  confidence: 'high' | 'medium' | 'none';
-  /** title_token | title_child_token | title_conflict | url_token | url_conflict | none */
+  confidence: 'high' | 'medium' | 'low' | 'none';
+  /** title_token | title_child_token | title_conflict | url_token | url_conflict | <word>_default | default_conflict | accessory_neutral | none */
   rule: string;
   /** The matched word, or '' when unknown. */
   key: string;
@@ -275,6 +279,20 @@ const GENDER_TOKEN_LABELS: ReadonlyArray<readonly [GenderLabel, readonly string[
 const CHILD_TOKENS = ['çocuk', 'cocuk', 'bebek'] as const;
 // Child-only words: they say "child" but not which gender.
 const CHILD_IMPLIED_TOKENS = ['kız', 'kiz', 'oğlan', 'oglan'] as const;
+
+// Words that make womenswear the default when nothing else names a gender.
+const WOMEN_DEFAULT_WORDS: ReadonlyArray<readonly [rule: string, key: string]> = [
+  ['skirt_default', 'etek'],
+  ['formal_default', 'abiye'],
+  ['heels_default', 'topuklu'],
+  ['pareo_default', 'pareo'],
+  ['blouse_default', 'bluz'],
+  ['body_default', 'body'],
+];
+// Whole words only ("Kemerli Pantolon" is not a belt); accessories with no gender word are neutral.
+const NEUTRAL_ACCESSORY_WORDS: readonly string[] = [
+  'kemer', 'kemeri', 'atkı', 'atki', 'atkısı', 'kolye', 'kolyesi', 'takı', 'taki', 'takısı',
+];
 
 const wordsOf = (text: string): string[] =>
   lowerTurkish(text).match(/[\p{L}\p{N}]+/gu) ?? [];
@@ -310,12 +328,28 @@ export const inferGenderDetail = (
   category?: string,
 ): GenderInference => {
   const base = inferGenderEvidence(title, productUrl);
-  if (category !== 'dresses') return base;
-  // Dresses are sold as womenswear; a men's word on one is contradictory, so stay unknown.
-  if (base.gender === 'erkek') {
-    return { gender: 'bilinmiyor', confidence: 'none', rule: 'dress_conflict', key: base.key };
+  if (category === 'dresses') {
+    // Dresses are sold as womenswear; a men's word on one is contradictory, so stay unknown.
+    if (base.gender === 'erkek') {
+      return { gender: 'bilinmiyor', confidence: 'none', rule: 'dress_conflict', key: base.key };
+    }
+    if (base.rule === 'none') return { gender: 'kadin', confidence: 'medium', rule: 'dress_default', key: '' };
+    return base;
   }
-  if (base.rule === 'none') return { gender: 'kadin', confidence: 'medium', rule: 'dress_default', key: '' };
+  // Defaults apply only while the title and URL are silent on gender.
+  const womenWord = WOMEN_DEFAULT_WORDS.find(([, key]) => startsAWord(lowerTurkish(title), key));
+  if (womenWord) {
+    if (base.rule === 'none') return { gender: 'kadin', confidence: 'medium', rule: womenWord[0], key: womenWord[1] };
+    // Men's or children's evidence contradicts the default: unknown, never a guess.
+    if (base.gender === 'erkek' || base.gender === 'cocuk') {
+      return { gender: 'bilinmiyor', confidence: 'none', rule: 'default_conflict', key: womenWord[1] };
+    }
+    return base;
+  }
+  if (category === 'accessories' && base.rule === 'none') {
+    const neutralWord = wordsOf(title).find(word => NEUTRAL_ACCESSORY_WORDS.includes(word));
+    if (neutralWord) return { gender: 'unisex', confidence: 'low', rule: 'accessory_neutral', key: neutralWord };
+  }
   return base;
 };
 

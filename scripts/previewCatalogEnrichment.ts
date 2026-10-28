@@ -1,14 +1,17 @@
 /**
- * READ-ONLY preview: compares stored product_attributes with the current title rules
- * and writes scripts/queries/catalog_enrichment_preview.csv. Uses anon PostgREST GET
- * only; nothing is written to the database and nothing is wired into scoring.
+ * READ-ONLY preview: compares stored product_attributes with the current title rules,
+ * merges them with the shared rule (lib/catalogEnrichment.ts: an unknown inference keeps
+ * the stored value; a different inference wins and is marked "incelenecek"), and writes
+ * scripts/queries/catalog_enrichment_preview.csv and catalog_enrichment_review.md.
+ * Uses anon PostgREST GET only; nothing is written to the database and nothing is wired
+ * into scoring.
  *
  * Run: npx tsx scripts/previewCatalogEnrichment.ts
  */
 import { config as loadEnv } from 'dotenv';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-import { FEED_CATEGORIES, feedEligibilityMissing } from '../lib/catalogEnrichment';
+import { computeCatalogEnrichment, existingGender, FEED_CATEGORIES } from '../lib/catalogEnrichment';
 import { cleanDeclaredCatalogColors, declaredCatalogFit } from '../lib/catalogMetadata';
 import {
   inferColorsFromText,
@@ -24,7 +27,6 @@ loadEnv();
 
 const PAGE_SIZE = 1000;
 const GARMENT_CATEGORIES = ['upper_body', 'lower_body', 'dresses'];
-const GENDER_FROM_DB: Record<string, string> = { women: 'kadin', men: 'erkek', unisex: 'unisex' };
 
 interface ProductRow { id: string; provider: string; title: string; brand: string | null; category: string; product_url: string | null; price: number | null; current_price: number | null; image_url: string | null }
 interface AttributeRow { product_id: string; gender: string | null; colors: unknown; fit: string | null; subcategory: string | null }
@@ -64,9 +66,10 @@ const main = async () => {
   const attributes = new Map((await fetchAll<AttributeRow>('product_attributes', 'product_id,gender,colors,fit,subcategory', 'product_id'))
     .map(row => [row.product_id, row]));
 
-  const stats = { total: products.length, changed: 0, filled: 0, overwritten: 0, unknownColor: 0, unknownSubcategory: 0,
+  const stats = { total: products.length, changed: 0, review: 0, reviewFields: 0, unknownColor: 0, unknownSubcategory: 0,
     unknownFit: 0, unknownGender: 0, anyUnknown: 0, vocabulary: 0 };
   const lines: string[] = [];
+  const reviewLines: string[] = [];
   const reasons = new Map<string, number>(), ineligibleByProvider = new Map<string, number>(),
     ineligibleByBrand = new Map<string, number>();
   const bySide: Record<string, Map<string, number>> = { kadin: new Map(), erkek: new Map(), unisex: new Map() };
@@ -78,8 +81,9 @@ const main = async () => {
     const curColors = cleanDeclaredCatalogColors(product.id, stored?.colors).join('|');
     const curSub = stored?.subcategory ?? '';
     const curFit = declaredCatalogFit(stored?.fit);
-    const curGender = GENDER_FROM_DB[stored?.gender ?? ''] ?? '';
+    const curGender = existingGender(null, stored?.gender) ?? '';
 
+    // Title inference alone, shown next to the merged result below.
     const newColors = inferColorsFromText(product.title, product.brand).join('|');
     const keyword = matchSubcategoryFromTitle(product.title, product.category);
     const newSub = inferSubcategory(product.title, product.category) ?? '';
@@ -87,30 +91,35 @@ const main = async () => {
     const newFit = inferFitFromTitle(product.title);
     const gender = inferGenderDetail(product.title, product.product_url, product.category);
 
-    const diffs = [
-      [curColors, newColors], [curSub, newSub], [curFit, newFit],
-      [curGender, gender.gender === 'bilinmiyor' ? '' : gender.gender],
-    ].filter(([current, next]) => next !== '' && next !== current);
-    const changed = diffs.length > 0;
-    const overwrites = diffs.some(([current]) => current !== '');
+    // The shared merge: exactly what the backfill dry-run and --apply compute.
+    const merged = computeCatalogEnrichment({ ...product, gender: null },
+      { colors: stored?.colors, fit: stored?.fit ?? null, subcategory: stored?.subcategory ?? null, gender: stored?.gender ?? null });
+    const mergedColors = merged.colors.join('|');
+    const mergedSub = merged.subcategory ?? '';
+    const mergedFit = merged.fit ?? '';
+    const mergedGender = merged.gender ?? '';
+
+    const changed = [[curColors, mergedColors], [curSub, mergedSub], [curFit, mergedFit], [curGender, mergedGender]]
+      .some(([current, next]) => next !== current);
+    const reviewText = merged.review.map(entry => `${entry.field}: ${entry.from} → ${entry.to}`).join('; ');
+    if (merged.review.length > 0) {
+      stats.review++;
+      stats.reviewFields += merged.review.length;
+      reviewLines.push(...merged.review.map(entry =>
+        `| ${product.id} | ${product.title.replace(/\|/g, '/')} | ${entry.field}: ${entry.from} → ${entry.to} |`));
+    }
 
     const unknown = [
-      newColors === '' && 'renk',
-      newSub === '' && 'alt_tur',
-      garment && newFit === '' && 'kalip',
-      gender.gender === 'bilinmiyor' && 'gender',
+      mergedColors === '' && 'renk',
+      mergedSub === '' && 'alt_tur',
+      garment && mergedFit === '' && 'kalip',
+      mergedGender === '' && 'gender',
     ].filter(Boolean) as string[];
 
-    // Shared feed rule (lib/catalogEnrichment.ts), judged here on the title inference alone.
-    const missing = feedEligibilityMissing({
-      category: product.category, gender: gender.gender, subcategory: newSub,
-      colors: newColors ? newColors.split('|') : [],
-      price: Number(product.current_price ?? product.price), imageUrl: product.image_url,
-    });
-    const eligible = missing.length === 0;
-    if (eligible) {
+    const missing = merged.eligibilityMissing;
+    if (merged.feedEligible) {
       eligibleCount++;
-      const sides = gender.gender === 'unisex' ? ['unisex', 'kadin', 'erkek'] : [gender.gender];
+      const sides = mergedGender === 'unisex' ? ['unisex', 'kadin', 'erkek'] : [mergedGender];
       for (const side of sides) bump(bySide[side], product.category);
     } else {
       missing.forEach(field => bump(reasons, field));
@@ -118,14 +127,12 @@ const main = async () => {
       bump(ineligibleByBrand, product.brand ?? '(marka yok)');
     }
 
-    const vocabulary = vocabularyFor(product.category, newSub);
+    const vocabulary = vocabularyFor(product.category, mergedSub);
     stats.changed += Number(changed);
-    stats.overwritten += Number(overwrites);
-    stats.filled += Number(changed && !overwrites);
-    stats.unknownColor += Number(newColors === '');
-    stats.unknownSubcategory += Number(newSub === '');
-    stats.unknownFit += Number(garment && newFit === '');
-    stats.unknownGender += Number(gender.gender === 'bilinmiyor');
+    stats.unknownColor += Number(mergedColors === '');
+    stats.unknownSubcategory += Number(mergedSub === '');
+    stats.unknownFit += Number(garment && mergedFit === '');
+    stats.unknownGender += Number(mergedGender === '');
     stats.anyUnknown += Number(unknown.length > 0);
     stats.vocabulary += Number(vocabulary !== undefined);
 
@@ -134,34 +141,48 @@ const main = async () => {
       curColors, curSub, curFit, curGender,
       newColors, newSub, newFit, gender.gender,
       `sub:${subRule};gender:${gender.rule}${gender.key ? `(${gender.key})` : ''}`, gender.confidence,
-      changed ? 'evet' : 'hayir', unknown.join('|') || 'yok',
+      mergedColors, mergedSub, mergedFit, mergedGender,
+      changed ? 'evet' : 'hayir', reviewText ? 'evet' : 'hayir', reviewText, unknown.join('|') || 'yok',
       vocabulary?.formality ?? '', vocabulary?.family ?? '', vocabulary?.season ?? '',
-      eligible ? 'evet' : 'hayir', missing.join(','),
+      merged.feedEligible ? 'evet' : 'hayir', missing.join(','),
     ].map(csvCell).join(','));
   }
 
   const header = ['id', 'baslik', 'kaynak', 'kategori',
     'mevcut_renk', 'mevcut_alt_tur', 'mevcut_kalip', 'mevcut_gender',
     'cikarilan_renk', 'cikarilan_alt_tur', 'cikarilan_kalip', 'cikarilan_gender',
-    'kural', 'gender_guven', 'degisti_mi', 'belirsiz_alanlar',
+    'kural', 'gender_guven',
+    'birlesik_renk', 'birlesik_alt_tur', 'birlesik_kalip', 'birlesik_gender',
+    'degisti_mi', 'incelenecek', 'incelenecek_degisiklik', 'belirsiz_alanlar',
     'sozluk_formalite(1-5)', 'sozluk_stil_ailesi', 'sozluk_sezon', 'feed_eligible', 'eksik_alan'];
   const counts = (map: Map<string, number>) => CATEGORY_ORDER.map(c => `${c} ${map.get(c) ?? 0}`).join(', ');
   const side = (name: string) => bySide[name].size ? [...bySide[name].values()].reduce((a, b) => a + b, 0) : 0;
   const low = (name: string) => CATEGORY_ORDER.filter(c => (bySide[name].get(c) ?? 0) < 100).join(', ') || 'yok';
   const summary = [
     '# Salt okunur önizleme: veritabanına YAZILMADI, skorlamaya BAĞLANMADI. Yeniden üretmek için: npx tsx scripts/previewCatalogEnrichment.ts',
-    `# Ürün: ${stats.total}. Değeri değişecek: ${stats.changed} (yalnız boş alan dolar: ${stats.filled}; dolu bir değer değişir: ${stats.overwritten}).`,
-    `# Hâlâ bilinmeyen (tüm ürünler üzerinden): renk ${stats.unknownColor}, alt tür ${stats.unknownSubcategory}, kalıp ${stats.unknownFit} (yalnız giyimde), gender ${stats.unknownGender}; en az bir alanı bilinmeyen ürün: ${stats.anyUnknown}.`,
-    `# sozluk_* sütunları (formalite/stil ailesi/sezon) yalnız gösterim: çıkarılan alt türün lib/styleVocabulary.ts karşılığı; ${stats.vocabulary} üründe karşılık var, boşsa alt tür sözlükte yok (genel ayakkabi/canta/aksesuar/sapka) veya bilinmiyor.`,
-    `# Feed uygunluğu (kategori, gender kadin/erkek/unisex, alt tür, renk, fiyat, görsel hepsi bilinmeli; kalıp isteğe bağlı): uygun ${eligibleCount}, elenen ${stats.total - eligibleCount}.`,
+    '# Birleştirme (lib/catalogEnrichment.ts): çıkarım bilinmiyor/boşsa MEVCUT değer korunur; çıkarım doluysa ve farklıysa çıkarılan değer geçer ve "incelenecek" olur. Dolu değer bilinmeyene çevrilmez.',
+    `# Ürün: ${stats.total}. birlesik_* değeri mevcut değerden farklı olan ürün: ${stats.changed}. İncelenecek: ${stats.review} ürün (${stats.reviewFields} alan; liste catalog_enrichment_review.md).`,
+    `# Birleştirmeden sonra hâlâ bilinmeyen (tüm ürünler üzerinden): renk ${stats.unknownColor}, alt tür ${stats.unknownSubcategory}, kalıp ${stats.unknownFit} (yalnız giyimde), gender ${stats.unknownGender}; en az bir alanı bilinmeyen ürün: ${stats.anyUnknown}.`,
+    `# sozluk_* sütunları (formalite/stil ailesi/sezon) yalnız gösterim: birleşik alt türün lib/styleVocabulary.ts karşılığı; ${stats.vocabulary} üründe karşılık var, boşsa alt tür sözlükte yok (genel ayakkabi/canta/aksesuar/sapka) veya bilinmiyor.`,
+    `# Feed uygunluğu (birleşik değerlerle; kategori, gender kadin/erkek/unisex, alt tür, renk, fiyat, görsel hepsi bilinmeli; kalıp isteğe bağlı): uygun ${eligibleCount}, elenen ${stats.total - eligibleCount}.`,
     `# Elenme nedeni (bir ürün birden çok alanda eksik olabilir): ${sorted(reasons) || 'yok'}. Kaynak: ${sorted(ineligibleByProvider) || 'yok'}. Marka (ilk 8): ${sorted(ineligibleByBrand).split(', ').slice(0, 8).join(', ') || 'yok'}.`,
     `# Uygun, kadın feed'i (kadin+unisex) ${side('kadin')}: ${counts(bySide.kadin)}. Erkek feed'i (erkek+unisex) ${side('erkek')}: ${counts(bySide.erkek)}. Yalnız unisex ${side('unisex')}: ${counts(bySide.unisex)}.`,
     `# 100'ün altındaki kategori — kadın: ${low('kadin')}; erkek: ${low('erkek')}.`,
-    '# kural: sub:title_keyword|category_default|unknown; gender:<kural>(<anahtar>). degisti_mi: çıkarım boş olmayıp mevcut değerden farklıysa evet.',
+    '# kural: sub:title_keyword|category_default|unknown; gender:<kural>(<anahtar>) (yalnız çıkarım). degisti_mi: birleşik değer mevcuttan farklıysa evet.',
   ];
-  const out = join(__dirname, 'queries', 'catalog_enrichment_preview.csv');
-  writeFileSync(out, `﻿${[...summary, header.join(','), ...lines].join('\n')}\n`, 'utf8');
-  console.log(summary.slice(1, 8).join('\n'));
+  const queries = join(__dirname, 'queries');
+  writeFileSync(join(queries, 'catalog_enrichment_preview.csv'), `﻿${[...summary, header.join(','), ...lines].join('\n')}\n`, 'utf8');
+  writeFileSync(join(queries, 'catalog_enrichment_review.md'), [
+    '# İncelenecek değişiklikler',
+    '',
+    `Dolu bir değer, başlıktan çıkarılan farklı bir değerle değişir (${stats.review} ürün, ${stats.reviewFields} alan). Salt okunur önizleme; veritabanına yazılmadı.`,
+    '',
+    '| id | başlık | alan: eski → yeni |',
+    '| --- | --- | --- |',
+    ...reviewLines,
+    '',
+  ].join('\n'), 'utf8');
+  console.log(summary.slice(2, 9).join('\n'));
 };
 
 main().catch(error => { console.error(error instanceof Error ? error.message : error); process.exit(1); });
