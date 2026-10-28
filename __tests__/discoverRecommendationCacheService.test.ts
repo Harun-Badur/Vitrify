@@ -17,9 +17,9 @@ const bag: Product = { ...top, id: 'bag', category: 'bags', outfitRole: 'bag' };
 const catalog = [top, bottom, shoes, bag];
 
 function backend(rows: unknown[] = [], error: unknown = null) {
-  const query = { select: jest.fn(), eq: jest.fn(), in: jest.fn(), abortSignal: jest.fn(),
+  const query = { select: jest.fn(), eq: jest.fn(), gt: jest.fn(), in: jest.fn(), abortSignal: jest.fn(),
     limit: jest.fn().mockResolvedValue({ data: rows, error }) };
-  for (const method of [query.select, query.eq, query.in, query.abortSignal]) method.mockReturnValue(query);
+  for (const method of [query.select, query.eq, query.gt, query.in, query.abortSignal]) method.mockReturnValue(query);
   // A queued worker has no bearing on V1 display readiness.
   const client = { from: jest.fn(() => query), rpc: jest.fn().mockResolvedValue({ data: 'queued-job', error: null }),
     channel: jest.fn() };

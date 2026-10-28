@@ -16,13 +16,16 @@ export const PERF_LABELS = [
   'combo_ready_before_swipe_no',
   'swipe_to_next_ready',
   'js_long_task',
+  'session_hydrate',
+  'catalog_load',
+  'catalog_load_pages',
 ] as const;
 
 export type PerfLabel = (typeof PERF_LABELS)[number];
 
 export interface PerfEntry {
   label: PerfLabel;
-  /** Duration in milliseconds; 0 for counted marks. */
+  /** Duration in milliseconds; 0 for counted marks; a count for `*_pages` labels. */
   ms: number;
   /** Wall-clock time of the record (epoch ms). */
   at: number;
@@ -73,6 +76,9 @@ export const recordMs = (label: PerfLabel, ms: number): void => {
   nextSlot = (nextSlot + 1) % PERF_TRACE_CAPACITY;
   size = Math.min(size + 1, PERF_TRACE_CAPACITY);
 };
+
+/** A count rather than a duration (e.g. pages read); summarized like durations. */
+export const recordCount = (label: PerfLabel, count: number): void => recordMs(label, count);
 
 /** Counted event with no duration. */
 export const mark = (label: PerfLabel): void => recordMs(label, 0);

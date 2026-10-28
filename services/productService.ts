@@ -36,7 +36,7 @@ import type {
   SessionIntent,
 } from '../types/recommendation';
 import { DEFAULT_FEED_MODE } from '../types/recommendation';
-import { span } from '../lib/perfTrace';
+import { recordCount, span } from '../lib/perfTrace';
 
 export { filterProducts } from '../src/intelligence/filters/productFilters';
 export type { ProductFilters } from '../src/intelligence/filters/productFilters';
@@ -374,6 +374,7 @@ const loadRecommendationCatalog = async (): Promise<Product[]> => {
       if (!page.hasMore) break;
     }
   }
+  recordCount('catalog_load_pages', pages);
   const selected = measureDiscoverStageSync('catalog.pool', () => selectRecommendationPool(collected));
   const repository = getProductRepository();
   function* enrichSelected(): Generator<void, Product[], void> {
@@ -411,7 +412,7 @@ export const fetchRecommendationCatalog = (): Promise<Product[]> => {
     return Promise.resolve(recommendationPool.products);
   }
   if (!recommendationRequest) {
-    recommendationRequest = measureDiscoverStage('catalog.total', loadRecommendationCatalog).finally(() => { recommendationRequest = null; });
+    recommendationRequest = measureDiscoverStage('catalog.total', () => span('catalog_load', loadRecommendationCatalog)).finally(() => { recommendationRequest = null; });
   }
   return recommendationRequest;
 };

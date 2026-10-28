@@ -2,6 +2,7 @@ import { captureOwnerPublication, deviceSessionOwner, registerOwnerResource, set
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import type { StateCreator } from 'zustand';
 import { logger } from '../lib/logger';
+import { begin } from '../lib/perfTrace';
 import { setLastFeedMode } from '../lib/recsFeedState';
 import { resetSessionIntent } from '../lib/sessionIntent';
 import {
@@ -30,6 +31,8 @@ export const createProfileSlice: StateCreator<
   sessionUserId: null,
   sessionSyncStatus: 'idle',
   hydrateSession: async (userId): Promise<void> => {
+    // Measured until sessionSyncStatus settles: the Discover feed waits for it.
+    const endHydrate = begin('session_hydrate');
     if (await isAccountWriteFenced(userId)) return;
     setDeviceSessionOwner(userId);
     const current = captureOwnerPublication(userId);
@@ -53,9 +56,13 @@ export const createProfileSlice: StateCreator<
           passedIds,
         ),
       }));
+      endHydrate();
     } catch (error) {
       logger.error('Oturum verisi yüklenemedi', { error });
-      if (current() && get().sessionUserId === userId) set({ sessionSyncStatus: 'error' });
+      if (current() && get().sessionUserId === userId) {
+        set({ sessionSyncStatus: 'error' });
+        endHydrate();
+      }
     }
     await wardrobeLoad;
   },

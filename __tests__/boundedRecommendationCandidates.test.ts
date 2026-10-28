@@ -9,6 +9,12 @@ import * as compatibility from '../src/intelligence/outfits/catalogCompatibility
 
 // Public catalog snapshot, not products added to application/backend state.
 const catalog: Product[] = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/recommendation-catalog.snapshot.json'), 'utf8'));
+// The snapshot's first shoe is a children's boot, which the child/adult hard conflict
+// (1f50f52) excludes from adult outfits. Shoe anchors use an adult sneaker instead.
+const ADULT_SHOE_ID = 'boyner-15969332';
+const first = (role: string): Product => (role === 'shoes'
+  ? catalog.find(p => p.id === ADULT_SHOE_ID)
+  : catalog.find(p => p.outfitRole === role))!;
 const roles = ['top', 'bottom', 'shoes'] as const;
 const owned = roles.map((role, index) => ({ id: `owned-${role}`, category: role,
   color: ['black', 'white', 'beige'][index],
@@ -22,7 +28,7 @@ describe('exact diversity-band candidate search', () => {
   it.each(['top', 'bottom', 'one_piece'] as const)(
     'visits only eligible core bases in original order for a %s anchor', async role => {
       const products = ['top', 'bottom', 'one_piece'].flatMap(role => {
-        const original = catalog.find(p => p.outfitRole === role)!;
+        const original = first(role);
         return [0, 1, 2].map(index => ({ ...original, id: `core-${role}-${index}`, gender: 'unisex' as const }));
       });
       const anchor = products.find(p => p.outfitRole === role)!;
@@ -44,7 +50,7 @@ describe('exact diversity-band candidate search', () => {
     });
 
   it.each(roles)('preserves all results for %s, empty/full wardrobe and exposures', async role => {
-    const anchor = catalog.find(product => product.outfitRole === role)!;
+    const anchor = first(role);
     for (const wardrobeItems of [[], owned]) {
       const base = { catalogProducts: catalog, wardrobeItems, requiredCatalogProductId: anchor.id, firstOnly: true };
       const originalProducts = getDiscoverRecommendations(base)[0]?.displayProducts ?? [];
@@ -57,7 +63,7 @@ describe('exact diversity-band candidate search', () => {
   }, 120_000);
 
   it.each(roles)('retains the entire exact diversity band for %s, not a fixed K', async role => {
-    const anchor = catalog.find(product => product.outfitRole === role)!;
+    const anchor = first(role);
     const input = { catalogProducts: catalog, wardrobeItems: [], requiredCatalogProductId: anchor.id, maximalOnly: true };
     const original = rankOutfitCandidates(generateOutfitCandidates(input), anchor);
     const best = original[0].rankingValue;
@@ -73,7 +79,7 @@ describe('exact diversity-band candidate search', () => {
 
   it('preserves equal evidence, ID ties and boundary candidates without truncation', async () => {
     const products = roles.flatMap(role => {
-      const product = catalog.find(p => p.outfitRole === role)!;
+      const product = first(role);
       return [0, 1, 2, 3].map(index => ({ ...product, id: `${role}-${index}`, gender: 'unisex' as const }));
     });
     const anchor = products[0];
@@ -87,9 +93,9 @@ describe('exact diversity-band candidate search', () => {
   });
 
   it('keeps an exact best-minus-0.12 boundary and rejects only strictly lower scores', async () => {
-    const anchor = catalog.find(p => p.outfitRole === 'top')!;
-    const bottom = catalog.find(p => p.outfitRole === 'bottom')!;
-    const shoe = catalog.find(p => p.outfitRole === 'shoes')!;
+    const anchor = first('top');
+    const bottom = first('bottom');
+    const shoe = first('shoes');
     const shoes = [1, 0.76, 0.75999998].map((_, index) => ({ ...shoe, id: `boundary-${index}` }));
     const real = compatibility.catalogCompatibility;
     jest.spyOn(compatibility, 'catalogCompatibility').mockImplementation((anchor, product) => ({
@@ -133,7 +139,7 @@ describe('exact diversity-band candidate search', () => {
 
   it('cancels between search passes and leaves the reference behavior intact', async () => {
     const controller = new AbortController();
-    const anchor = catalog.find(p => p.outfitRole === 'shoes')!;
+    const anchor = first('shoes');
     const search = generation.searchOutfitCandidatesAsync;
     const spy = jest.spyOn(generation, 'searchOutfitCandidatesAsync').mockImplementation(async (...args) => {
       const result = await search(...args);
