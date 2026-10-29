@@ -8,7 +8,8 @@ jest.mock('../lib/logger',()=>({logger:{debug:jest.fn(),warn:jest.fn(),error:jes
 jest.mock('../lib/recsFeedState',()=>({setLastFeedMode:jest.fn(),setLastRecommendationId:jest.fn()}));
 jest.mock('../lib/recsConfig',()=>({fetchRecsConfig:jest.fn(),fetchStyleProfileSnapshot:jest.fn()}));
 jest.mock('../services/productRepository',()=>({productsById:jest.fn()}));
-// Expo's build-time URL is supplied by the local test command, never a real endpoint.
+// Expo's build-time URL is not set under Jest; a fake local URL keeps the Edge path reachable without any real endpoint.
+process.env.EXPO_PUBLIC_RECS_FEED_URL='http://localhost.invalid/recs-feed';
 beforeEach(()=>{
   jest.mocked(getSupabaseClient).mockReturnValue({auth:{getSession:async()=>({data:{session:{access_token:'fake'}},error:null})}} as never);
 });

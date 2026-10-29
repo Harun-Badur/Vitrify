@@ -65,16 +65,19 @@ describe('ready feed packet context and memory', () => {
     expect(cache.accept(packet, [top])).toBe(true); expect(cache.lookup(top)).toEqual([]);
     cache.activate(top); expect(cache.shown.has(top.id)).toBe(true); expect(cache.exposure.size).toBe(0);
   });
-  it('writes owner-scoped codec records to Supabase and denies publishing private wardrobe to public scope', async () => {
-    const upsert = jest.fn().mockResolvedValue({ error: null });
-    const client = { from: jest.fn(() => ({ upsert })) };
+  it('publishes owner-bound codec records through the v2 claim RPC and denies writes without a matching claim', async () => {
+    const rpc = jest.fn().mockResolvedValue({ error: null });
+    const client = { rpc };
+    const claim = { id: 'job', owner_id: 'owner', claim_token: 'token', claim_revision: 1, request_payload: '' };
     const context = anchorContext(catalog, top, wardrobe, new Map());
     const key = createFinalCacheKey(context), payload = serializeFinal(getDiscoverRecommendations(context.input), context);
-    await new SupabaseRecommendationRecordStore(client as never, 'owner').write(key, payload);
-    expect(upsert.mock.calls[0][0]).toMatchObject({ scope: 'owner', owner_id: 'owner', kind: 'final', payload });
-    expect(upsert.mock.calls[0][0].cache_key_hash).toMatch(/^[a-f0-9]{64}$/);
-    await expect(new SupabaseRecommendationRecordStore(client as never).write(key, payload)).rejects.toThrow('Private wardrobe');
-    expect(upsert).toHaveBeenCalledTimes(1);
+    await new SupabaseRecommendationRecordStore(client as never, 'owner', claim).write(key, payload);
+    expect(rpc.mock.calls[0][0]).toBe('publish_discover_recommendation_cache');
+    expect(rpc.mock.calls[0][1]).toMatchObject({ p_job: 'job', p_token: 'token', p_revision: 1, p_record: { kind: 'final', payload } });
+    expect(rpc.mock.calls[0][1].p_record.cache_key_hash).toMatch(/^[a-f0-9]{64}$/);
+    await expect(new SupabaseRecommendationRecordStore(client as never).write(key, payload)).rejects.toThrow('owner-bound v2 job claim');
+    await expect(new SupabaseRecommendationRecordStore(client as never, 'other', claim).write(key, payload)).rejects.toThrow('owner-bound v2 job claim');
+    expect(rpc).toHaveBeenCalledTimes(1);
   });
   it('rebinds a changed already-shown anchor on a new batch without counting exposure twice', async () => {
     const cache = new DiscoverRecommendationCache(catalog, [], 'u');
@@ -96,33 +99,29 @@ describe('ready feed packet context and memory', () => {
     const cache = new DiscoverRecommendationCache(catalog, wardrobe, 'owner');
     const request = cache.request([top], 1);
     const records: Record<string, unknown>[] = [];
-    const updates: { table: string; value: Record<string, unknown> }[] = [];
+    const finishes: Record<string, unknown>[] = [];
+    const job = { id: 'job', owner_id: 'owner', claim_token: 'token', claim_revision: 1, request_payload: encodeSnapshot(request) };
     const client = {
-      rpc: jest.fn().mockResolvedValue({ data: [{ id: 'job', owner_id: 'owner' }], error: null }),
-      from: (table: string) => {
+      rpc: jest.fn(async (name: string, args?: Record<string, unknown>) => {
+        if (name === 'claim_discover_recommendation_job_v2') return { data: job, error: null };
+        if (name === 'publish_discover_recommendation_cache') { records.push(args!.p_record as Record<string, unknown>); return { error: null }; }
+        if (name === 'finish_discover_recommendation_job') { finishes.push(args!); return { error: null }; }
+        throw new Error(`unexpected rpc ${name}`);
+      }),
+      from: () => {
         const query = {
-          select: (_columns: string) => query,
-          eq: (_column: string, _value: unknown) => query,
-          gt: (_column: string, _value: unknown) => query,
-          single: async () => ({ data: { request_payload: encodeSnapshot(request) }, error: null }),
+          select: () => query, eq: () => query, gt: () => query,
           maybeSingle: async () => ({ data: null, error: null }),
-          upsert: async (value: Record<string, unknown>) => { records.push(value); return { error: null }; },
-          update: (value: Record<string, unknown>) => {
-            updates.push({ table, value });
-            return { eq: async () => ({ error: null }) };
-          },
         };
         return query;
       },
     };
     expect(await processRecommendationJob(client as never)).toBe(true);
-    expect(updates.filter(update => update.value.status === 'error')).toEqual([]);
+    expect(finishes).toHaveLength(1);
+    expect(finishes[0]).toMatchObject({ p_job: 'job', p_token: 'token', p_revision: 1, p_error: null });
     expect(records.map(record => record.kind)).toEqual(['ranking', 'final']);
-    expect(records.every(record => record.owner_id === 'owner' && record.scope === 'owner')).toBe(true);
-    const result = updates.find(update => update.table === 'discover_recommendation_job_payloads')!;
-    const packet = JSON.parse(result.value.result_packet as string) as RecommendationFeedPacket;
+    const packet = JSON.parse(finishes[0].p_packet as string) as RecommendationFeedPacket;
     expect(cache.accept(packet, [top])).toBe(true);
     expect(cache.lookup(top)).toStrictEqual(getDiscoverRecommendations(anchorContext(catalog, top, wardrobe, new Map()).input));
-    expect(updates.at(-1)).toMatchObject({ table: 'discover_recommendation_jobs', value: { status: 'completed' } });
   });
 });
