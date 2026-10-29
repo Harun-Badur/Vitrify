@@ -4,6 +4,7 @@ import type { LikedProduct } from '../types/product';
 import { fetchFeedProducts } from '../services/productService';
 import { deleteLikedProduct, fetchLikedProducts, fetchPassedProductIds } from '../services/likeService';
 import { DEFAULT_FEED_MODE } from '../types/recommendation';
+import { setDeviceSessionOwner } from '../lib/accountDeviceWork';
 
 jest.mock('../services/productService', () => ({
   fetchFeedProducts: jest.fn(),
@@ -123,7 +124,7 @@ describe('app store domain state', () => {
     expect(useAppStore.getState().passedProductIds).toEqual([second.id]);
   });
 
-  it('session reset clears user data while retaining the current feed', () => {
+  it('session reset clears user data and the current feed', () => {
     useAppStore.setState({
       sessionUserId: 'user-1',
       sessionSyncStatus: 'success',
@@ -141,7 +142,8 @@ describe('app store domain state', () => {
     expect(useAppStore.getState()).toMatchObject({
       sessionUserId: null,
       sessionSyncStatus: 'idle',
-      currentProducts: [third],
+      currentProducts: [],
+      feedStatus: 'idle',
       likedProducts: [],
       passedProductIds: [],
       passedStack: [],
@@ -153,6 +155,7 @@ describe('app store domain state', () => {
   });
 
   it('removes a favorite through the existing service without changing discovery', async () => {
+    setDeviceSessionOwner('user-1');
     jest.mocked(deleteLikedProduct).mockResolvedValueOnce(undefined);
     useAppStore.setState({ sessionUserId: 'user-1', currentProducts: [third], likedProducts: [liked] });
     await useAppStore.getState().unlikeProduct(first.id);
@@ -162,10 +165,11 @@ describe('app store domain state', () => {
   });
 
   it('restores a favorite after a failed removal without changing discovery', async () => {
+    setDeviceSessionOwner('user-1');
     jest.mocked(deleteLikedProduct).mockRejectedValueOnce(new Error('offline'));
     const secondLike = { ...liked, product: second };
     useAppStore.setState({ sessionUserId: 'user-1', currentProducts: [third], likedProducts: [liked, secondLike] });
-    await expect(useAppStore.getState().unlikeProduct(first.id)).rejects.toThrow('offline');
+    await expect(useAppStore.getState().unlikeProduct(first.id)).rejects.toThrow('Favori kaldırılamadı');
     expect(useAppStore.getState().likedProducts).toEqual([liked, secondLike]);
     expect(useAppStore.getState().currentProducts).toEqual([third]);
   });
