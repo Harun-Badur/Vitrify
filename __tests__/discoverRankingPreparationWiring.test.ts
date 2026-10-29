@@ -162,14 +162,14 @@ const bag = {
   category: 'bags' as const,
   outfitRole: 'bag' as const,
 };
-const catalog = [top, bottom, shoes, jacket, bag];
+const catalog = [top, bottom, shoes, jacket, bag].map((product) => ({ ...product, gender: 'women' as const }));
 const realService = jest.requireActual<
   typeof import('../src/intelligence/recommendations/getDiscoverRecommendations')
 >('../src/intelligence/recommendations/getDiscoverRecommendations');
 
 
 jest.mock('react-native', () => ({
-  View: 'View', Text: 'Text', TextInput: 'TextInput', StatusBar: {
+  Platform: { OS: 'ios' }, View: 'View', Text: 'Text', TextInput: 'TextInput', StatusBar: {
     setBarStyle: jest.fn(), pushStackEntry: jest.fn(), popStackEntry: jest.fn(),
   },
   StyleSheet: { create: (value: unknown) => value, absoluteFillObject: {}, hairlineWidth: 1 },
@@ -321,7 +321,7 @@ describe('Discover cache-only wiring', () => {
       typeof urls === 'string' ? [urls] : urls));
     await renderer.act(() => publish({ ...packet, entries: [packet.entries[1]] }));
     expect(current()).toEqual([]);
-    const nextImages = complementaryProductsForDisplay(session.peekPrepared(bottom)!, bottom.id)
+    const nextImages = complementaryProductsForDisplay(session.peekPrepared(catalog[1])!, catalog[1].id)
       .flatMap(product => getProductImages(product).slice(0, 1)).filter(url => !alreadyWarmed.has(url));
     expect(nextImages.length).toBeGreaterThan(0);
     expect(Image.prefetch).toHaveBeenCalledWith(expect.arrayContaining(nextImages), { cachePolicy: 'memory-disk' });

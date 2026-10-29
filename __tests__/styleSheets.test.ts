@@ -33,6 +33,8 @@ const renderer = jest.requireActual('react-test-renderer') as {
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 jest.mock('react-native', () => ({
+  Platform: { OS: 'ios' },
+  KeyboardAvoidingView: 'KeyboardAvoidingView',
   Modal: 'Modal',
   Pressable: 'Pressable',
   ScrollView: 'ScrollView',
@@ -236,7 +238,7 @@ it('saves styles once on Save without triggering the immediate body/style callba
   expect(callbacks.onStyleToggle).not.toHaveBeenCalled();
 });
 it.each(['colors', 'brands', 'budget'] as const)(
-  'keeps Save disabled until a selection exists in the %s view',
+  'keeps Save enabled with an empty selection in the %s view so it can be cleared',
   async (section) => {
     await render(
       createElement(SizeStudioSheet, {
@@ -249,7 +251,7 @@ it.each(['colors', 'brands', 'budget'] as const)(
     );
     expect(
       tree.root.findByProps({ accessibilityLabel: 'Kaydet' }).props.disabled,
-    ).toBe(true);
+    ).toBe(false);
     expect(callbacks.onStyleToggle).not.toHaveBeenCalled();
   },
 );
@@ -294,7 +296,7 @@ it.each([
     );
     expect(
       tree.root.findByProps({ accessibilityLabel: 'Kaydet' }).props.disabled,
-    ).toBe(true);
+    ).toBe(false);
     await renderer.act(() => {
       tree.root.findByProps({ accessibilityLabel: label }).props.onPress();
     });
