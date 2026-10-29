@@ -1,7 +1,7 @@
 # Jest baseline: kırık suite sınıflandırması
 
 Tarih: 2026-10-28, `main` (feat/wardrobe-missing-info + chore/dev-build-cutout birleştirildikten sonra).
-Durum: 15 suite / 70 test kırık; tsc 3 hata. Bu belge yalnız sınıflandırır, hiçbir düzeltme yapılmadı.
+Güncel durum (2026-10-29, chore/test-cleanup): 3 suite / 19 test kırık, 1 test bilinçli atlandı; tsc 0 hata. Aşağıdaki tablolar 2026-10-28 anlık görüntüsüdür; temizlenen suite'ler 'Güncel durum' bölümünde.
 
 **Sayılar (suite): A (gerçek hata) = 0 kesin, 2 şüpheli (A?) · B (eskimiş test) = 11 · C (ortam/araç) = 2**
 
@@ -37,3 +37,19 @@ Bu belgedeki sınıflar, jest çıktısı ve kısa kod okumasından çıkarıld�
 |---|---|---|---|---|
 | recommendationCacheWorker | 1 | CLI `tsx scripts/prepareRecommendationCache.ts` çalışırken `__DEV__ is not defined` (RN global'i Node'da yok). | Script'te/testte `globalThis.__DEV__ = false` tanımla. | küçük |
 | stagingCatalogTransfer | 1 | `reports/backend/staging-catalog-20-20261012.json` ile `reports/catalog-expansion-v1/phase7.4-payload.json` satırları birebir eşleşmiyor (rapor verisi; `reports/` EAS'ta da dışlanır). | Rapor dosyalarını yeniden üret ya da testi `reports/` yoksa atlayacak şekilde yap. | küçük |
+
+## Güncel durum (chore/test-cleanup)
+
+**Hâlâ kırmızı (3 suite / 19 test):**
+
+| Suite | Kırık | Neden | Karar |
+|---|---|---|---|
+| wardrobeScreen | 13 | Etiketler `app/wardrobe/[section].tsx` içine taşındı; test `liked.tsx` ekranında arıyor. | Bu temizlikte kapsam dışı; testi yeni bölüm ekranına göre yeniden yaz (orta). |
+| createOutfitScreen | 5 | Erişilebilirlik etiketleri değişti. | Kapsam dışı (orta). |
+| accountStorageUpgradeContract | 1 | Test `user.rpc('storage_upload_admit', …)` alt dizesini arıyor; işleyicide `user!.rpc(...)` (yalnız non-null `!`), RPC argümanları aynı. İşleyici ve test aynı commit'te (`eb59d1d`), sonradan değişmedi. | A1 dosyası, dokunulmadı. `A1_DEPENDENCY`: bilinçli bir sözleşme değişikliği gibi görünmüyor, `!` kaynaklı; A1 yetkisiyle test alt dizesi `user!.rpc` olarak güncellenebilir (küçük). |
+
+**Bilinçli atlanan:** stagingCatalogTransfer (1 test, `test.skip`): iki rapor JSON'u birebir eşleşmiyor; raporlar yeniden üretilince `.skip` kaldırılır.
+
+**Temizlenenler:** discoverRankingPreparationWiring (Platform mock + fixture'lara `gender`; pairing artık güvenilir cinsiyet kanıtı istiyor), styleSheets (Platform, KeyboardAvoidingView, Kaydet artık boş seçimle açık), discoverBackendConsistency, cardPhysics, outfitCover, recommendationCacheWorker (NODE_OPTIONS ile `__DEV__`), discoverFeedErrors (`EXPO_PUBLIC_RECS_FEED_URL` testte tanımlı), discoverRecommendationCache (v2 sahip bağlı RPC), appStoreDomains (`resetSession` feed'i temizliyor; `setDeviceSessionOwner`; kullanıcı mesajı), tsc 3 hata.
+
+**Flaky notu:** boundedRecommendationCandidates ve discoverRecommendationCacheService 2026-10-28'de kırmızıydı; 2026-10-29'da tam çalıştırmada geçtiler. Kök neden bulunmadı; aralıklı kırılırlarsa A? sınıfında yeniden incele.
