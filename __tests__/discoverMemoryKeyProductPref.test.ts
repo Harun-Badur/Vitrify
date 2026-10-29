@@ -7,9 +7,9 @@ import type { Product } from '../types/product';
 const base: Product = { id: 'k-top', title: 'Top', price: 100, brand: 'Brand', category: 'upper_body',
   outfitRole: 'top', imageUrl: 'top.jpg', garmentDescription: 'Top', gender: 'unisex' };
 const kadinPool: Product[] = [base,
-  { ...base, id: 'k-bottom', category: 'lower_body', outfitRole: 'bottom', gender: 'kadin' }];
+  { ...base, id: 'k-bottom', category: 'lower_body', outfitRole: 'bottom', gender: 'women' }];
 const hepsiPool: Product[] = [...kadinPool,
-  { ...base, id: 'e-bottom', category: 'lower_body', outfitRole: 'bottom', gender: 'erkek' }];
+  { ...base, id: 'e-bottom', category: 'lower_body', outfitRole: 'bottom', gender: 'men' }];
 
 // The in-session memory cache has no productPref in its key; the key must still differ whenever
 // the preference changes the pool, because the pool content is part of the fingerprint.
@@ -36,5 +36,17 @@ describe('in-session memory cache keys follow the preference-scoped pool', () =>
     const erkek = new DiscoverRecommendationCache(kadinPool, [], 'owner', 'erkek');
     expect(new Set([hepsi.sessionId, kadin.sessionId, erkek.sessionId]).size).toBe(3);
     expect(new Set([hepsi.contextFingerprint, kadin.contextFingerprint, erkek.contextFingerprint]).size).toBe(3);
+  });
+});
+
+describe('Discover split timers are closed-list PERF_TRACE labels', () => {
+  it('records the catalog, ranking and empty-slot labels', () => {
+    const { PERF_LABELS, recordMs, resetPerfTrace, perfTraceEntries, setPerfTraceOverrideForTests } = require('../lib/perfTrace');
+    setPerfTraceOverrideForTests(true); resetPerfTrace();
+    const labels = ['catalog_products', 'catalog_attributes', 'catalog_pool_select', 'catalog_enrich',
+      'ranking_prepare', 'ranking_select', 'combo_empty', 'combo_complements'];
+    for (const label of labels) { expect(PERF_LABELS).toContain(label); recordMs(label, 1); }
+    expect(perfTraceEntries().map((entry: { label: string }) => entry.label)).toEqual(labels);
+    resetPerfTrace(); setPerfTraceOverrideForTests(null);
   });
 });

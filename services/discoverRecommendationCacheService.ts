@@ -1,5 +1,5 @@
 import { measureDiscoverStage, measureDiscoverStageSync } from '../lib/discoverStageTiming';
-import { begin, mark, span } from '../lib/perfTrace';
+import { begin, mark, recordCount, span } from '../lib/perfTrace';
 import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '../lib/accountDeviceWork';
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
@@ -237,8 +237,8 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).stage(product, 'preparationStartedAt', 'ranking_miss');
                 let value: PreparedDiscoverRanking;
                 try {
-                  value = await measureDiscoverStage('ranking.prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
-                    waitForTurn: () => rankings.waitForTurn(product, rankingSignal) }));
+                  value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
+                    waitForTurn: () => rankings.waitForTurn(product, rankingSignal) })));
                 } catch (error) {
                   if (__DEV__ && !rankingSignal.aborted) trace?.cancel(product, attempt!, 'preparation_failed');
                   throw error;
@@ -256,7 +256,11 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               changed.delete(wake);
               if (prepared === undefined) break;
               if (!current(version)) break;
-              result = await measureDiscoverStage('ranking.select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal }));
+              result = await measureDiscoverStage('ranking.select', () => span('ranking_select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal })));
+              // Empty-slot signal: how many complements this anchor got (0 = an empty combo).
+              const complements = complementaryProductsForDisplay(result, product.id).length;
+              if (complements === 0) mark('combo_empty');
+              recordCount('combo_complements', complements);
               if (__DEV__) discoverPrefetchTrace(session).stage(product, 'finalReadyAt');
             }
             if (!current(version)) break;

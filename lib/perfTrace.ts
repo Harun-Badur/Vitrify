@@ -19,6 +19,14 @@ export const PERF_LABELS = [
   'session_hydrate',
   'catalog_load',
   'catalog_load_pages',
+  'catalog_products',
+  'catalog_attributes',
+  'catalog_pool_select',
+  'catalog_enrich',
+  'ranking_prepare',
+  'ranking_select',
+  'combo_empty',
+  'combo_complements',
 ] as const;
 
 export type PerfLabel = (typeof PERF_LABELS)[number];

@@ -227,7 +227,7 @@ const queryCatalogPage = async (
   let productsResult: {
     data: unknown[] | null;
     error: { message: string } | null;
-  } = await measureDiscoverStage('catalog.products', () => catalogQuery(productSelectWithImages));
+  } = await measureDiscoverStage('catalog.products', () => span('catalog_products', () => catalogQuery(productSelectWithImages)));
 
   function catalogQuery(columns: string) {
     const serverExclusions = excludeIds.slice(0, CATALOG_PAGE_SIZE);
@@ -256,7 +256,7 @@ const queryCatalogPage = async (
     /column .*images.* does not exist/i.test(productsResult.error.message)
   ) {
     logger.warn('products.images yok; legacy select kullanılıyor');
-    productsResult = await measureDiscoverStage('catalog.products', () => catalogQuery(productSelectLegacy));
+    productsResult = await measureDiscoverStage('catalog.products', () => span('catalog_products', () => catalogQuery(productSelectLegacy)));
   }
 
   if (productsResult.error) throw new Error(productsResult.error.message);
@@ -275,11 +275,11 @@ const queryCatalogPage = async (
   if (validRows.length === 0) return { products: [], hasMore: (productsResult.data?.length ?? 0) > CATALOG_PAGE_SIZE };
 
   let attributesResult: { data: unknown[] | null; error: { message: string } | null } = ids.length === 0
-    ? { data: [], error: null } : await measureDiscoverStage('catalog.attributes', () => client
+    ? { data: [], error: null } : await measureDiscoverStage('catalog.attributes', () => span('catalog_attributes', () => client
     .from('product_attributes')
     .select(
       'product_id, gender, colors, fit, subcategory, brand_slug, price_band, outfit_role',
-    ).in('product_id', ids));
+    ).in('product_id', ids)));
 
   if (
     attributesResult.error &&
@@ -393,7 +393,7 @@ const loadRecommendationCatalog = async (productPref: ProductPref): Promise<Prod
     }
   }
   recordCount('catalog_load_pages', pages);
-  const selected = measureDiscoverStageSync('catalog.pool', () => selectRecommendationPool(collected));
+  const selected = measureDiscoverStageSync('catalog.pool', () => span('catalog_pool_select', () => selectRecommendationPool(collected)));
   const repository = getProductRepository();
   function* enrichSelected(): Generator<void, Product[], void> {
     const result: Product[] = [];
@@ -412,7 +412,7 @@ const loadRecommendationCatalog = async (productPref: ProductPref): Promise<Prod
     }
     return result;
   }
-  const products = await measureDiscoverStage('catalog.prepare', () => runCooperatively(enrichSelected(), { diagnosticStage: 'catalog' }));
+  const products = await measureDiscoverStage('catalog.prepare', () => span('catalog_enrich', () => runCooperatively(enrichSelected(), { diagnosticStage: 'catalog' })));
   if (getSupabaseClient() === client) {
     recommendationPool = { products, at: Date.now(), productPref };
     recommendationPoolClient = client;
