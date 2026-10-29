@@ -3,6 +3,7 @@ import {createFavoritesSlice} from '../store/favoritesSlice';
 import {MOCK_PRODUCTS} from '../data/mockProducts';
 import {deleteLikedProduct,fetchLikedProducts,insertLikedProduct} from '../services/likeService';
 import {track} from '../lib/analytics';
+import {recordSessionProductAction} from '../lib/sessionIntent';
 import {PreferenceTransactionError} from '../services/preferenceTransactionAdapter';
 jest.mock('../services/likeService',()=>({deleteLikedProduct:jest.fn(),fetchLikedProducts:jest.fn(),insertLikedProduct:jest.fn(),updateLikedProductAlert:jest.fn()}));
 jest.mock('../lib/analytics',()=>({track:jest.fn()}));
@@ -19,6 +20,11 @@ test('failed add reports error and retry is possible without duplicates',async()
   store.getState().swipeRight(p);await flush();
   expect(store.getState().likedProducts).toEqual([]);expect(store.getState().favoritesStatus).toBe('error');
   store.getState().swipeRight(p);await flush();expect(store.getState().likedProducts).toHaveLength(1);
+});
+test('a catalog favorite feeds the session profile with its catalog id',async()=>{
+  store.getState().swipeRight(p);await flush();
+  expect(recordSessionProductAction).toHaveBeenCalledWith('dolap_add',p);
+  expect(track).toHaveBeenCalledWith('dolap_add',p.id,{source:'feed'},expect.objectContaining({origin:'favorite'}));
 });
 test('remove waits for backend; failure keeps existing favorite and explicit retry works',async()=>{
   const d=deferred<void>();jest.mocked(deleteLikedProduct).mockReturnValueOnce(d.promise);store.setState({likedProducts:[like]});

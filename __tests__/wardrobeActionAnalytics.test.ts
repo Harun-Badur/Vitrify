@@ -4,10 +4,12 @@ import type { AppState } from '../store/useAppStore';
 import type { WardrobeData } from '../services/wardrobeService';
 import { loadWardrobe, saveWardrobe, storeWardrobePhoto } from '../services/wardrobeService';
 import { track } from '../lib/analytics';
+import { recordSessionProductAction } from '../lib/sessionIntent';
 
 jest.mock('../services/wardrobeService', () => ({loadWardrobe:jest.fn(),saveWardrobe:jest.fn(),storeWardrobePhoto:jest.fn()}));
 jest.mock('../services/wardrobeCutoutService', () => ({wardrobeCutoutConfigured:()=>false,createWardrobeCutout:jest.fn(),uploadWardrobeCutout:jest.fn()}));
 jest.mock('../lib/analytics',()=>({track:jest.fn()}));
+jest.mock('../lib/sessionIntent',()=>({...jest.requireActual('../lib/sessionIntent'),recordSessionProductAction:jest.fn()}));
 jest.mock('../lib/logger',()=>({logger:{debug:jest.fn(),warn:jest.fn(),error:jest.fn()}}));
 const input = {title:'Fixture',brand:'Fixture',category:'upper_body' as const,imageUrl:'local-fixture'};
 const makeStore = () => create<AppState>()((set,get,api)=>({
@@ -28,6 +30,16 @@ test('real wardrobe add emits a distinct owner-bound ownership event after cloud
   expect(track).toHaveBeenCalledWith('dolap_add',store.getState().wardrobeItems[0].id,
     {source:'wardrobe'},expect.objectContaining({userId:'A',origin:'wardrobe',actionId:expect.any(String)}));
   expect(jest.mocked(track).mock.calls[0][3]?.actionId).not.toBe(store.getState().wardrobeItems[0].id);
+});
+test('a wardrobe UUID never feeds the session profile; only the owner-bound event is emitted',async()=>{
+  const store=makeStore();await store.getState().hydrateWardrobe('A');
+  await store.getState().addWardrobeItem(input);
+  const id=store.getState().wardrobeItems[0].id;
+  expect(id).toMatch(/^wardrobe-/);
+  await store.getState().removeWardrobeItem(id);
+  expect(recordSessionProductAction).not.toHaveBeenCalled();
+  expect(jest.mocked(track).mock.calls.map(call=>[call[0],call[1],call[2]])).toEqual([
+    ['dolap_add',id,{source:'wardrobe'}],['dolap_remove',id,{source:'wardrobe'}]]);
 });
 test.each(['pending','conflict'] as const)('local %s result is preserved but not reported as committed',async state=>{
   jest.mocked(saveWardrobe).mockImplementation(async (_owner,data)=>({...data,wardrobeSync:{state,pending:1}}));
