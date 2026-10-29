@@ -21,7 +21,7 @@ test('entry binds the real handler; new RPC argument names and return contracts 
   expect(body('storage_upload_start').result).toBe('boolean');
   expect(body('storage_upload_succeed').params).toBe('p_operation uuid,p_lease uuid,p_subject uuid,p_bucket text,p_path text,p_proof jsonb');
   expect(body('storage_upload_succeed').result).toBe('boolean');
-  expect(handler).toContain("user.rpc('storage_upload_admit', { p_bucket: bucket, p_path: path, p_request: requestId })");
+  expect(handler).toContain("user!.rpc('storage_upload_admit', { p_bucket: bucket, p_path: path, p_request: requestId })");
   expect(handler).toContain('p_operation: op.operation, p_lease: op.lease, p_subject: op.owner, p_bucket: op.bucket, p_path: op.path');
   expect(handler).toContain("admin.rpc('storage_upload_succeed', { ...args(op), p_proof: JSON.parse(proof) })");
 });
