@@ -64,6 +64,8 @@ export interface InsightChipContext {
   reasons: unknown;
   wardrobe: readonly InsightWardrobeItem[];
   likeCount: number;
+  /** Profilde beyan edilen bütçe; verilmişse fiyatı aralığın dışındaki ürün için bütçe chip'i çıkmaz. */
+  declaredPriceRange?: { min: number; max: number } | null;
   /** Önceki kartların türleri (en yenisi sonda); chip'siz kart null. */
   recentKinds: readonly (InsightChipKind | null)[];
   hiddenKinds?: ReadonlySet<InsightChipKind>;
@@ -195,6 +197,8 @@ const candidateChips = (product: Product, context: InsightChipContext): Map<Insi
   for (const signal of parseReasonSignals(context.reasons)) {
     if (candidates.has(signal.kind)) continue;
     if (signal.kind === 'budget' && context.likeCount < BUDGET_CHIP_MIN_LIKES) continue;
+    if (signal.kind === 'budget' && context.declaredPriceRange
+      && (product.price < context.declaredPriceRange.min || product.price > context.declaredPriceRange.max)) continue;
     const evidence: InsightEvidence[] = [productEvidence(product)];
     if (signal.kind === 'style_fit') {
       const labels = parseReasonSignals(context.reasons).filter(item => item.kind === 'style_fit').slice(0, MAX_EVIDENCE);

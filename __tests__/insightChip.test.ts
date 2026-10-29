@@ -146,6 +146,28 @@ describe('budget evidence threshold', () => {
   });
 });
 
+describe('declared budget contradicts the learned price band', () => {
+  const reasons = [PRICE_BAND_REASON_LABEL];
+  const likeCount = BUDGET_CHIP_MIN_LIKES;
+  const range = { min: 80, max: 150 };
+
+  it('hides the budget chip when the price is below or above the declared range', () => {
+    expect(selectInsightChip(product('p', { price: 79 }), context({ reasons, likeCount, declaredPriceRange: range }))).toBeNull();
+    expect(selectInsightChip(product('p', { price: 151 }), context({ reasons, likeCount, declaredPriceRange: range }))).toBeNull();
+  });
+
+  it('keeps the budget chip at both edges and inside the declared range', () => {
+    for (const price of [80, 100, 150]) {
+      expect(selectInsightChip(product('p', { price }), context({ reasons, likeCount, declaredPriceRange: range }))?.kind).toBe('budget');
+    }
+  });
+
+  it('keeps the like-evidenced chip when no budget was declared', () => {
+    expect(selectInsightChip(product('p', { price: 9999 }), context({ reasons, likeCount }))?.kind).toBe('budget');
+    expect(selectInsightChip(product('p', { price: 9999 }), context({ reasons, likeCount, declaredPriceRange: null }))?.kind).toBe('budget');
+  });
+});
+
 describe('frequency cap', () => {
   it(`never shows the same kind on ${MAX_CONSECUTIVE_SAME_KIND + 1} consecutive cards`, () => {
     expect(MAX_CONSECUTIVE_SAME_KIND).toBe(2);
