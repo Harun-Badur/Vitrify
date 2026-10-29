@@ -11,8 +11,8 @@ Insight chip. Bugünkü “Fiyat aralığına uygun” `buildReasons` içindedir
 Hızlı doğruluk:
 
 - `dolap_add` yalnız nitelik satırı olan katalog kimliğinde profili beslesin. Dolap UUID’si `product_attributes` ile eşleşmez. [kodda doğrulandı: supabase/recs_v1.sql, 504–506; store/wardrobeSlice.ts, 333]
-- `dolap_remove` yazılsın. Tip ve SQL ağırlığı var, `track` çağrısı yok.
-- Profil kaydı sıralama bellek önbelleğini düşürsün ve desteyi yenilesin. Bugün yalnız `invalidateStyleProfileSnapshot`. [kodda doğrulandı: services/profileService.ts, syncDeclaredStyleTags yolu]
+- `dolap_remove` olayı yazılıyor (`store/wardrobeSlice.ts` `removeWardrobeItem`, commit `f139ec9`). Dolapta silmeyi geri alma arayüzü yok; Beta sonrasına.
+- Profil kaydı sonrası deste yenileme zaten var: `app/(tabs)/profile.tsx` `scheduleFeedRefreshAfterProfileSave` (debounce, sahip korumalı) ve `invalidateStyleProfileSnapshot`.
 - `feedPagination` Jest ortamı. Üç test `EXPO_PUBLIC_*` inlining yüzünden Edge’e çıkmaz. Ayrıntı `08`. Ürün kodunu “Edge yok” diye değiştirmek yanlış onarımdır.
 - Release derlemesinde gerçek cihaz ölçümü. 2026-10-14 raporu bunu NOT VERIFIED bırakır. [rapora dayanıyor: reports/release/VITRIFY_V1_DISCOVER_CATALOG_PERFORMANCE.md]
 
