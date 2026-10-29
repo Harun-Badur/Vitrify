@@ -124,7 +124,7 @@ export const SUBTYPES: Readonly<Record<GarmentCategory, readonly VocabularySubty
 
 export const CATEGORY_SUBTYPES: Readonly<Record<GarmentCategory, readonly string[]>> = Object.fromEntries(
   (Object.keys(SUBTYPES) as GarmentCategory[]).map(category => [category, SUBTYPES[category].map(item => item.slug)]),
-) as Record<GarmentCategory, readonly string[]>;
+) as unknown as Record<GarmentCategory, readonly string[]>;
 
 export const subtypesForCategory = (category: GarmentCategory): readonly VocabularySubtype[] =>
   SUBTYPES[category] ?? [];

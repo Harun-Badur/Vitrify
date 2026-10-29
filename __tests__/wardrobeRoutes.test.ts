@@ -17,6 +17,8 @@ interface Node {
     onPress: () => void;
     onChangeText: (value: string) => void;
     disabled?: boolean;
+    value?: string;
+    accessibilityState?: { selected?: boolean };
     numColumns: number;
     width: number;
     imageHeight: number;
@@ -551,7 +553,7 @@ describe('Dolap child routes', () => {
 
   describe('required subtype, color and automatic name', () => {
     const save = () => tree.root.findByProps({ accessibilityLabel: 'Kıyafeti kaydet' });
-    const selected = (label: string) => tree.root.findByProps({ accessibilityLabel: label }).props.accessibilityState.selected;
+    const selected = (label: string) => tree.root.findByProps({ accessibilityLabel: label }).props.accessibilityState?.selected;
 
     it('keeps the second category row and adds Alt tür and Renk rows under it', async () => {
       await mount(AddWardrobeScreen);
