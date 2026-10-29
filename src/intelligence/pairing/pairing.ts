@@ -203,6 +203,46 @@ export const colorCompatibility = (anchor: PairItem, candidate: PairItem): Color
     : 'incompatible';
 };
 
+export type PairEvidenceKind = 'formality' | 'season' | 'color';
+
+interface DimensionMatch { compatible: boolean; value: string | null }
+
+/** Per dimension: known and compatible on both items. Formality and season need reliable subtypes. */
+const dimensionMatches = (
+  anchor: PairItem,
+  candidate: PairItem,
+  policy: CompatibilityPolicy,
+  evidencePolicy: PairEvidencePolicy,
+): Record<PairEvidenceKind, DimensionMatch> => {
+  const coarse = <T extends string>(table: Readonly<Record<string, T>>): DimensionMatch => {
+    const left = fromSubtype(anchor, table), right = fromSubtype(candidate, table);
+    const usable = left.value !== null && right.value !== null
+      && isReliable(anchor.subtype, affectsSubtype(anchor.conflicts), policy)
+      && isReliable(candidate.subtype, affectsSubtype(candidate.conflicts), policy);
+    return { compatible: usable && left.value === right.value, value: usable ? left.value : null };
+  };
+  const color = colorCompatibility(anchor, candidate) === 'compatible';
+  return {
+    formality: coarse<PairFormality>(evidencePolicy.formalityBySubtype),
+    season: coarse<PairSeason>(evidencePolicy.seasonBySubtype),
+    color: { compatible: color, value: color ? colorSlugs(candidate)[0] ?? null : null },
+  };
+};
+
+/**
+ * The evidence kinds a compatible pair actually rests on, for explanation text only: it never
+ * decides eligibility. Unknown or incompatible dimensions are not listed.
+ */
+export const pairEvidenceKinds = (
+  anchor: PairItem,
+  candidate: PairItem,
+  policy: CompatibilityPolicy,
+  evidencePolicy: PairEvidencePolicy = PAIRING_EVIDENCE_POLICY_V1,
+): PairEvidenceKind[] => {
+  const matches = dimensionMatches(anchor, candidate, policy, evidencePolicy);
+  return (['color', 'formality', 'season'] as const).filter((kind) => matches[kind].compatible);
+};
+
 /**
  * V3: counts the dimensions that are known on both items and compatible. Compatible color means a
  * shared color or a neutral on either side (the catalog scorer's rule); two different chromatic
@@ -216,25 +256,13 @@ const positiveEvidenceCheck = (
   rule: NonNullable<CompatibilityPolicy['positiveEvidence']>,
 ): CompatibilityCheck => {
   const evidence: CompatibilityEvidence[] = [];
-  const add = (field: 'formality' | 'season' | 'color', compatible: boolean, value: string | null) => {
-    if (rule.dimensions.includes(field)) {
-      evidence.push({ subject: 'candidate', field, value, source: field === 'color' ? 'product_snapshot' : 'derived_from_subtype',
-        confidence: compatible ? 'high' : 'unknown', reliable: compatible });
-    }
-  };
-  const coarse = <T extends string>(table: Readonly<Record<string, T>>) => {
-    const left = fromSubtype(anchor, table), right = fromSubtype(candidate, table);
-    const usable = left.value !== null && right.value !== null
-      && isReliable(anchor.subtype, affectsSubtype(anchor.conflicts), policy)
-      && isReliable(candidate.subtype, affectsSubtype(candidate.conflicts), policy);
-    return { compatible: usable && left.value === right.value, value: usable ? left.value : null };
-  };
-  const formality = coarse<PairFormality>(evidencePolicy.formalityBySubtype);
-  const season = coarse<PairSeason>(evidencePolicy.seasonBySubtype);
-  const color = colorCompatibility(anchor, candidate) === 'compatible';
-  add('formality', formality.compatible, formality.value);
-  add('season', season.compatible, season.value);
-  add('color', color, color ? colorSlugs(candidate)[0] ?? null : null);
+  const matches = dimensionMatches(anchor, candidate, policy, evidencePolicy);
+  for (const field of ['formality', 'season', 'color'] as const) {
+    if (!rule.dimensions.includes(field)) continue;
+    const { compatible, value } = matches[field];
+    evidence.push({ subject: 'candidate', field, value, source: field === 'color' ? 'product_snapshot' : 'derived_from_subtype',
+      confidence: compatible ? 'high' : 'unknown', reliable: compatible });
+  }
   const count = evidence.filter((entry) => entry.reliable).length;
   return count >= rule.minDimensions
     ? { check: 'positive_evidence', status: 'pass', code: 'positive_evidence_sufficient', evidence }

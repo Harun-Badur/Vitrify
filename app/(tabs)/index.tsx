@@ -79,8 +79,8 @@ import {
   createInsightChipSequence,
   type InsightChip,
   type InsightChipKind,
-  type InsightWardrobeItem,
 } from '../../lib/insightChip';
+import { insightWardrobeSignature, toInsightWardrobeItems } from '../../lib/insightWardrobe';
 import type { DiscoverRecommendation } from '../../src/intelligence/recommendations/discoverRecommendation';
 import { useAppStore } from '../../store/useAppStore';
 import { getProductImages, type Product } from '../../types/product';
@@ -93,8 +93,6 @@ const SEARCH_TRACK_DEBOUNCE_MS = 500;
 const HEADER_Z_INDEX = 7;
 const EMPTY_RECOMMENDATIONS: readonly DiscoverRecommendation[] = [];
 const EMPTY_RECOMMENDATION_CATALOG: Product[] = [];
-// Discover dolap girdisi bilerek boş; dolap kanıtlı chip'ler şimdilik üretilmez.
-const EMPTY_INSIGHT_WARDROBE: readonly InsightWardrobeItem[] = [];
 const NO_HIDDEN_INSIGHT_KINDS: ReadonlySet<InsightChipKind> = new Set();
 
 type HintStatus = 'checking' | 'visible' | 'hidden';
@@ -746,11 +744,20 @@ export default function FeedScreen() {
   const insightSequenceRef = useRef(createInsightChipSequence());
   const [hiddenInsightKinds, setHiddenInsightKinds] = useState(NO_HIDDEN_INSIGHT_KINDS);
   const likeCount = likedProducts.length;
+  const wardrobeItems = useAppStore((state) => state.wardrobeItems);
+  const insightWardrobe = useMemo(() => toInsightWardrobeItems(wardrobeItems ?? []), [wardrobeItems]);
+  const insightWardrobeKey = insightWardrobeSignature(insightWardrobe);
+  const insightWardrobeKeyRef = useRef(insightWardrobeKey);
   const insightChips = useMemo(() => {
+    // Dolap değişince chip'ler yeni dolaba göre baştan atanır; kalıcı eski chip yanlış kanıt gösterirdi.
+    if (insightWardrobeKeyRef.current !== insightWardrobeKey) {
+      insightWardrobeKeyRef.current = insightWardrobeKey;
+      insightSequenceRef.current = createInsightChipSequence();
+    }
     insightSequenceRef.current = assignInsightChips(deckPages.map(page => page.product),
-      { wardrobe: EMPTY_INSIGHT_WARDROBE, likeCount }, insightSequenceRef.current);
+      { wardrobe: insightWardrobe, likeCount }, insightSequenceRef.current);
     return insightSequenceRef.current.chips;
-  }, [deckPages, likeCount]);
+  }, [deckPages, likeCount, insightWardrobe, insightWardrobeKey]);
   const handleHideInsightKind = useCallback((chip: InsightChip): void => {
     setHiddenInsightKinds(previous => new Set(previous).add(chip.kind));
   }, []);

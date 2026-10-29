@@ -7,7 +7,8 @@ import type { InsightChipKind } from './insightChip';
 export const INSIGHT_CHIP_COPY = {
   aiBadge: 'AI',
   chipLabel: {
-    wardrobe_match: 'Dolabındakiyle uyumlu',
+    // Yedek metin; chip'in gerçek metni lib/insightChipEvidence.ts'te kanıt türünden gelir.
+    wardrobe_match: 'Dolabınla renk uyumlu',
     completes_wardrobe: 'Dolabını tamamlar',
     style_fit: 'Tarzına uygun',
     // Kaynak öğrenilmiş fiyat bandıdır, beyan edilen bütçe değil; metin bunu söyler.
@@ -16,7 +17,7 @@ export const INSIGHT_CHIP_COPY = {
   } satisfies Record<InsightChipKind, string>,
   sheetTitle: 'Neden bu öneri?',
   sheetSummary: {
-    wardrobe_match: 'Dolabındaki bir parçayla renk ve kombin olarak uyumlu görünüyor.',
+    wardrobe_match: 'Dolabındaki bir parçayla renk uyumlu.',
     completes_wardrobe: 'Dolabında bu kategoriden parça yok; mevcut parçalarınla kombinlenebilir.',
     style_fit: 'Beğenilerinden öğrendiğimiz tercihlerle örtüşüyor.',
     budget: 'Beğendiğin ürünlerin çoğu bu fiyat aralığında.',

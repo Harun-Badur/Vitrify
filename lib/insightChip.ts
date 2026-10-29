@@ -1,5 +1,6 @@
 import type { Product } from '../types/product';
-import { colorCompatibility, evaluatePair } from '../src/intelligence/pairing/pairing';
+import { colorCompatibility, evaluatePair, pairEvidenceKinds } from '../src/intelligence/pairing/pairing';
+import { evidenceCopy } from './insightChipEvidence';
 import type { PairItem } from '../src/intelligence/pairing/pairingTypes';
 import { fromWardrobe } from '../src/intelligence/pairing/wardrobePairing';
 import { UPPER_SUBCATEGORY_ROLE } from '../src/intelligence/pairing/outfitRules';
@@ -136,10 +137,15 @@ const productEvidence = (product: Product): InsightEvidence => ({
   imageUrl: product.imageUrl,
 });
 
-const chip = (kind: InsightChipKind, evidence: InsightEvidence[], matchedItem?: InsightWardrobeItem): InsightChip => ({
+const chip = (
+  kind: InsightChipKind,
+  evidence: InsightEvidence[],
+  matchedItem?: InsightWardrobeItem,
+  text?: { label: string; summary: string },
+): InsightChip => ({
   kind,
-  label: INSIGHT_CHIP_COPY.chipLabel[kind],
-  summary: INSIGHT_CHIP_COPY.sheetSummary[kind],
+  label: text?.label ?? INSIGHT_CHIP_COPY.chipLabel[kind],
+  summary: text?.summary ?? INSIGHT_CHIP_COPY.sheetSummary[kind],
   evidence,
   ...(matchedItem ? { matchedItem } : {}),
 });
@@ -175,8 +181,10 @@ const candidateChips = (product: Product, context: InsightChipContext): Map<Insi
       return colorCompatibility(subject, partner) !== 'unknown' && isComplementary(subject, partner);
     });
     const match = pairable.find(item => colorCompatibility(subject, wardrobePair(item)) === 'compatible');
-    if (match) {
-      candidates.set('wardrobe_match', () => chip('wardrobe_match', [wardrobeEvidence(match), productEvidence(product)], match));
+    // The text names only the evidence the pairing module found; no evidence text, no chip.
+    const text = match ? evidenceCopy(pairEvidenceKinds(subject, wardrobePair(match), ACTIVE_CATALOG_PAIRING_POLICY)) : null;
+    if (match && text) {
+      candidates.set('wardrobe_match', () => chip('wardrobe_match', [wardrobeEvidence(match), productEvidence(product)], match, text));
     }
     const ownsCategory = wardrobe.some(item => item.category === product.category);
     if (!ownsCategory && pairable.length > 0) {
