@@ -261,6 +261,8 @@ function SwipeCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isInsightOpen, setIsInsightOpen] = useState(false);
   const [isLikedLocal, setIsLikedLocal] = useState(false);
+  /** Görselin alt kenarı (kart koordinatı); ray bu kenara göre konumlanır. */
+  const [imageBottom, setImageBottom] = useState(0);
   const likeSourceRef = useRef<LikeInputSource>('double_tap');
 
   const hasExited = useSharedValue(false);
@@ -351,7 +353,9 @@ function SwipeCard({
 
   const handleImagePagerLayout = useCallback(
     (event: LayoutChangeEvent): void => {
-      const width = event.nativeEvent.layout.width;
+      const { width, y, height } = event.nativeEvent.layout;
+      const bottom = y + height;
+      setImageBottom((current) => (Math.abs(current - bottom) > 0.5 ? bottom : current));
       if (!(width > 0)) {
         return;
       }
@@ -556,11 +560,6 @@ function SwipeCard({
     });
 
   const cardGesture = Gesture.Exclusive(doubleTapGesture, panGesture, singleTapGesture);
-  const ctaNativeGesture = Gesture.Native().blocksExternalGesture(
-    doubleTapGesture,
-    panGesture,
-    singleTapGesture,
-  );
 
   /**
    * Image-only horizontal pager. Separation from card vertical via offsets only:
@@ -794,19 +793,6 @@ function SwipeCard({
                 <Heart color={colors.accent} fill={colors.accent} size={64} />
               </Animated.View>
 
-              {isCurrent ? (
-                <GestureDetector gesture={ctaNativeGesture}>
-                  <View style={styles.railHost} collapsable={false}>
-                    <DiscoverActionRail
-                      onTry={handleVirtualTryOn}
-                      onStore={handleStorePress}
-                      onLike={handleLikeButton}
-                      liked={isLikedLocal}
-                      onWhy={insightChip ? openInsight : undefined}
-                    />
-                  </View>
-                </GestureDetector>
-              ) : null}
             </View>
 
             <View style={styles.info}>
@@ -842,6 +828,22 @@ function SwipeCard({
           </View>
         </Animated.View>
       </GestureDetector>
+      {isCurrent && imageBottom > 0 ? (
+        // Kartın jest ağacının KARDEŞİ: ray üzerinde başlayan dokunuş
+        // tek/çift dokunuş ve pan jestlerine hiç ulaşmaz.
+        <View
+          style={[styles.railAnchor, { height: imageBottom }]}
+          pointerEvents="box-none"
+        >
+          <DiscoverActionRail
+            onTry={handleVirtualTryOn}
+            onStore={handleStorePress}
+            onLike={handleLikeButton}
+            liked={isLikedLocal}
+            onWhy={insightChip ? openInsight : undefined}
+          />
+        </View>
+      ) : null}
       {recommendations !== undefined ? (
         <DiscoverRecommendations
           currentProductId={product.id}
@@ -899,10 +901,12 @@ export const SWIPE_CARD_WIDTH = CARD_WIDTH;
 export const SWIPE_CARD_HEIGHT = CARD_HEIGHT;
 
 const styles = StyleSheet.create({
-  railHost: {
+  railAnchor: {
     position: 'absolute',
+    top: 0,
     right: 10,
-    bottom: 26,
+    justifyContent: 'flex-end',
+    paddingBottom: 26,
   },
   expandedSurface: { flex: 1, backgroundColor: colors.backdrop },
   closeExpanded: {

@@ -256,6 +256,12 @@ describe('Discover product block motion', () => {
       }));
       await Promise.resolve();
     });
+    await renderer.act(async () => {
+      const wrap = tree.root.findAllByType('View').find(node => typeof node.props.onLayout === 'function')!;
+      (wrap.props.onLayout as (event: unknown) => void)({
+        nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 500 } },
+      });
+    });
     const slot = tree.root.findAllByType('AnimatedView').find(node =>
       node.props.collapsable === false && node.props.pointerEvents === 'auto');
     expect(slot).toBeDefined();

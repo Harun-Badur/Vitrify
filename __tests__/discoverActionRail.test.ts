@@ -2,13 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { createElement, type ElementType, type ReactElement } from 'react';
 import DiscoverActionRail from '../components/DiscoverActionRail';
+import ShadowedIcon from '../components/ShadowedIcon';
 
 jest.mock('react-native', () => ({
   Text: 'Text', View: 'View',
   StyleSheet: { create: (styles: unknown) => styles, flatten: (s: unknown) => s },
 }));
 jest.mock('lucide-react-native', () => ({
-  Heart: 'Heart', ShoppingBag: 'ShoppingBag', Sparkles: 'Sparkles', Shirt: 'Shirt',
+  Heart: 'Heart', ShoppingBag: 'ShoppingBag', Sparkles: 'Sparkles', BadgeCheck: 'BadgeCheck',
 }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
 
@@ -75,6 +76,33 @@ describe('DiscoverActionRail', () => {
   });
 });
 
+describe('touch absorption and halo icons', () => {
+  it('rail root claims every touch inside its rectangle, gaps and labels included', () => {
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
+    const host = tree.root.findAllByType('View')[0];
+    expect(host.props.onStartShouldSetResponder()).toBe(true);
+  });
+
+  it('each item is one pressable holding both icon and label', () => {
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    for (const button of buttons(tree)) {
+      expect(button.findAllByType('Text').length).toBeGreaterThanOrEqual(1);
+    }
+    expect(tree.root.findAllByType('BadgeCheck').length).toBeGreaterThan(0);
+  });
+
+  it('halo copy is an unfilled thicker dark stroke under a white outline', () => {
+    const tree = mount(createElement(ShadowedIcon, { icon: 'Heart' as never, size: 28 }));
+    const [halo, top] = tree.root.findAllByType('Heart');
+    expect(halo.props.fill).toBe('none');
+    expect(halo.props.strokeWidth).toBeCloseTo(4.2);
+    expect(halo.props.color).toBe('rgba(0, 0, 0, 0.4)');
+    expect(top.props.fill).toBe('none');
+    expect(top.props.strokeWidth).toBe(2);
+    expect(top.props.color).toBe('#FFFFFF');
+  });
+});
+
 describe('SwipeCard presentation wiring (source contract)', () => {
   const card = read('components/SwipeCard.tsx');
   const index = read('app/(tabs)/index.tsx');
@@ -97,6 +125,22 @@ describe('SwipeCard presentation wiring (source contract)', () => {
     expect(card).toMatch(/requireExternalGestureToFail\(doubleTapGesture\)/);
     expect(card).toMatch(/Gesture\.Exclusive\(doubleTapGesture, panGesture, singleTapGesture\)/);
     expect(card).toMatch(/SINGLE_TAP_DELAY_MS = 250/);
+  });
+
+  it('mounts the rail as a sibling of the card gesture tree so rail touches never reach it', () => {
+    const detectorStart = card.indexOf('<GestureDetector gesture={cardGesture}>');
+    const detectorEnd = card.indexOf('</GestureDetector>', detectorStart);
+    const railAt = card.indexOf('<DiscoverActionRail');
+    expect(detectorStart).toBeGreaterThan(-1);
+    expect(railAt).toBeGreaterThan(detectorEnd);
+    expect(card).not.toMatch(/ctaNativeGesture/);
+  });
+
+  it('the header strip sits outside the deck and its tabs and icons are pressables', () => {
+    expect(index).toMatch(/header: \{\s*position: 'absolute'[\s\S]*?zIndex: HEADER_Z_INDEX/);
+    expect(index).toMatch(/<ShadowedIcon icon=\{Search\}/);
+    expect(index).toMatch(/<ShadowedIcon icon=\{SlidersHorizontal\}/);
+    expect(read('components/FeedModeSegment.tsx')).not.toMatch(/opacity: isActive \? 1 : 0\.65/);
   });
 
   it('the header only adds readable shadows, no new layers', () => {

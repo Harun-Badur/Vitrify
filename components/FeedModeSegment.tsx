@@ -96,7 +96,6 @@ export default function FeedModeSegment({
                 isActive ? styles.labelActive : null,
                 overlay && {
                   color: colors.inverseText,
-                  opacity: isActive ? 1 : 0.65,
                   fontSize: 12,
                   textShadowColor: 'rgba(0, 0, 0, 0.55)',
                   textShadowOffset: { width: 0, height: 1 },

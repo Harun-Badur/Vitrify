@@ -1,14 +1,15 @@
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Heart, Shirt, ShoppingBag, Sparkles } from 'lucide-react-native';
+import { BadgeCheck, Heart, ShoppingBag, Sparkles } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import ShadowedIcon from './ShadowedIcon';
 import { INSIGHT_CHIP_COPY } from '../lib/insightChipTemplates';
 import { colors } from '../lib/theme';
 
-const TRY_SIZE = 48;
-const ICON_SIZE = 32;
-const HEART_SIZE = 34;
+const TRY_SIZE = 44;
+const TRY_ICON_SIZE = 22;
+const ICON_SIZE = 26;
+const HEART_SIZE = 28;
 const HIT_SIZE = 44;
 
 interface DiscoverActionRailProps {
@@ -20,9 +21,12 @@ interface DiscoverActionRailProps {
   onWhy?: () => void;
 }
 
+/** Boşluklar ve etiketler dahil tüm ray dikdörtgeni dokunuşu yutar. */
+const claimTouch = (): boolean => true;
+
 function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverActionRailProps) {
   return (
-    <View style={styles.rail}>
+    <View style={styles.rail} onStartShouldSetResponder={claimTouch}>
       <PressableScale
         onPress={onTry}
         style={styles.item}
@@ -30,7 +34,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         accessibilityLabel="Dene"
       >
         <View style={styles.tryCircle}>
-          <Sparkles color={colors.inverseText} size={24} />
+          <Sparkles color={colors.inverseText} size={TRY_ICON_SIZE} strokeWidth={2} />
         </View>
         <Text style={styles.label}>Dene</Text>
       </PressableScale>
@@ -66,7 +70,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
           accessibilityLabel="Neden bu öneri?"
         >
           <View>
-            <ShadowedIcon icon={Shirt} size={ICON_SIZE} />
+            <ShadowedIcon icon={BadgeCheck} size={ICON_SIZE} />
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{INSIGHT_CHIP_COPY.aiBadge}</Text>
             </View>
@@ -116,7 +120,7 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.inverseText,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     textShadowColor: 'rgba(0, 0, 0, 0.65)',
     textShadowOffset: { width: 0, height: 1 },
