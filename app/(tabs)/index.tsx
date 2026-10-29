@@ -23,6 +23,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, SlidersHorizontal, X } from 'lucide-react-native';
+import ShadowedIcon from '../../components/ShadowedIcon';
 import {
   runOnUI,
   useSharedValue,
@@ -83,6 +84,7 @@ import {
 import { insightWardrobeSignature, toInsightWardrobeItems } from '../../lib/insightWardrobe';
 import type { DiscoverRecommendation } from '../../src/intelligence/recommendations/discoverRecommendation';
 import { useAppStore } from '../../store/useAppStore';
+import type { LikeInputSource } from '../../types/analytics';
 import { getProductImages, type Product } from '../../types/product';
 import type { FeedMode } from '../../types/recommendation';
 
@@ -529,14 +531,14 @@ export default function FeedScreen() {
   const noteSwipe = useDiscoverPerfTrace(recommendationSession, currentProduct, recommendationRevision);
 
   const handleSwipeRight = useCallback(
-    (product: Product): void => {
+    (product: Product, input?: LikeInputSource): void => {
       if (!canLike) {
         handleRequireAuth();
         return;
       }
       try {
         noteSwipe();
-        swipeRight(product);
+        swipeRight(product, input);
       } catch (error) {
         logger.error('Beğeni işlenemedi', { code: 'FAVORITE_START_FAILED' });
         Alert.alert('Beğeni kaydedilemedi', 'Bağlantını kontrol edip tekrar dene.');
@@ -873,7 +875,7 @@ export default function FeedScreen() {
             accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
             accessibilityState={{ expanded: isSearchInputOpen }}
           >
-            <Search color={colors.inverseText} size={24} />
+            <ShadowedIcon icon={Search} size={24} />
           </PressableScale>
           <PressableScale
             onPress={() => setIsFilterOpen(true)}
@@ -881,7 +883,7 @@ export default function FeedScreen() {
             accessibilityRole="button"
             accessibilityLabel="Filtreler"
           >
-            <SlidersHorizontal color={colors.inverseText} size={21} />
+            <ShadowedIcon icon={SlidersHorizontal} size={21} />
             {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
           </PressableScale>
         </View>
@@ -896,7 +898,7 @@ export default function FeedScreen() {
             onSubmitEditing={() => commitSearchText(searchInput)}
             placeholder="Ne arıyorsun?"
             placeholderTextColor={colors.inverseText}
-            style={styles.searchInput}
+            style={[styles.searchInput, styles.headerTextShadow]}
             autoCorrect={false}
             autoCapitalize="none"
             returnKeyType="search"
@@ -1092,6 +1094,11 @@ const styles = StyleSheet.create({
     color: colors.inverseText,
     fontSize: 14,
     paddingVertical: 0,
+  },
+  headerTextShadow: {
+    textShadowColor: 'rgba(0, 0, 0, 0.55)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   filterHit: {
     width: FILTER_HIT_SIZE,

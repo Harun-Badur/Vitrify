@@ -28,7 +28,7 @@ jest.mock('expo-image', () => ({ Image: Object.assign((props: Record<string, unk
   prefetch: jest.fn(), getCachePathAsync: jest.fn().mockResolvedValue(null),
 }) }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
-jest.mock('../components/InsightChip', () => 'InsightChip');
+jest.mock('../components/DiscoverActionRail', () => 'DiscoverActionRail');
 jest.mock('../components/InsightWhySheet', () => 'InsightWhySheet');
 const mockImageRenders = jest.fn();
 const mockImageMounts = jest.fn();
@@ -49,7 +49,7 @@ jest.mock('react-native-gesture-handler', () => {
   const builder = (): Record<string, jest.Mock> => {
     const chain: Record<string, jest.Mock> = {};
     for (const method of ['enabled', 'activeOffsetY', 'failOffsetX', 'onUpdate', 'onEnd',
-      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'minPointers', 'activeOffsetX', 'failOffsetY']) {
+      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'requireExternalGestureToFail', 'maxDelay', 'minPointers', 'activeOffsetX', 'failOffsetY']) {
       chain[method] = jest.fn(() => chain);
     }
     return chain;
@@ -239,7 +239,7 @@ describe('Discover product block motion', () => {
     expect(mainImages().map(node => node.props.uri)).toEqual(anchor.images.slice(0, 3));
   });
 
-  it('moves main image, product information, both CTAs and the recommendation section with one pose', async () => {
+  it('moves main image, product information, the action rail and the recommendation section with one pose', async () => {
     const anchor = product('anchor', 'top');
     const recommendations = getDiscoverRecommendations({ wardrobeItems: [], catalogProducts: [anchor,
       product('bottom', 'bottom'), product('shoes', 'shoes'), product('coat', 'outerwear')],
@@ -264,8 +264,7 @@ describe('Discover product block motion', () => {
       return false;
     };
     const members = [tree.root.findByProps({ slot: 'main' }),
-      tree.root.findByProps({ accessibilityLabel: 'Dene' }),
-      tree.root.findByProps({ accessibilityLabel: 'Mağazaya git' }),
+      tree.root.findByType('DiscoverActionRail'),
       tree.root.findByProps({ accessibilityLabel: `${anchor.brand} ${anchor.title}, ${formatTryPrice(anchor.price)}` }),
       tree.root.findByProps({ testID: 'discover-recommendation-card-bottom' })];
     members.forEach(node => expect(belongsToSlot(node)).toBe(true));
@@ -279,7 +278,7 @@ describe('Discover product block motion', () => {
     dragOffset.value = -700;
     const pose = (slot?.props.style as { current: { transform: { translateY: number }[] } }[])[2].current;
     expect(pose.transform).toEqual([{ translateY: 0 }]);
-    const mainStyle = StyleSheet.flatten(members[3].props.style as ViewStyle);
+    const mainStyle = StyleSheet.flatten(members[2].props.style as ViewStyle);
     expect(mainStyle).toMatchObject({ flex: 1, height: 'auto', width: '100%' });
   });
 

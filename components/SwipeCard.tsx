@@ -33,15 +33,12 @@ import Animated, {
 import {
   ChevronRight,
   Heart,
-  Maximize,
-  ShoppingBag,
-  Sparkles,
   X,
 } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
-import InsightChip from './InsightChip';
+import DiscoverActionRail from './DiscoverActionRail';
 import InsightWhySheet from './InsightWhySheet';
 import type { InsightChip as InsightChipModel } from '../lib/insightChip';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
@@ -54,7 +51,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
-import { IMPRESSION_MIN_DWELL_MS } from '../types/analytics';
+import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
   colors,
   estimateDiscoverCardHeight,
@@ -80,7 +77,8 @@ const HEART_BURST_OUT_MS = 260;
 const HEART_BURST_PEAK_SCALE = 1.18;
 /** Soft crossfade when bitmap arrives; pairs with surface placeholder (no white flash). */
 const IMAGE_CROSSFADE_MS = 0;
-const ACTION_ICON_SIZE = 16;
+/** Single tap (expand) fires only after the double tap window has closed. */
+const SINGLE_TAP_DELAY_MS = 250;
 /** Horizontal gallery: activate after 6px X; fail if 12px Y first (card vertical wins). */
 const IMAGE_SWIPE_ACTIVE_OFFSET_X_PX = 6;
 const IMAGE_SWIPE_FAIL_OFFSET_Y_PX = 12;
@@ -115,7 +113,7 @@ export interface SwipeCardProps {
   pageHeight: SharedValue<number>;
   /** Ortak sürükleme ofseti; commit sonrası parent 0'a baslar. */
   dragOffset: SharedValue<number>;
-  onAddToCloset: (product: Product) => void;
+  onAddToCloset: (product: Product, source?: LikeInputSource) => void;
   /** Pass throw settle sonrası tek store reconcile. */
   onPass: (product: Product) => void;
   onVirtualTryOn: (product: Product) => void;
@@ -260,6 +258,11 @@ function SwipeCard({
     };
   }, [product.id, unregisterPageIndexSV]);
 
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isInsightOpen, setIsInsightOpen] = useState(false);
+  const [isLikedLocal, setIsLikedLocal] = useState(false);
+  const likeSourceRef = useRef<LikeInputSource>('double_tap');
+
   const hasExited = useSharedValue(false);
   const exitAnimationId = useSharedValue(0);
   const heartBurst = useSharedValue(0);
@@ -307,9 +310,9 @@ function SwipeCard({
     };
   }, [isCurrent, onImpression, product]);
 
-  const handleAddToCloset = useCallback((): void => {
+  const handleAddToCloset = useCallback((source: LikeInputSource): void => {
     try {
-      onAddToCloset(product);
+      onAddToCloset(product, source);
     } catch (error) {
       logger.error('Beğeni işlenemedi', { error, productId: product.id });
     }
@@ -404,12 +407,15 @@ function SwipeCard({
   }, [handleBuy]);
 
   const finishDoubleTapLike = useCallback((): void => {
+    const source = likeSourceRef.current;
+    likeSourceRef.current = 'double_tap';
     if (!canLike) {
       handleRequireAuth();
       return;
     }
-    handleAddToCloset();
+    handleAddToCloset(source);
   }, [canLike, handleAddToCloset, handleRequireAuth]);
+
 
   const snapHome = (): void => {
     'worklet';
@@ -499,9 +505,29 @@ function SwipeCard({
     );
   };
 
+  const openInsight = useCallback((): void => setIsInsightOpen(true), []);
+
+  const playHeartRef = useRef(playHeartThenLike);
+  playHeartRef.current = playHeartThenLike;
+
+  /** Beğen butonu: çift dokunuşla aynı kalp animasyonu ve beğeni akışı. */
+  const handleLikeButton = useCallback((): void => {
+    if (!canLike) {
+      handleRequireAuth();
+      return;
+    }
+    likeSourceRef.current = 'button';
+    setIsLikedLocal(true);
+    runOnUI(() => {
+      'worklet';
+      playHeartRef.current();
+    })();
+  }, [canLike, handleRequireAuth]);
+
   const doubleTapGesture = Gesture.Tap()
     .enabled(isCurrent)
     .numberOfTaps(2)
+    .maxDelay(SINGLE_TAP_DELAY_MS)
     .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
     .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
     .onEnd(() => {
@@ -515,10 +541,25 @@ function SwipeCard({
       playHeartThenLike();
     });
 
-  const cardGesture = Gesture.Exclusive(doubleTapGesture, panGesture);
+  /** Tek dokunuş: çift dokunuş başarısız olunca görseli büyütür. */
+  const singleTapGesture = Gesture.Tap()
+    .enabled(isCurrent)
+    .numberOfTaps(1)
+    .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
+    .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
+    .requireExternalGestureToFail(doubleTapGesture)
+    .onEnd(() => {
+      if (hasExited.value) {
+        return;
+      }
+      runOnJS(setIsExpanded)(true);
+    });
+
+  const cardGesture = Gesture.Exclusive(doubleTapGesture, panGesture, singleTapGesture);
   const ctaNativeGesture = Gesture.Native().blocksExternalGesture(
     doubleTapGesture,
     panGesture,
+    singleTapGesture,
   );
 
   /**
@@ -635,9 +676,6 @@ function SwipeCard({
     setHasImageError(true);
     setIsImageLoading(false);
   }, []);
-
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isInsightOpen, setIsInsightOpen] = useState(false);
 
   return (
     <Animated.View
@@ -756,22 +794,19 @@ function SwipeCard({
                 <Heart color={colors.accent} fill={colors.accent} size={64} />
               </Animated.View>
 
-              {insightChip ? (
-                <InsightChip
-                  chip={insightChip}
-                  active={isCurrent}
-                  onPress={() => setIsInsightOpen(true)}
-                />
+              {isCurrent ? (
+                <GestureDetector gesture={ctaNativeGesture}>
+                  <View style={styles.railHost} collapsable={false}>
+                    <DiscoverActionRail
+                      onTry={handleVirtualTryOn}
+                      onStore={handleStorePress}
+                      onLike={handleLikeButton}
+                      liked={isLikedLocal}
+                      onWhy={insightChip ? openInsight : undefined}
+                    />
+                  </View>
+                </GestureDetector>
               ) : null}
-
-              <PressableScale
-                onPress={() => setIsExpanded(true)}
-                style={styles.expandButton}
-                accessibilityRole="button"
-                accessibilityLabel="Ürün görselini genişlet"
-              >
-                <Maximize color={colors.inverseText} size={22} />
-              </PressableScale>
             </View>
 
             <View style={styles.info}>
@@ -802,52 +837,6 @@ function SwipeCard({
                     </View>
                   ) : null}
                 </View>
-
-                {/* CTA her zaman mount — page flip CTA unmount etmez. */}
-                <GestureDetector gesture={ctaNativeGesture}>
-                  <View
-                    style={styles.actions}
-                    collapsable={false}
-                    pointerEvents={isCurrent ? 'auto' : 'none'}
-                  >
-                    <PressableScale
-                      onPress={handleVirtualTryOn}
-                      style={styles.primaryAction}
-                      accessibilityRole="button"
-                      accessibilityLabel="Dene"
-                    >
-                      <Sparkles
-                        color={colors.inverseText}
-                        size={ACTION_ICON_SIZE}
-                      />
-                      <Text
-                        style={styles.primaryActionText}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      >
-                        Dene
-                      </Text>
-                    </PressableScale>
-                    <PressableScale
-                      onPress={handleStorePress}
-                      style={styles.secondaryAction}
-                      accessibilityRole="button"
-                      accessibilityLabel="Mağazaya git"
-                    >
-                      <ShoppingBag
-                        color={colors.text}
-                        size={ACTION_ICON_SIZE}
-                      />
-                      <Text
-                        style={styles.secondaryActionText}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      >
-                        Mağazaya Git
-                      </Text>
-                    </PressableScale>
-                  </View>
-                </GestureDetector>
               </View>
             </View>
           </View>
@@ -910,16 +899,10 @@ export const SWIPE_CARD_WIDTH = CARD_WIDTH;
 export const SWIPE_CARD_HEIGHT = CARD_HEIGHT;
 
 const styles = StyleSheet.create({
-  expandButton: {
+  railHost: {
     position: 'absolute',
-    right: 16,
-    bottom: 30,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.inverseSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    right: 10,
+    bottom: 26,
   },
   expandedSurface: { flex: 1, backgroundColor: colors.backdrop },
   closeExpanded: {
@@ -1153,47 +1136,5 @@ const styles = StyleSheet.create({
     color: colors.accentDark,
     fontSize: 10,
     fontWeight: '800',
-  },
-  actions: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  primaryAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.accent,
-    minHeight: 32,
-    borderRadius: 8,
-    paddingVertical: 6,
-  },
-  primaryActionText: {
-    flexShrink: 1,
-    color: colors.inverseText,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  secondaryAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.input,
-    minHeight: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingVertical: 6,
-  },
-  secondaryActionText: {
-    flexShrink: 1,
-    color: colors.text,
-    fontSize: 10,
-    fontWeight: '700',
   },
 });
