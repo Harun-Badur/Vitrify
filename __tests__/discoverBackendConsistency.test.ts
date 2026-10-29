@@ -5,7 +5,7 @@ import {insertPassedProduct,deletePassedProduct} from '../services/likeService';
 import {fetchFeedProducts} from '../services/productService';
 import {track} from '../lib/analytics';
 jest.mock('../services/likeService',()=>({insertPassedProduct:jest.fn(),deletePassedProduct:jest.fn()}));
-jest.mock('../services/productService',()=>({fetchFeedProducts:jest.fn()}));
+jest.mock('../services/productService',()=>({fetchFeedProducts:jest.fn(),resetProductPrefCatalogCaches:jest.fn(),FeedServiceError:jest.requireActual('../services/productService').FeedServiceError}));
 jest.mock('../lib/analytics',()=>({track:jest.fn()}));
 jest.mock('../lib/sessionIntent',()=>({recordSessionProductAction:jest.fn()}));
 jest.mock('../lib/logger',()=>({logger:{debug:jest.fn(),warn:jest.fn(),error:jest.fn()}}));

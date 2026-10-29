@@ -180,16 +180,18 @@ describe('Node recommendation cache worker', () => {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'recommendation-worker-'));
     const anchors = [...pool, ...Array.from({ length: 198 }, (_, index) => product(`import-${index}`, 'bag'))];
     const source = path.join(directory, 'input.json'), cacheDirectory = path.join(directory, 'cache');
+    const preload = path.join(directory, 'preload.cjs');
+    await fs.writeFile(preload, 'globalThis.__DEV__ = false;');
     const args = [require.resolve('tsx/cli'), path.resolve('scripts/prepareRecommendationCache.ts'),
       '--input', source, '--cache-dir', cacheDirectory, '--mode', 'import'];
     try {
       await fs.writeFile(source, JSON.stringify({ candidatePool: pool, anchors, catalogVersion: 'import-v1' }));
       const execute = promisify(execFile);
-      const first = JSON.parse((await execute(process.execPath, args, { timeout: 120_000 })).stdout);
+      const first = JSON.parse((await execute(process.execPath, args, { timeout: 120_000, env: { ...process.env, NODE_OPTIONS: `--require "${preload.split(path.sep).join('/')}"` } })).stdout);
       expect(first).toMatchObject({ anchors: 278, completed: 278, rankingMisses: 278, finalMisses: 278, finalHits: 0 });
       expect(await fs.readdir(path.join(cacheDirectory, 'ranking'))).toHaveLength(278);
       expect(await fs.readdir(path.join(cacheDirectory, 'final'))).toHaveLength(278);
-      const second = JSON.parse((await execute(process.execPath, args, { timeout: 120_000 })).stdout);
+      const second = JSON.parse((await execute(process.execPath, args, { timeout: 120_000, env: { ...process.env, NODE_OPTIONS: `--require "${preload.split(path.sep).join('/')}"` } })).stdout);
       expect(second).toMatchObject({ completed: 278, rankingMisses: 0, finalMisses: 0, finalHits: 278 });
       const records = new FileRecommendationRecordStore(cacheDirectory);
       // Every stored result, including outside-pool anchors, equals the real engine.

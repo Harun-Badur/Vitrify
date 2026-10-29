@@ -176,6 +176,6 @@ describe('overlay cleanup: pass wash gone, undo toast gone, undoPass stays', () 
     expect(indexSrc).toMatch(/undoPass\(\)/);
     expect(indexSrc).toMatch(/onUndoPass=\{handleUndoPass\}/);
     expect(swipeCardSrc).toMatch(/shouldCommitUndo\(y, vy\)/);
-    expect(swipeCardSrc).toMatch(/runOnJS\(handleUndoPass\)\(\)/);
+    expect(swipeCardSrc).toMatch(/runOnJS\(handleUndoPass\)\(animationId\)/);
   });
 });

@@ -103,19 +103,7 @@ describe('outfit collage cover', () => {
       });
       expect(StyleSheet.flatten(cover.props.style).height).toBe(120);
       const layout = unwrap(cover);
-      if (count === 4) {
-        expect(layout.children).toHaveLength(2);
-        expect(
-          layout.children.every(
-            (row) =>
-              typeof row !== 'string' && unwrap(row).children.length === 2,
-          ),
-        ).toBe(true);
-      }
-      if (count === 3) {
-        expect(layout.children).toHaveLength(2);
-        expect(unwrap(layout.children[1] as Node).children).toHaveLength(2);
-      }
+      if (count >= 3) expect(layout.children).toHaveLength(count);
     },
   );
   it('combines wardrobe and catalog images instead of using only the old thumbnail', async () => {
