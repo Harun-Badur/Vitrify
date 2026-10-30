@@ -18,6 +18,7 @@ const mockSwipeRight = jest.fn();
 const mockUndoPass = jest.fn();
 const mockSwipeCardRender = jest.fn();
 const mockRouter = { push: jest.fn() };
+jest.mock('../components/TouchClaim', () => ({ __esModule: true, default: ({ children }: { children: unknown }) => children }));
 jest.mock('../services/discoverRecommendationCacheService', () => ({ loadDiscoverRecommendationPacket: jest.fn() }));
 const mockState = {
   feedPreparationRevision: 1,
@@ -169,7 +170,7 @@ const realService = jest.requireActual<
 
 
 jest.mock('react-native', () => ({
-  Platform: { OS: 'ios' }, View: 'View', Text: 'Text', TextInput: 'TextInput', StatusBar: {
+  Platform: { OS: 'ios' }, View: 'View', Image: 'Image', Text: 'Text', TextInput: 'TextInput', StatusBar: {
     setBarStyle: jest.fn(), pushStackEntry: jest.fn(), popStackEntry: jest.fn(),
   },
   StyleSheet: { create: (value: unknown) => value, absoluteFillObject: {}, hairlineWidth: 1 },

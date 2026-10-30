@@ -22,7 +22,10 @@ import {
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, SlidersHorizontal, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
+import TouchClaim from '../../components/TouchClaim';
+import ShadowedIcon from '../../components/ShadowedIcon';
+import { DISCOVER_EDGE_MARGIN, RAIL_COLUMN_WIDTH } from '../../components/DiscoverActionRail';
 import {
   runOnUI,
   useSharedValue,
@@ -83,11 +86,13 @@ import {
 import { insightWardrobeSignature, toInsightWardrobeItems } from '../../lib/insightWardrobe';
 import type { DiscoverRecommendation } from '../../src/intelligence/recommendations/discoverRecommendation';
 import { useAppStore } from '../../store/useAppStore';
+import type { LikeInputSource } from '../../types/analytics';
 import { getProductImages, type Product } from '../../types/product';
 import type { FeedMode } from '../../types/recommendation';
 
 const TOAST_DURATION_MS = 1600;
-const FILTER_HIT_SIZE = 40;
+/** Filtre kutusu rail sütunuyla birebir aynı 44dp: merkezler aynı dikey eksende. */
+const FILTER_HIT_SIZE = RAIL_COLUMN_WIDTH;
 const SEARCH_TRACK_DEBOUNCE_MS = 500;
 /** Header, clip sınırında kesilen kartın üstünde kalır. */
 const HEADER_Z_INDEX = 7;
@@ -156,6 +161,16 @@ function DeckFinishedCard({
 export default function FeedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  /**
+   * İkon grubu, header'ın sağ padding'i çıkarılarak rail ile aynı sağ referansa
+   * (ekran kenarından DISCOVER_EDGE_MARGIN) oturur.
+   */
+  const headerActionsRight = DISCOVER_EDGE_MARGIN - Math.max(insets.right, spacing.lg);
+  /** Header alt kenarı + 16dp: Keşfet rayının üst sınırı. */
+  const railTopInset =
+    (insets.top > 0 ? insets.top : layout.statusBarFallback) +
+    layout.headerPaddingTop + layout.headerControl + layout.searchToSegment +
+    layout.segmentHeight + spacing.lg;
   const { height: windowHeight } = useWindowDimensions();
   const discoverCardLiftPx = discoverCardLiftForHeight(windowHeight);
   const { user, loading: authLoading } = useAuthContext();
@@ -529,14 +544,14 @@ export default function FeedScreen() {
   const noteSwipe = useDiscoverPerfTrace(recommendationSession, currentProduct, recommendationRevision);
 
   const handleSwipeRight = useCallback(
-    (product: Product): void => {
+    (product: Product, input?: LikeInputSource): void => {
       if (!canLike) {
         handleRequireAuth();
         return;
       }
       try {
         noteSwipe();
-        swipeRight(product);
+        swipeRight(product, input);
       } catch (error) {
         logger.error('Beğeni işlenemedi', { code: 'FAVORITE_START_FAILED' });
         Alert.alert('Beğeni kaydedilemedi', 'Bağlantını kontrol edip tekrar dene.');
@@ -847,83 +862,6 @@ export default function FeedScreen() {
     >
       <View
         style={[
-          styles.header,
-          {
-            paddingLeft: Math.max(insets.left, spacing.lg),
-            paddingRight: Math.max(insets.right, spacing.lg),
-            paddingTop:
-              (insets.top > 0 ? insets.top : layout.statusBarFallback) +
-              layout.headerPaddingTop,
-          },
-        ]}
-      >
-        <View style={styles.segmentWrap}>
-          <FeedModeSegment
-            value={feedMode}
-            onChange={handleFeedModeChange}
-            overlay
-        />
-        <View style={styles.headerActions}>
-          <PressableScale
-            onPress={() => {
-              setIsSearchInputOpen(open => !open);
-            }}
-            style={styles.filterHit}
-            accessibilityRole="button"
-            accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
-            accessibilityState={{ expanded: isSearchInputOpen }}
-          >
-            <Search color={colors.inverseText} size={24} />
-          </PressableScale>
-          <PressableScale
-            onPress={() => setIsFilterOpen(true)}
-            style={styles.filterHit}
-            accessibilityRole="button"
-            accessibilityLabel="Filtreler"
-          >
-            <SlidersHorizontal color={colors.inverseText} size={21} />
-            {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
-          </PressableScale>
-        </View>
-        <View style={[styles.searchBar, !isSearchInputOpen && styles.searchClosed]}
-          accessibilityElementsHidden={!isSearchInputOpen}
-          importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
-          pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
-          <TextInput
-            ref={searchInputRef}
-            value={searchInput}
-            onChangeText={handleSearchChange}
-            onSubmitEditing={() => commitSearchText(searchInput)}
-            placeholder="Ne arıyorsun?"
-            placeholderTextColor={colors.inverseText}
-            style={styles.searchInput}
-            autoCorrect={false}
-            autoCapitalize="none"
-            returnKeyType="search"
-            accessibilityLabel="Ürün ara"
-          />
-          {isSearchMode || searchInput.trim().length > 0 ? (
-            <PressableScale
-              onPress={handleClearSearch}
-              style={styles.clearHit}
-              accessibilityRole="button"
-              accessibilityLabel="Aramayı temizle"
-            >
-              <X color={colors.inverseText} size={16} />
-            </PressableScale>
-          ) : null}
-        </View>
-        </View>
-        {isSearchMode && showSearchBanner && searchBannerText ? (
-          <View style={styles.searchMetaBlock}>
-            <View style={styles.fallbackBanner}>
-              <Text style={styles.fallbackBannerText}>{searchBannerText}</Text>
-            </View>
-          </View>
-        ) : null}
-      </View>
-      <View
-        style={[
           styles.body,
           {
             paddingBottom:
@@ -999,11 +937,102 @@ export default function FeedScreen() {
                   insightChip={insightChip && !hiddenInsightKinds.has(insightChip.kind) ? insightChip : null}
                   onOpenInsightWardrobe={handleOpenLiked}
                   onHideInsightKind={handleHideInsightKind}
+                  railTopInset={railTopInset}
                 />
               })}
             </View>
           </View>
         )}
+      </View>
+      {/*
+        Header, deste (body) KARDEŞİNDEN SONRA gelir: RNGH Android'de dokunuşu çizim
+        sırasına (zIndex) değil çocuk sırasına göre arar; header'ın önce olması, header
+        butonlarına dokunuşu da kartın tek dokunuş (büyütme) jestine gönderiyordu.
+        box-none: yalnız header kontrolleri hedef olur, boş şerit desteye geçer.
+      */}
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.header,
+          {
+            paddingLeft: Math.max(insets.left, spacing.lg),
+            paddingRight: Math.max(insets.right, spacing.lg),
+            paddingTop:
+              (insets.top > 0 ? insets.top : layout.statusBarFallback) +
+              layout.headerPaddingTop,
+          },
+        ]}
+      >
+        <View style={styles.segmentWrap}>
+          <TouchClaim>
+            <FeedModeSegment
+              value={feedMode}
+              onChange={handleFeedModeChange}
+              overlay
+            />
+          </TouchClaim>
+        <TouchClaim>
+        <View collapsable={false} style={[styles.headerActions, { right: headerActionsRight }]}>
+          <PressableScale
+            onPress={() => {
+              setIsSearchInputOpen(open => !open);
+            }}
+            style={styles.filterHit}
+            accessibilityRole="button"
+            accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
+            accessibilityState={{ expanded: isSearchInputOpen }}
+          >
+            <ShadowedIcon name="search" size={21} />
+          </PressableScale>
+          <PressableScale
+            onPress={() => setIsFilterOpen(true)}
+            style={styles.filterHit}
+            accessibilityRole="button"
+            accessibilityLabel="Filtreler"
+          >
+            <ShadowedIcon name="sliders-horizontal" size={21} />
+            {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
+          </PressableScale>
+        </View>
+        </TouchClaim>
+        <TouchClaim>
+        <View collapsable={false} style={[styles.searchBar, { right: headerActionsRight + FILTER_HIT_SIZE * 2 + spacing.xs }, !isSearchInputOpen && styles.searchClosed]}
+          accessibilityElementsHidden={!isSearchInputOpen}
+          importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
+          pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
+          <TextInput
+            ref={searchInputRef}
+            value={searchInput}
+            onChangeText={handleSearchChange}
+            onSubmitEditing={() => commitSearchText(searchInput)}
+            placeholder="Ne arıyorsun?"
+            placeholderTextColor={colors.inverseText}
+            style={[styles.searchInput, styles.headerTextShadow]}
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="search"
+            accessibilityLabel="Ürün ara"
+          />
+          {isSearchMode || searchInput.trim().length > 0 ? (
+            <PressableScale
+              onPress={handleClearSearch}
+              style={styles.clearHit}
+              accessibilityRole="button"
+              accessibilityLabel="Aramayı temizle"
+            >
+              <X color={colors.inverseText} size={16} />
+            </PressableScale>
+          ) : null}
+        </View>
+        </TouchClaim>
+        </View>
+        {isSearchMode && showSearchBanner && searchBannerText ? (
+          <View style={styles.searchMetaBlock}>
+            <View style={styles.fallbackBanner}>
+              <Text style={styles.fallbackBannerText}>{searchBannerText}</Text>
+            </View>
+          </View>
+        ) : null}
       </View>
       {hintStatus === 'visible' && !isLoading && !isSearchMode && hasDeck ? (
         <SwipeHintOverlay onDismiss={handleDismissHint} />
@@ -1059,7 +1088,6 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     position: 'absolute',
-    right: FILTER_HIT_SIZE * 2 + spacing.sm + spacing.xs,
     top: (FILTER_HIT_SIZE - 36) / 2,
     width: '30%',
     maxWidth: 120,
@@ -1077,10 +1105,8 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     position: 'absolute',
-    right: 0,
     top: (layout.segmentHeight - FILTER_HIT_SIZE) / 2,
     flexDirection: 'row',
-    gap: spacing.sm,
   },
   searchClosed: {
     height: 0,
@@ -1092,6 +1118,11 @@ const styles = StyleSheet.create({
     color: colors.inverseText,
     fontSize: 14,
     paddingVertical: 0,
+  },
+  headerTextShadow: {
+    textShadowColor: 'rgba(0, 0, 0, 0.55)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   filterHit: {
     width: FILTER_HIT_SIZE,

@@ -14,6 +14,9 @@ export type AnalyticsEventType =
   | 'share'
   | 'feed_fallback';
 
+/** Optional client-only hint on `like` events: which control produced the like. */
+export type LikeInputSource = 'button' | 'double_tap';
+
 export type AnalyticsPayload = Record<
   string,
   string | number | boolean | null

@@ -208,7 +208,7 @@ function LikedItem({
         <Trash2 color={colors.inverseText} size={22} />
       </Animated.View>
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.card, cardStyle]}>
+        <Animated.View collapsable={false} style={[styles.card, cardStyle]}>
           <PressableScale
             style={[
               styles.imageButton,

@@ -33,19 +33,18 @@ import Animated, {
 import {
   ChevronRight,
   Heart,
-  Maximize,
-  ShoppingBag,
-  Sparkles,
   X,
 } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
-import InsightChip from './InsightChip';
+import TouchClaim from './TouchClaim';
+import DiscoverActionRail, { DISCOVER_EDGE_MARGIN } from './DiscoverActionRail';
 import InsightWhySheet from './InsightWhySheet';
 import type { InsightChip as InsightChipModel } from '../lib/insightChip';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 import { logger } from '../lib/logger';
+import { stripBrandPrefix } from '../lib/productTitle';
 import {
   CARD_SPRING_BACK,
   CARD_THROW_SPRING,
@@ -54,7 +53,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
-import { IMPRESSION_MIN_DWELL_MS } from '../types/analytics';
+import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
   colors,
   estimateDiscoverCardHeight,
@@ -80,7 +79,10 @@ const HEART_BURST_OUT_MS = 260;
 const HEART_BURST_PEAK_SCALE = 1.18;
 /** Soft crossfade when bitmap arrives; pairs with surface placeholder (no white flash). */
 const IMAGE_CROSSFADE_MS = 0;
-const ACTION_ICON_SIZE = 16;
+const RAIL_BOTTOM_PADDING = 26;
+
+/** Single tap (expand) fires only after the double tap window has closed. */
+const SINGLE_TAP_DELAY_MS = 250;
 /** Horizontal gallery: activate after 6px X; fail if 12px Y first (card vertical wins). */
 const IMAGE_SWIPE_ACTIVE_OFFSET_X_PX = 6;
 const IMAGE_SWIPE_FAIL_OFFSET_Y_PX = 12;
@@ -115,7 +117,7 @@ export interface SwipeCardProps {
   pageHeight: SharedValue<number>;
   /** Ortak sürükleme ofseti; commit sonrası parent 0'a baslar. */
   dragOffset: SharedValue<number>;
-  onAddToCloset: (product: Product) => void;
+  onAddToCloset: (product: Product, source?: LikeInputSource) => void;
   /** Pass throw settle sonrası tek store reconcile. */
   onPass: (product: Product) => void;
   onVirtualTryOn: (product: Product) => void;
@@ -140,6 +142,8 @@ export interface SwipeCardProps {
   insightChip?: InsightChipModel | null;
   onOpenInsightWardrobe?: () => void;
   onHideInsightKind?: (chip: InsightChipModel) => void;
+  /** Header altı + 16dp: rayın üst sınırı (kart koordinatı). */
+  railTopInset?: number;
 }
 
 const formatPrice = (product: Product): string =>
@@ -190,6 +194,7 @@ function SwipeCard({
   insightChip,
   onOpenInsightWardrobe,
   onHideInsightKind,
+  railTopInset = 0,
 }: SwipeCardProps) {
   const isCurrent = pageIndex === 0;
   /** Pose slot index — parent atomically writes on deck remap; do not sync from React. */
@@ -260,6 +265,18 @@ function SwipeCard({
     };
   }, [product.id, unregisterPageIndexSV]);
 
+  const hasBrand = product.brand.trim().length > 0;
+  const displayTitle = useMemo(
+    () => stripBrandPrefix(product.title, product.brand),
+    [product.title, product.brand],
+  );
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isInsightOpen, setIsInsightOpen] = useState(false);
+  const [isLikedLocal, setIsLikedLocal] = useState(false);
+  /** Görselin alt kenarı (kart koordinatı); ray bu kenara göre konumlanır. */
+  const [imageBottom, setImageBottom] = useState(0);
+  const likeSourceRef = useRef<LikeInputSource>('double_tap');
+
   const hasExited = useSharedValue(false);
   const exitAnimationId = useSharedValue(0);
   const heartBurst = useSharedValue(0);
@@ -307,9 +324,9 @@ function SwipeCard({
     };
   }, [isCurrent, onImpression, product]);
 
-  const handleAddToCloset = useCallback((): void => {
+  const handleAddToCloset = useCallback((source: LikeInputSource): void => {
     try {
-      onAddToCloset(product);
+      onAddToCloset(product, source);
     } catch (error) {
       logger.error('Beğeni işlenemedi', { error, productId: product.id });
     }
@@ -348,7 +365,9 @@ function SwipeCard({
 
   const handleImagePagerLayout = useCallback(
     (event: LayoutChangeEvent): void => {
-      const width = event.nativeEvent.layout.width;
+      const { width, y, height } = event.nativeEvent.layout;
+      const bottom = y + height;
+      setImageBottom((current) => (Math.abs(current - bottom) > 0.5 ? bottom : current));
       if (!(width > 0)) {
         return;
       }
@@ -404,12 +423,15 @@ function SwipeCard({
   }, [handleBuy]);
 
   const finishDoubleTapLike = useCallback((): void => {
+    const source = likeSourceRef.current;
+    likeSourceRef.current = 'double_tap';
     if (!canLike) {
       handleRequireAuth();
       return;
     }
-    handleAddToCloset();
+    handleAddToCloset(source);
   }, [canLike, handleAddToCloset, handleRequireAuth]);
+
 
   const snapHome = (): void => {
     'worklet';
@@ -499,9 +521,29 @@ function SwipeCard({
     );
   };
 
+  const openInsight = useCallback((): void => setIsInsightOpen(true), []);
+
+  const playHeartRef = useRef(playHeartThenLike);
+  playHeartRef.current = playHeartThenLike;
+
+  /** Beğen butonu: çift dokunuşla aynı kalp animasyonu ve beğeni akışı. */
+  const handleLikeButton = useCallback((): void => {
+    if (!canLike) {
+      handleRequireAuth();
+      return;
+    }
+    likeSourceRef.current = 'button';
+    setIsLikedLocal(true);
+    runOnUI(() => {
+      'worklet';
+      playHeartRef.current();
+    })();
+  }, [canLike, handleRequireAuth]);
+
   const doubleTapGesture = Gesture.Tap()
     .enabled(isCurrent)
     .numberOfTaps(2)
+    .maxDelay(SINGLE_TAP_DELAY_MS)
     .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
     .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
     .onEnd(() => {
@@ -515,11 +557,21 @@ function SwipeCard({
       playHeartThenLike();
     });
 
-  const cardGesture = Gesture.Exclusive(doubleTapGesture, panGesture);
-  const ctaNativeGesture = Gesture.Native().blocksExternalGesture(
-    doubleTapGesture,
-    panGesture,
-  );
+  /** Tek dokunuş: çift dokunuş başarısız olunca görseli büyütür. */
+  const singleTapGesture = Gesture.Tap()
+    .enabled(isCurrent)
+    .numberOfTaps(1)
+    .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
+    .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
+    .requireExternalGestureToFail(doubleTapGesture)
+    .onEnd(() => {
+      if (hasExited.value) {
+        return;
+      }
+      runOnJS(setIsExpanded)(true);
+    });
+
+  const cardGesture = Gesture.Exclusive(doubleTapGesture, panGesture, singleTapGesture);
 
   /**
    * Image-only horizontal pager. Separation from card vertical via offsets only:
@@ -636,9 +688,6 @@ function SwipeCard({
     setIsImageLoading(false);
   }, []);
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isInsightOpen, setIsInsightOpen] = useState(false);
-
   return (
     <Animated.View
       pointerEvents={isCurrent ? 'auto' : 'none'}
@@ -647,6 +696,7 @@ function SwipeCard({
     >
       <GestureDetector gesture={cardGesture}>
         <Animated.View
+          collapsable={false}
           style={[styles.shadowWrap, styles.shadowWrapFront,
             recommendations !== undefined && styles.pageContent]}
           accessibilityRole="image"
@@ -756,34 +806,26 @@ function SwipeCard({
                 <Heart color={colors.accent} fill={colors.accent} size={64} />
               </Animated.View>
 
-              {insightChip ? (
-                <InsightChip
-                  chip={insightChip}
-                  active={isCurrent}
-                  onPress={() => setIsInsightOpen(true)}
-                />
-              ) : null}
-
-              <PressableScale
-                onPress={() => setIsExpanded(true)}
-                style={styles.expandButton}
-                accessibilityRole="button"
-                accessibilityLabel="Ürün görselini genişlet"
-              >
-                <Maximize color={colors.inverseText} size={22} />
-              </PressableScale>
             </View>
 
             <View style={styles.info}>
-              <View style={styles.metaRow}>
-                <Text style={styles.brand} numberOfLines={1}>
-                  {product.brand}
+              <View
+                style={styles.metaRow}
+                accessible
+                accessibilityLabel={`${product.brand} ${product.title}`.trim()}
+              >
+                {hasBrand ? (
+                  <View style={styles.brandGroup}>
+                    <Text style={styles.brand} numberOfLines={1} maxFontSizeMultiplier={1.15}>
+                      {product.brand}
+                    </Text>
+                    <ChevronRight size={16} color={colors.textSecondary} />
+                  </View>
+                ) : null}
+                <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail" maxFontSizeMultiplier={1.15}>
+                  {displayTitle}
                 </Text>
-                <ChevronRight size={16} color={colors.textSecondary} />
               </View>
-              <Text style={styles.title} numberOfLines={1}>
-                {product.title}
-              </Text>
               <View style={styles.purchaseRow}>
                 <View style={styles.priceRow}>
                   {hasCatalogPriceDrop(product) &&
@@ -802,57 +844,33 @@ function SwipeCard({
                     </View>
                   ) : null}
                 </View>
-
-                {/* CTA her zaman mount — page flip CTA unmount etmez. */}
-                <GestureDetector gesture={ctaNativeGesture}>
-                  <View
-                    style={styles.actions}
-                    collapsable={false}
-                    pointerEvents={isCurrent ? 'auto' : 'none'}
-                  >
-                    <PressableScale
-                      onPress={handleVirtualTryOn}
-                      style={styles.primaryAction}
-                      accessibilityRole="button"
-                      accessibilityLabel="Dene"
-                    >
-                      <Sparkles
-                        color={colors.inverseText}
-                        size={ACTION_ICON_SIZE}
-                      />
-                      <Text
-                        style={styles.primaryActionText}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      >
-                        Dene
-                      </Text>
-                    </PressableScale>
-                    <PressableScale
-                      onPress={handleStorePress}
-                      style={styles.secondaryAction}
-                      accessibilityRole="button"
-                      accessibilityLabel="Mağazaya git"
-                    >
-                      <ShoppingBag
-                        color={colors.text}
-                        size={ACTION_ICON_SIZE}
-                      />
-                      <Text
-                        style={styles.secondaryActionText}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                      >
-                        Mağazaya Git
-                      </Text>
-                    </PressableScale>
-                  </View>
-                </GestureDetector>
               </View>
             </View>
           </View>
         </Animated.View>
       </GestureDetector>
+      {imageBottom > 0 ? (
+        // Kartın jest ağacının KARDEŞİ: ray üzerinde başlayan dokunuş
+        // tek/çift dokunuş ve pan jestlerine hiç ulaşmaz. Peek kartlarda da çizilir
+        // (kartla aynı kaydırma kapsayıcısında kayar); slot pointerEvents'i yalnız
+        // öndeki kartın rayını dokunulabilir bırakır.
+        <View
+          style={[styles.railAnchor, { height: imageBottom, paddingTop: railTopInset }]}
+          pointerEvents="box-none"
+        >
+          <TouchClaim>
+          <DiscoverActionRail
+            onTry={handleVirtualTryOn}
+            onStore={handleStorePress}
+            onLike={handleLikeButton}
+            liked={isLikedLocal}
+            onWhy={openInsight}
+            whyVisible={insightChip !== null && insightChip !== undefined}
+            maxHeight={imageBottom - RAIL_BOTTOM_PADDING - railTopInset}
+          />
+          </TouchClaim>
+        </View>
+      ) : null}
       {recommendations !== undefined ? (
         <DiscoverRecommendations
           currentProductId={product.id}
@@ -910,16 +928,12 @@ export const SWIPE_CARD_WIDTH = CARD_WIDTH;
 export const SWIPE_CARD_HEIGHT = CARD_HEIGHT;
 
 const styles = StyleSheet.create({
-  expandButton: {
+  railAnchor: {
     position: 'absolute',
-    right: 16,
-    bottom: 30,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.inverseSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: 0,
+    right: DISCOVER_EDGE_MARGIN,
+    justifyContent: 'flex-end',
+    paddingBottom: RAIL_BOTTOM_PADDING,
   },
   expandedSurface: { flex: 1, backgroundColor: colors.backdrop },
   closeExpanded: {
@@ -1059,9 +1073,16 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+    alignItems: 'baseline',
     marginBottom: spacing.xs,
+  },
+  brandGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    maxWidth: '45%',
+    marginRight: 8,
+    gap: spacing.xs,
   },
   identityRow: {
     flex: 1,
@@ -1095,11 +1116,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
+    flex: 1,
     color: colors.text,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     lineHeight: 20,
-    marginBottom: spacing.xs,
   },
   variationRow: {
     flexDirection: 'row',
@@ -1153,47 +1174,5 @@ const styles = StyleSheet.create({
     color: colors.accentDark,
     fontSize: 10,
     fontWeight: '800',
-  },
-  actions: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  primaryAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.accent,
-    minHeight: 32,
-    borderRadius: 8,
-    paddingVertical: 6,
-  },
-  primaryActionText: {
-    flexShrink: 1,
-    color: colors.inverseText,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  secondaryAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.input,
-    minHeight: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingVertical: 6,
-  },
-  secondaryActionText: {
-    flexShrink: 1,
-    color: colors.text,
-    fontSize: 10,
-    fontWeight: '700',
   },
 });

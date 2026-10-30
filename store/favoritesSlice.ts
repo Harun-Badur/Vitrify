@@ -11,6 +11,7 @@ import {
   insertLikedProduct,
   type LikedProductsResult,
 } from '../services/likeService';
+import type { LikeInputSource } from '../types/analytics';
 import type { LikedProduct, Product } from '../types/product';
 import type { AppState } from './useAppStore';
 import { removeProduct, restoreProduct } from './productState';
@@ -21,7 +22,7 @@ export interface FavoritesSlice {
   favoritesOwner: string | null;
   likedProducts: LikedProduct[];
   addLikedProductLocally: (product: Product) => void;
-  swipeRight: (product: Product) => void;
+  swipeRight: (product: Product, input?: LikeInputSource) => void;
   unlikeProduct: (productId: string) => Promise<void>;
   refreshLikedProducts: () => Promise<void>;
 }
@@ -84,7 +85,7 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
         };
       });
     },
-    swipeRight: (product): void => {
+    swipeRight: (product, input): void => {
       const userId = get().sessionUserId;
       const current = captureOwnerPublication(userId);
       if (!current()) return;
@@ -111,7 +112,7 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
 
       const action = createAnalyticsAction(userId, 'favorite');
       const committed = () => {
-        track('like', product.id, { source: 'feed' }, action);
+        track('like', product.id, input ? { source: 'feed', like_input: input } : { source: 'feed' }, action);
         track('dolap_add', product.id, { source: 'feed' }, action);
       };
       recordSessionProductAction('like', product);

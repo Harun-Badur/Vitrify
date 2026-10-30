@@ -7,6 +7,7 @@ import SwipeCard, { type SwipeCardProps } from '../components/SwipeCard';
 import { getDiscoverRecommendations } from '../src/intelligence/recommendations/getDiscoverRecommendations';
 import { formatTryPrice, type Product, type OutfitRole } from '../types/product';
 
+jest.mock('../components/TouchClaim', () => ({ __esModule: true, default: ({ children }: { children: unknown }) => children }));
 jest.mock('react-native', () => {
   const flatten = (style: unknown): Record<string, unknown> => Array.isArray(style)
     ? Object.assign({}, ...style.map(flatten)) : typeof style === 'object' && style !== null ? style as Record<string, unknown> : {};
@@ -28,7 +29,7 @@ jest.mock('expo-image', () => ({ Image: Object.assign((props: Record<string, unk
   prefetch: jest.fn(), getCachePathAsync: jest.fn().mockResolvedValue(null),
 }) }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
-jest.mock('../components/InsightChip', () => 'InsightChip');
+jest.mock('../components/DiscoverActionRail', () => 'DiscoverActionRail');
 jest.mock('../components/InsightWhySheet', () => 'InsightWhySheet');
 const mockImageRenders = jest.fn();
 const mockImageMounts = jest.fn();
@@ -49,7 +50,7 @@ jest.mock('react-native-gesture-handler', () => {
   const builder = (): Record<string, jest.Mock> => {
     const chain: Record<string, jest.Mock> = {};
     for (const method of ['enabled', 'activeOffsetY', 'failOffsetX', 'onUpdate', 'onEnd',
-      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'minPointers', 'activeOffsetX', 'failOffsetY']) {
+      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'requireExternalGestureToFail', 'maxDelay', 'minPointers', 'activeOffsetX', 'failOffsetY']) {
       chain[method] = jest.fn(() => chain);
     }
     return chain;
@@ -239,7 +240,7 @@ describe('Discover product block motion', () => {
     expect(mainImages().map(node => node.props.uri)).toEqual(anchor.images.slice(0, 3));
   });
 
-  it('moves main image, product information, both CTAs and the recommendation section with one pose', async () => {
+  it('moves main image, product information, the action rail and the recommendation section with one pose', async () => {
     const anchor = product('anchor', 'top');
     const recommendations = getDiscoverRecommendations({ wardrobeItems: [], catalogProducts: [anchor,
       product('bottom', 'bottom'), product('shoes', 'shoes'), product('coat', 'outerwear')],
@@ -256,6 +257,12 @@ describe('Discover product block motion', () => {
       }));
       await Promise.resolve();
     });
+    await renderer.act(async () => {
+      const wrap = tree.root.findAllByType('View').find(node => typeof node.props.onLayout === 'function')!;
+      (wrap.props.onLayout as (event: unknown) => void)({
+        nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 500 } },
+      });
+    });
     const slot = tree.root.findAllByType('AnimatedView').find(node =>
       node.props.collapsable === false && node.props.pointerEvents === 'auto');
     expect(slot).toBeDefined();
@@ -264,8 +271,7 @@ describe('Discover product block motion', () => {
       return false;
     };
     const members = [tree.root.findByProps({ slot: 'main' }),
-      tree.root.findByProps({ accessibilityLabel: 'Dene' }),
-      tree.root.findByProps({ accessibilityLabel: 'Mağazaya git' }),
+      tree.root.findByType('DiscoverActionRail'),
       tree.root.findByProps({ accessibilityLabel: `${anchor.brand} ${anchor.title}, ${formatTryPrice(anchor.price)}` }),
       tree.root.findByProps({ testID: 'discover-recommendation-card-bottom' })];
     members.forEach(node => expect(belongsToSlot(node)).toBe(true));
@@ -279,9 +285,39 @@ describe('Discover product block motion', () => {
     dragOffset.value = -700;
     const pose = (slot?.props.style as { current: { transform: { translateY: number }[] } }[])[2].current;
     expect(pose.transform).toEqual([{ translateY: 0 }]);
-    const mainStyle = StyleSheet.flatten(members[3].props.style as ViewStyle);
+    const mainStyle = StyleSheet.flatten(members[2].props.style as ViewStyle);
     expect(mainStyle).toMatchObject({ flex: 1, height: 'auto', width: '100%' });
   });
+
+  it.each([[0, 'auto'], [1, 'none']] as const)(
+    'page %i renders its own rail in the card slot (shares the slide), outside the photo gesture tree, touchable=%s',
+    async (pageIndex, pointerEvents) => {
+      await renderer.act(async () => {
+        tree = renderer.create(createElement(SwipeCard, {
+          product: product('rail-anchor', 'top'), pageIndex, insightChip: null,
+          pageHeight: { value: 700 } as SharedValue<number>, dragOffset: { value: 0 } as SharedValue<number>,
+          onAddToCloset: jest.fn(), onPass: jest.fn(), onVirtualTryOn: jest.fn(),
+          onBuy: jest.fn(), onImpression: jest.fn(),
+        }));
+        await Promise.resolve();
+      });
+      await renderer.act(async () => {
+        const wrap = tree.root.findAllByType('View').find(node => typeof node.props.onLayout === 'function')!;
+        (wrap.props.onLayout as (event: unknown) => void)({
+          nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 500 } },
+        });
+      });
+      const rail = tree.root.findByType('DiscoverActionRail');
+      expect(rail.props.whyVisible).toBe(false);
+      const ancestors: TestNode[] = [];
+      for (let parent: TestNode | null = rail.parent; parent; parent = parent.parent) ancestors.push(parent);
+      const slot = ancestors.find(node => node.props.collapsable === false && node.props.pointerEvents !== undefined);
+      expect(slot?.props.pointerEvents).toBe(pointerEvents);
+      // Foto jest ağacının içinde değil: kart GestureDetector'ının torunu olamaz.
+      expect(ancestors.some(node => node.props.gesture !== undefined)).toBe(false);
+      expect(tree.root.findByProps({ slot: 'main' })).toBeDefined();
+    },
+  );
 
   it('keeps all three already mounted recommendation cards and images when next becomes current', async () => {
     const anchor = product('next', 'top');

@@ -56,6 +56,7 @@ export default function FeedModeSegment({
 
   return (
     <View
+      collapsable={false}
       style={[styles.track, overlay && styles.overlayTrack]}
       accessibilityRole="tablist"
       accessibilityLabel="Keşif modu"
@@ -91,14 +92,12 @@ export default function FeedModeSegment({
             accessibilityLabel={option.label}
           >
             <Text
+              maxFontSizeMultiplier={1.15}
               style={[
                 styles.label,
                 isActive ? styles.labelActive : null,
-                overlay && {
-                  color: colors.inverseText,
-                  opacity: isActive ? 1 : 0.65,
-                  fontSize: 12,
-                },
+                overlay && styles.overlayLabel,
+                overlay && !isActive && styles.overlayLabelInactive,
               ]}
               numberOfLines={1}
             >
@@ -113,7 +112,17 @@ export default function FeedModeSegment({
 
 const styles = StyleSheet.create({
   overlayTrack: { padding: 0, backgroundColor: 'transparent' },
-  overlayOption: { paddingHorizontal: 6, marginRight: 10 },
+  /** İlk yazı kart içeriğiyle (16dp) aynı hizada başlasın: yatay iç boşluk yok. */
+  overlayOption: { paddingHorizontal: 0, marginRight: 22 },
+  overlayLabel: {
+    color: colors.inverseText,
+    fontSize: 14,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  overlayLabelInactive: { color: 'rgba(255, 255, 255, 0.85)' },
   overlayActiveOption: { borderBottomWidth: 1, borderBottomColor: colors.inverseText },
   track: {
     alignSelf: 'flex-start',
