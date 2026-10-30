@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { createElement, type ElementType, type ReactElement } from 'react';
-import DiscoverActionRail from '../components/DiscoverActionRail';
+import DiscoverActionRail, {
+  computeRailGap, DISCOVER_ICON_CENTER_FROM_RIGHT, RAIL_COLUMN_WIDTH,
+} from '../components/DiscoverActionRail';
 import ShadowedIcon from '../components/ShadowedIcon';
 
 jest.mock('react-native', () => ({
@@ -117,11 +119,50 @@ describe('touch absorption and shadowed icons', () => {
     const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
     for (const button of buttons(tree)) {
       const style = Object.assign({}, ...[button.props.style].flat());
-      expect(style.minWidth).toBeGreaterThanOrEqual(44);
+      expect(style.width).toBeGreaterThanOrEqual(44);
       expect(style.minHeight).toBeGreaterThanOrEqual(44);
     }
     const sizes = tree.root.findAllByType(ShadowedIcon).map(n => n.props.size);
     expect(sizes).toEqual([13, 19, 19, 19]);
+  });
+});
+
+describe('device-robust alignment', () => {
+  it('rail gap shrinks to 4dp minimum instead of hiding items', () => {
+    expect(computeRailGap(4)).toBe(6);
+    expect(computeRailGap(4, 400)).toBe(6);
+    expect(computeRailGap(4, 188)).toBe(4);
+    expect(computeRailGap(4, 100)).toBe(4);
+    expect(computeRailGap(4, 190)).toBeCloseTo(4.67, 1);
+    expect(computeRailGap(4, 192)).toBeCloseTo(5.33, 1);
+  });
+
+  it('rail keeps all items under a tight maxHeight and applies the computed gap', () => {
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn(), maxHeight: 188 }));
+    expect(buttons(tree)).toHaveLength(4);
+    const host = tree.root.findAllByType('View')[0];
+    expect(Object.assign({}, ...[host.props.style].flat())).toMatchObject({ width: RAIL_COLUMN_WIDTH, gap: 4 });
+  });
+
+  it('labels cap font scaling at 1.15', () => {
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    for (const text of tree.root.findAllByType('Text')) expect(text.props.maxFontSizeMultiplier).toBe(1.15);
+  });
+
+  it('header icons and rail share one centre axis and the header offsets the rail by the same constant', () => {
+    expect(DISCOVER_ICON_CENTER_FROM_RIGHT).toBe(38);
+    const index = read('app/(tabs)/index.tsx');
+    const card = read('components/SwipeCard.tsx');
+    expect(index).toMatch(/HEADER_ACTIONS_RIGHT = DISCOVER_ICON_CENTER_FROM_RIGHT - FILTER_HIT_SIZE \/ 2/);
+    expect(card).toMatch(/right: DISCOVER_EDGE_MARGIN/);
+    expect(index).toMatch(/railTopInset=\{railTopInset\}/);
+    expect(index).toMatch(/\(insets\.top > 0 \? insets\.top : layout\.statusBarFallback\)/);
+  });
+
+  it('first segment label starts at the 16dp content edge and caps font scaling', () => {
+    const seg = read('components/FeedModeSegment.tsx');
+    expect(seg).toMatch(/overlayOption: \{ paddingHorizontal: 0, marginRight: 22 \}/);
+    expect(seg).toMatch(/maxFontSizeMultiplier=\{1\.15\}/);
   });
 });
 

@@ -38,7 +38,7 @@ import {
 import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
-import DiscoverActionRail from './DiscoverActionRail';
+import DiscoverActionRail, { DISCOVER_EDGE_MARGIN } from './DiscoverActionRail';
 import InsightWhySheet from './InsightWhySheet';
 import type { InsightChip as InsightChipModel } from '../lib/insightChip';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
@@ -77,6 +77,8 @@ const HEART_BURST_OUT_MS = 260;
 const HEART_BURST_PEAK_SCALE = 1.18;
 /** Soft crossfade when bitmap arrives; pairs with surface placeholder (no white flash). */
 const IMAGE_CROSSFADE_MS = 0;
+const RAIL_BOTTOM_PADDING = 26;
+
 /** Single tap (expand) fires only after the double tap window has closed. */
 const SINGLE_TAP_DELAY_MS = 250;
 /** Horizontal gallery: activate after 6px X; fail if 12px Y first (card vertical wins). */
@@ -138,6 +140,8 @@ export interface SwipeCardProps {
   insightChip?: InsightChipModel | null;
   onOpenInsightWardrobe?: () => void;
   onHideInsightKind?: (chip: InsightChipModel) => void;
+  /** Header altı + 16dp: rayın üst sınırı (kart koordinatı). */
+  railTopInset?: number;
 }
 
 const formatPrice = (product: Product): string =>
@@ -188,6 +192,7 @@ function SwipeCard({
   insightChip,
   onOpenInsightWardrobe,
   onHideInsightKind,
+  railTopInset = 0,
 }: SwipeCardProps) {
   const isCurrent = pageIndex === 0;
   /** Pose slot index — parent atomically writes on deck remap; do not sync from React. */
@@ -832,7 +837,7 @@ function SwipeCard({
         // Kartın jest ağacının KARDEŞİ: ray üzerinde başlayan dokunuş
         // tek/çift dokunuş ve pan jestlerine hiç ulaşmaz.
         <View
-          style={[styles.railAnchor, { height: imageBottom }]}
+          style={[styles.railAnchor, { height: imageBottom, paddingTop: railTopInset }]}
           pointerEvents="box-none"
         >
           <DiscoverActionRail
@@ -841,6 +846,7 @@ function SwipeCard({
             onLike={handleLikeButton}
             liked={isLikedLocal}
             onWhy={insightChip ? openInsight : undefined}
+            maxHeight={imageBottom - RAIL_BOTTOM_PADDING - railTopInset}
           />
         </View>
       ) : null}
@@ -904,9 +910,9 @@ const styles = StyleSheet.create({
   railAnchor: {
     position: 'absolute',
     top: 0,
-    right: 10,
+    right: DISCOVER_EDGE_MARGIN,
     justifyContent: 'flex-end',
-    paddingBottom: 26,
+    paddingBottom: RAIL_BOTTOM_PADDING,
   },
   expandedSurface: { flex: 1, backgroundColor: colors.backdrop },
   closeExpanded: {

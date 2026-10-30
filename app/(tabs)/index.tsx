@@ -24,6 +24,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import ShadowedIcon from '../../components/ShadowedIcon';
+import { DISCOVER_ICON_CENTER_FROM_RIGHT } from '../../components/DiscoverActionRail';
 import {
   runOnUI,
   useSharedValue,
@@ -90,6 +91,8 @@ import type { FeedMode } from '../../types/recommendation';
 
 const TOAST_DURATION_MS = 1600;
 const FILTER_HIT_SIZE = 40;
+/** Filtre ikon merkezi rail sütunuyla aynı dikey eksende. */
+const HEADER_ACTIONS_RIGHT = DISCOVER_ICON_CENTER_FROM_RIGHT - FILTER_HIT_SIZE / 2;
 const SEARCH_TRACK_DEBOUNCE_MS = 500;
 /** Header, clip sınırında kesilen kartın üstünde kalır. */
 const HEADER_Z_INDEX = 7;
@@ -158,6 +161,11 @@ function DeckFinishedCard({
 export default function FeedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  /** Header alt kenarı + 16dp: Keşfet rayının üst sınırı. */
+  const railTopInset =
+    (insets.top > 0 ? insets.top : layout.statusBarFallback) +
+    layout.headerPaddingTop + layout.headerControl + layout.searchToSegment +
+    layout.segmentHeight + spacing.lg;
   const { height: windowHeight } = useWindowDimensions();
   const discoverCardLiftPx = discoverCardLiftForHeight(windowHeight);
   const { user, loading: authLoading } = useAuthContext();
@@ -1001,6 +1009,7 @@ export default function FeedScreen() {
                   insightChip={insightChip && !hiddenInsightKinds.has(insightChip.kind) ? insightChip : null}
                   onOpenInsightWardrobe={handleOpenLiked}
                   onHideInsightKind={handleHideInsightKind}
+                  railTopInset={railTopInset}
                 />
               })}
             </View>
@@ -1061,7 +1070,7 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     position: 'absolute',
-    right: FILTER_HIT_SIZE * 2 + spacing.sm + spacing.xs,
+    right: HEADER_ACTIONS_RIGHT + FILTER_HIT_SIZE * 2 + spacing.sm + spacing.xs,
     top: (FILTER_HIT_SIZE - 36) / 2,
     width: '30%',
     maxWidth: 120,
@@ -1079,7 +1088,7 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     position: 'absolute',
-    right: 0,
+    right: HEADER_ACTIONS_RIGHT,
     top: (layout.segmentHeight - FILTER_HIT_SIZE) / 2,
     flexDirection: 'row',
     gap: spacing.sm,

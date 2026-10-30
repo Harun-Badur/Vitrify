@@ -91,6 +91,7 @@ export default function FeedModeSegment({
             accessibilityLabel={option.label}
           >
             <Text
+              maxFontSizeMultiplier={1.15}
               style={[
                 styles.label,
                 isActive ? styles.labelActive : null,
@@ -110,7 +111,8 @@ export default function FeedModeSegment({
 
 const styles = StyleSheet.create({
   overlayTrack: { padding: 0, backgroundColor: 'transparent' },
-  overlayOption: { paddingHorizontal: 6, marginRight: 10 },
+  /** İlk yazı kart içeriğiyle (16dp) aynı hizada başlasın: yatay iç boşluk yok. */
+  overlayOption: { paddingHorizontal: 0, marginRight: 22 },
   overlayLabel: {
     color: colors.inverseText,
     fontSize: 14,

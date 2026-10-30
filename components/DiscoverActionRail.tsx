@@ -9,6 +9,21 @@ import { colors } from '../lib/theme';
  * Görünen glyph boyutu search ikonuyla (21dp kutuda 19.6/24 → ~17.1dp) eşit:
  * bag/heart/badge-check PNG'lerinde çizim 21.6/24 dolduğu için kutu 19dp.
  */
+/** Header ve rail aynı kenar boşluğu ve sütun ekseni: ikon merkezi sağ kenardan 16 + 22dp. */
+export const DISCOVER_EDGE_MARGIN = 16;
+export const RAIL_COLUMN_WIDTH = 44;
+export const DISCOVER_ICON_CENTER_FROM_RIGHT = DISCOVER_EDGE_MARGIN + RAIL_COLUMN_WIDTH / 2;
+const RAIL_GAP = 6;
+const RAIL_MIN_GAP = 4;
+const LABEL_MAX_FONT_SCALE = 1.15;
+
+/** Sığmazsa öğeler gizlenmez, aralıklar RAIL_MIN_GAP'e kadar sıkışır. */
+export function computeRailGap(count: number, maxHeight?: number): number {
+  if (maxHeight === undefined || count < 2) return RAIL_GAP;
+  const fitting = (maxHeight - count * HIT_SIZE) / (count - 1);
+  return Math.min(RAIL_GAP, Math.max(RAIL_MIN_GAP, fitting));
+}
+
 const TRY_SIZE = 28;
 const TRY_ICON_SIZE = 13;
 const ICON_SIZE = 19;
@@ -22,14 +37,17 @@ interface DiscoverActionRailProps {
   liked: boolean;
   /** Yalnız insight chip varsa verilir; rayın en altında görünür. */
   onWhy?: () => void;
+  /** Ray için kullanılabilir yükseklik (header altı boşluğu düşülmüş). */
+  maxHeight?: number;
 }
 
 /** Boşluklar ve etiketler dahil tüm ray dikdörtgeni dokunuşu yutar. */
 const claimTouch = (): boolean => true;
 
-function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverActionRailProps) {
+function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, maxHeight }: DiscoverActionRailProps) {
+  const gap = computeRailGap(onWhy ? 4 : 3, maxHeight);
   return (
-    <View style={styles.rail} onStartShouldSetResponder={claimTouch}>
+    <View style={[styles.rail, { gap }]} onStartShouldSetResponder={claimTouch}>
       <PressableScale
         onPress={onTry}
         style={styles.item}
@@ -39,7 +57,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         <View style={styles.tryCircle}>
           <ShadowedIcon name="sparkles" size={TRY_ICON_SIZE} />
         </View>
-        <Text style={styles.label}>Dene</Text>
+        <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Dene</Text>
       </PressableScale>
       <PressableScale
         onPress={onStore}
@@ -48,7 +66,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         accessibilityLabel="Mağazaya git"
       >
         <ShadowedIcon name="shopping-bag" size={ICON_SIZE} />
-        <Text style={styles.label}>Mağaza</Text>
+        <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Mağaza</Text>
       </PressableScale>
       <PressableScale
         onPress={onLike}
@@ -58,7 +76,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         accessibilityState={{ selected: liked }}
       >
         <ShadowedIcon name={liked ? 'heart-liked' : 'heart'} size={HEART_SIZE} />
-        <Text style={styles.label}>Beğen</Text>
+        <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Beğen</Text>
       </PressableScale>
       {onWhy ? (
         <PressableScale
@@ -70,10 +88,10 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
           <View>
             <ShadowedIcon name="badge-check" size={ICON_SIZE} />
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{INSIGHT_CHIP_COPY.aiBadge}</Text>
+              <Text style={styles.badgeText} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>{INSIGHT_CHIP_COPY.aiBadge}</Text>
             </View>
           </View>
-          <Text style={styles.label}>Uyumlu</Text>
+          <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Uyumlu</Text>
         </PressableScale>
       ) : null}
     </View>
@@ -84,11 +102,11 @@ export default memo(DiscoverActionRail);
 
 const styles = StyleSheet.create({
   rail: {
+    width: RAIL_COLUMN_WIDTH,
     alignItems: 'center',
-    gap: 6,
   },
   item: {
-    minWidth: HIT_SIZE,
+    width: RAIL_COLUMN_WIDTH,
     minHeight: HIT_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
