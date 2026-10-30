@@ -20,10 +20,11 @@ export const parseFlo: VariantParser = (html, pageUrl) => {
     colors.push(imageUrl ? { name, url, imageUrl } : { name, url });
   });
 
-  // The size list is rendered twice (main + sticky bar); keep first occurrence per label.
+  // Scope to the product's own size block: related-product cards elsewhere on the page reuse the same
+  // input class with SKU values. The block is rendered twice (main + sticky bar); keep first per label.
   const sizes: VariantSize[] = [];
   const seen = new Set<string>();
-  $('input.js-product-size-input').each((_, el) => {
+  $('.detail__sizes').first().find('input.js-product-size-input').each((_, el) => {
     const label = ($(el).attr('value') ?? '').trim();
     if (!label || seen.has(label)) return;
     seen.add(label);

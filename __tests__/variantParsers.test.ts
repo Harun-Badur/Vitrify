@@ -21,10 +21,13 @@ const FLO_HTML = `<html><body>
 <a href="/urun/sneaker-101909426" class="detail__colors-item "><img class="detail__colors-image" src="https://img.test/c.jpg" alt="Color 101909426"></a>
 <a href="/urun/sneaker-101909425" class="detail__colors-item active"><img class="detail__colors-image" src="https://img.test/d.jpg" alt="Color 101909425"></a>
 </div>
+<div class="detail__sizes">
 ${flo('js-product-size-input-not-sticky not-stock', '36', 'sizeSelection0')}
 ${flo('js-product-size-input-not-sticky', '37', 'sizeSelection1')}
 ${flo('not-stock', '36', 'sizeSelection-sticky0')}
 ${flo('', '37', 'sizeSelection-sticky1')}
+</div>
+<div class="other-card">${flo('', '101972231001', 'card0')}</div>
 <input type="radio" name="in-stock" data-value="36" class="js-select-product-size">
 </body></html>`;
 
