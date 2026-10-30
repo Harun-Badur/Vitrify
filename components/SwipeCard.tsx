@@ -37,6 +37,15 @@ import {
 } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
+import { DiscoverSizesLine, DiscoverVariantInline } from './DiscoverVariantRow';
+import {
+  activeVariantIndex,
+  fallbackColor,
+  planVariantRow,
+  selectedImageFor,
+  storeProductFor,
+  type VariantSelectionState,
+} from '../lib/discoverVariants';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
 import TouchClaim from './TouchClaim';
 import DiscoverActionRail, { DISCOVER_EDGE_MARGIN } from './DiscoverActionRail';
@@ -239,7 +248,14 @@ function SwipeCard({
     galleryX.value = -next * pageWidthSV.value;
   }, [product.id, images, galleryX, imageCountSV, imageIndexSV, pageWidthSV]);
 
-  const selectedImageUrl = images[imageIndex] ?? product.imageUrl;
+  const [variantSelection, setVariantSelection] = useState<VariantSelectionState | null>(null);
+  const [variantShown, setVariantShown] = useState<VariantSelectionState | null>(null);
+  const selectedVariantIndex = activeVariantIndex(variantSelection, product.id);
+  const shownVariantImage = selectedImageFor(
+    product.colorVariants,
+    activeVariantIndex(variantShown, product.id),
+  );
+  const selectedImageUrl = shownVariantImage ?? images[imageIndex] ?? product.imageUrl;
 
   useEffect(() => {
     let cancelled = false;
@@ -390,14 +406,14 @@ function SwipeCard({
 
   const handleBuy = useCallback((): void => {
     try {
-      onBuy(product);
+      onBuy(storeProductFor(product, selectedVariantIndex));
     } catch (error) {
       logger.error('Pazaryeri sayfası açılamadı', {
         error,
         productId: product.id,
       });
     }
-  }, [onBuy, product]);
+  }, [onBuy, product, selectedVariantIndex]);
 
   const handleUndoPass = useCallback(async (animationId: number): Promise<void> => {
     let restored = false;
@@ -666,7 +682,7 @@ function SwipeCard({
     [selectedImageUrl],
   );
 
-  const showGalleryPager = imageCount > 1;
+  const showGalleryPager = imageCount > 1 && shownVariantImage === null;
 
   const slotTranslateStyle = useMemo(
     () => ({ transform: [{ translateY: pageIndex * CARD_HEIGHT }] }),
@@ -683,10 +699,79 @@ function SwipeCard({
     setIsImageLoading(false);
   }, []);
 
+  const clearVariant = useCallback((): void => {
+    setVariantSelection(null);
+    setVariantShown(null);
+  }, []);
+
   const handleImageError = useCallback((): void => {
+    if (shownVariantImage !== null) {
+      // Variant image failed: fall back to the previous photo instead of an error card.
+      clearVariant();
+      return;
+    }
     setHasImageError(true);
     setIsImageLoading(false);
-  }, []);
+  }, [clearVariant, shownVariantImage]);
+
+  const variantPlan = useMemo(
+    () => planVariantRow(product.colorVariants, product.sizeOptions),
+    [product.colorVariants, product.sizeOptions],
+  );
+  const showVariantInline =
+    variantPlan.showColors ||
+    (variantPlan.showSizes && !variantPlan.sizesOnSecondLine) ||
+    (!variantPlan.showColors && fallbackColor(product) !== null);
+  const inlineSizes = variantPlan.showSizes && !variantPlan.sizesOnSecondLine;
+
+  const handleSelectColor = useCallback((index: number): void => {
+    const variants = product.colorVariants;
+    const imageUrl = variants?.[index]?.imageUrl?.trim();
+    const productId = product.id;
+    if (activeVariantIndex(variantSelection, productId) === index) {
+      clearVariant();
+      return;
+    }
+    setVariantSelection({ productId, index });
+    if (!imageUrl) {
+      setVariantShown(null);
+      return;
+    }
+    // Keep the current photo until the variant image is cached; failure keeps the old photo.
+    void Image.prefetch(imageUrl).then(
+      (ok) => {
+        if (ok) {
+          setVariantShown({ productId, index });
+        } else {
+          setVariantSelection((current) =>
+            current?.productId === productId && current.index === index ? null : current);
+        }
+      },
+      () => {
+        setVariantSelection((current) =>
+          current?.productId === productId && current.index === index ? null : current);
+      },
+    );
+  }, [clearVariant, product.colorVariants, product.id, variantSelection]);
+
+  // Selection is per card: drop it when this slot is reused for another product.
+  useEffect(() => {
+    setVariantSelection((current) => (current?.productId === product.id ? current : null));
+    setVariantShown((current) => (current?.productId === product.id ? current : null));
+  }, [product.id]);
+
+  // Current card only: warm one or two unselected color images shortly after it settles.
+  useEffect(() => {
+    if (!isCurrent || !product.colorVariants || product.colorVariants.length < 2) return;
+    const timer = setTimeout(() => {
+      (product.colorVariants ?? [])
+        .map((variant, index) => ({ url: variant.imageUrl?.trim(), index }))
+        .filter((item) => item.url && item.index !== selectedVariantIndex)
+        .slice(0, 2)
+        .forEach((item) => { void Image.prefetch(item.url as string); });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [isCurrent, product.colorVariants, selectedVariantIndex]);
 
   return (
     <Animated.View
@@ -844,7 +929,19 @@ function SwipeCard({
                     </View>
                   ) : null}
                 </View>
+                {showVariantInline ? (
+                  <DiscoverVariantInline
+                    product={product}
+                    showColors={variantPlan.showColors}
+                    showSizes={inlineSizes}
+                    selectedIndex={selectedVariantIndex}
+                    onSelectColor={handleSelectColor}
+                  />
+                ) : null}
               </View>
+              {variantPlan.showSizes && variantPlan.sizesOnSecondLine ? (
+                <DiscoverSizesLine sizes={product.sizeOptions ?? []} />
+              ) : null}
             </View>
           </View>
         </Animated.View>
@@ -1081,8 +1178,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 0,
     maxWidth: '45%',
-    marginRight: 8,
-    gap: spacing.xs,
+    marginRight: 6,
+    gap: 4,
   },
   identityRow: {
     flex: 1,
