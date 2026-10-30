@@ -44,6 +44,7 @@ import InsightWhySheet from './InsightWhySheet';
 import type { InsightChip as InsightChipModel } from '../lib/insightChip';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 import { logger } from '../lib/logger';
+import { stripBrandPrefix } from '../lib/productTitle';
 import {
   CARD_SPRING_BACK,
   CARD_THROW_SPRING,
@@ -264,6 +265,11 @@ function SwipeCard({
     };
   }, [product.id, unregisterPageIndexSV]);
 
+  const hasBrand = product.brand.trim().length > 0;
+  const displayTitle = useMemo(
+    () => stripBrandPrefix(product.title, product.brand),
+    [product.title, product.brand],
+  );
   const [isExpanded, setIsExpanded] = useState(false);
   const [isInsightOpen, setIsInsightOpen] = useState(false);
   const [isLikedLocal, setIsLikedLocal] = useState(false);
@@ -802,15 +808,23 @@ function SwipeCard({
             </View>
 
             <View style={styles.info}>
-              <View style={styles.metaRow}>
-                <Text style={styles.brand} numberOfLines={1}>
-                  {product.brand}
+              <View
+                style={styles.metaRow}
+                accessible
+                accessibilityLabel={`${product.brand} ${product.title}`.trim()}
+              >
+                {hasBrand ? (
+                  <View style={styles.brandGroup}>
+                    <Text style={styles.brand} numberOfLines={1} maxFontSizeMultiplier={1.15}>
+                      {product.brand}
+                    </Text>
+                    <ChevronRight size={16} color={colors.textSecondary} />
+                  </View>
+                ) : null}
+                <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail" maxFontSizeMultiplier={1.15}>
+                  {displayTitle}
                 </Text>
-                <ChevronRight size={16} color={colors.textSecondary} />
               </View>
-              <Text style={styles.title} numberOfLines={1}>
-                {product.title}
-              </Text>
               <View style={styles.purchaseRow}>
                 <View style={styles.priceRow}>
                   {hasCatalogPriceDrop(product) &&
@@ -1058,9 +1072,16 @@ const styles = StyleSheet.create({
   },
   metaRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+    alignItems: 'baseline',
     marginBottom: spacing.xs,
+  },
+  brandGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    maxWidth: '45%',
+    marginRight: 8,
+    gap: spacing.xs,
   },
   identityRow: {
     flex: 1,
@@ -1094,11 +1115,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
+    flex: 1,
     color: colors.text,
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     lineHeight: 20,
-    marginBottom: spacing.xs,
   },
   variationRow: {
     flexDirection: 'row',
