@@ -56,10 +56,10 @@ describe('planVariantRow', () => {
     expect(planVariantRow(colors(2), undefined)).toMatchObject({ showColors: true, showSizes: false });
     expect(planVariantRow(undefined, sizes(2))).toMatchObject({ showColors: false, showSizes: true });
   });
-  it('caps colors at 5 + overflow when more than 6, sizes with +N', () => {
-    expect(visibleColors(colors(6)).shown).toHaveLength(6);
-    const capped = visibleColors(colors(8));
-    expect(capped.shown).toHaveLength(5);
+  it('caps colors at 4 + overflow, sizes with +N', () => {
+    expect(visibleColors(colors(4)).overflow).toBe(0);
+    const capped = visibleColors(colors(7));
+    expect(capped.shown).toHaveLength(4);
     expect(capped.overflow).toBe(3);
     const s = visibleSizes(sizes(14));
     expect(s.shown.length + s.overflow).toBe(14);
@@ -97,5 +97,21 @@ describe('selection', () => {
     const state = { productId: 'p1', index: 1 };
     expect(activeVariantIndex(state, 'p1')).toBe(1);
     expect(activeVariantIndex(state, 'p2')).toBeNull();
+  });
+});
+
+describe('DiscoverVariantRow rendering (source contract)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const src: string = require('fs').readFileSync(require('path').join(__dirname, '../components/DiscoverVariantRow.tsx'), 'utf8');
+  it('prefers the variant image preview, hex only as fallback', () => {
+    expect(src.indexOf('imageUrl ? (')).toBeGreaterThan(-1);
+    expect(src).toMatch(/imageUrl \? \([\s\S]*<Image[\s\S]*\) : \([\s\S]*swatch\.hex/);
+  });
+  it('uppercases size labels and uses the compact sizes', () => {
+    expect(src).toContain('size.label.toUpperCase()');
+    expect(src).toMatch(/const DOT = 26;/);
+    expect(src).toMatch(/height: 24, minWidth: 26, paddingHorizontal: 7, borderRadius: 8/);
+    expect(src).toMatch(/fontSize: 11, fontWeight: '400'/);
+    expect(src).toMatch(/height: 16/);
   });
 });

@@ -8,9 +8,15 @@ import { colors } from '../lib/theme';
 import { fallbackColor, visibleColors, visibleSizes } from '../lib/discoverVariants';
 import type { ColorVariant, Product, SizeOption } from '../types/product';
 
-const DOT = 20;
+const DOT = 26;
 const RING = 2;
-const HIT_SLOP = 12;
+const RING_GAP = 1.5;
+const RING_OUTER = DOT + 2 * (RING + RING_GAP);
+const RING_MARGIN = -(RING + RING_GAP);
+const HIT_SLOP = 9;
+const EDGE = '#E5E7EB';
+const INK = '#111827';
+const CHIP_INK = '#374151';
 
 interface InlineProps {
   product: Product;
@@ -25,6 +31,7 @@ function ColorDot({ variant, selected, onPress }: {
 }) {
   const swatch = resolveSwatch(variant.name);
   const label = variant.name?.trim() || 'Renk';
+  const imageUrl = variant.imageUrl?.trim();
   return (
     <PressableScale
       onPress={onPress}
@@ -34,12 +41,15 @@ function ColorDot({ variant, selected, onPress }: {
       accessibilityState={{ selected }}
       style={[styles.dotRing, selected && styles.dotRingSelected]}
     >
-      {swatch.kind === 'hex' ? (
-        <View style={[styles.dot, { backgroundColor: swatch.hex }, swatch.light && styles.dotLight]} />
-      ) : variant.imageUrl ? (
-        <Image source={{ uri: variant.imageUrl }} style={styles.dot} contentFit="cover" />
+      {imageUrl ? (
+        <Image source={{ uri: imageUrl }} style={styles.dot} contentFit="cover" />
       ) : (
-        <View style={[styles.dot, styles.dotLight, { backgroundColor: colors.border }]} />
+        <View
+          style={[
+            styles.dot,
+            { backgroundColor: swatch.kind === 'hex' ? swatch.hex : EDGE },
+          ]}
+        />
       )}
     </PressableScale>
   );
@@ -54,13 +64,13 @@ function SizeChips({ sizes }: { sizes: readonly SizeOption[] }) {
           key={size.label}
           style={[styles.chip, size.inStock === false && styles.chipOut]}
           accessible
-          accessibilityLabel={size.inStock === false ? `${size.label} beden, tükendi` : `${size.label} beden`}
+          accessibilityLabel={size.inStock === false ? `${size.label.toUpperCase()} beden, tükendi` : `${size.label.toUpperCase()} beden`}
         >
           <Text
             style={[styles.chipText, size.inStock === false && styles.chipTextOut]}
             maxFontSizeMultiplier={1.15}
           >
-            {size.label}
+            {size.label.toUpperCase()}
           </Text>
         </View>
       ))}
@@ -128,27 +138,27 @@ export function DiscoverSizesLine({ sizes }: { sizes: readonly SizeOption[] }) {
 
 const styles = StyleSheet.create({
   inline: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, justifyContent: 'flex-end', columnGap: 8 },
-  dots: { flexDirection: 'row', alignItems: 'center', columnGap: 4 },
+  dots: { flexDirection: 'row', alignItems: 'center', columnGap: 8 },
   dotRing: {
-    width: DOT + RING * 4, height: DOT + RING * 4, borderRadius: (DOT + RING * 4) / 2,
-    borderWidth: RING, borderColor: 'transparent', alignItems: 'center', justifyContent: 'center',
+    width: RING_OUTER, height: RING_OUTER, borderRadius: 8 + RING + RING_GAP,
+    margin: RING_MARGIN, borderWidth: RING, borderColor: 'transparent',
+    alignItems: 'center', justifyContent: 'center',
   },
-  dotRingSelected: { borderColor: colors.text },
-  dot: { width: DOT, height: DOT, borderRadius: DOT / 2, overflow: 'hidden' },
-  dotLight: { borderWidth: 1, borderColor: colors.border },
+  dotRingSelected: { borderColor: INK },
+  dot: { width: DOT, height: DOT, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: EDGE },
   smallDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1, borderColor: colors.border },
   colorName: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
-  more: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  divider: { width: 1, height: 18, backgroundColor: colors.border },
+  more: { color: colors.textSecondary, fontSize: 11, fontWeight: '400' },
+  divider: { width: 1, height: 16, backgroundColor: EDGE },
   chips: { flexDirection: 'row', alignItems: 'center', columnGap: 6 },
   secondLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: 6, marginTop: 8 },
   chip: {
-    height: 28, minWidth: 28, paddingHorizontal: 8, borderRadius: 10, borderWidth: 1,
-    borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
+    height: 24, minWidth: 26, paddingHorizontal: 7, borderRadius: 8, borderWidth: 1,
+    borderColor: EDGE, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.input,
   },
   chipOut: { opacity: 0.45 },
-  chipText: { color: colors.text, fontSize: 12, fontWeight: '600' },
+  chipText: { color: CHIP_INK, fontSize: 11, fontWeight: '400' },
   chipTextOut: { textDecorationLine: 'line-through' },
 });
 

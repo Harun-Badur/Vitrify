@@ -1,8 +1,7 @@
 import type { ColorVariant, Product, SizeOption } from '../types/product';
 import { resolveSwatch } from './colorSwatch';
 
-const MAX_COLOR_DOTS = 6;
-const COLOR_DOTS_WHEN_CAPPED = 5;
+const MAX_COLOR_DOTS = 4;
 const MAX_SIZE_CHIPS = 10;
 const SINGLE_LINE_MAX_SIZES = 5;
 const SINGLE_LINE_MAX_COLORS = 4;
@@ -28,7 +27,7 @@ export const planVariantRow = (
 
 export const visibleColors = <T,>(colors: readonly T[]): { shown: T[]; overflow: number } =>
   colors.length > MAX_COLOR_DOTS
-    ? { shown: colors.slice(0, COLOR_DOTS_WHEN_CAPPED), overflow: colors.length - COLOR_DOTS_WHEN_CAPPED }
+    ? { shown: colors.slice(0, MAX_COLOR_DOTS), overflow: colors.length - MAX_COLOR_DOTS }
     : { shown: [...colors], overflow: 0 };
 
 export const visibleSizes = <T,>(sizes: readonly T[]): { shown: T[]; overflow: number } =>
