@@ -71,6 +71,7 @@ import {
 } from '../../services/deeplinkService';
 import { fetchRecommendationCatalog, resetProductPrefCatalogCaches } from '../../services/productService';
 import { createDeckRefresher } from '../../lib/deckRefresh';
+import { canResurfacePassed, resurfacePassed } from '../../lib/resurfacePassed';
 import { effectiveProductPref, type ProductPref } from '../../lib/productPreferenceRules';
 import { DiscoverRecommendationCache } from '../../lib/discoverRecommendationCache';
 import { fingerprint } from '../../src/recommendationCache/fingerprint';
@@ -129,6 +130,8 @@ interface DeckFinishedCardProps {
   onRefresh: () => void;
   onOpenLiked: () => void;
   refreshing?: boolean;
+  /** GEÇİCİ (prototip): geçilenleri tekrar göster; yoksa buton çizilmez. */
+  onResurfacePassed?: () => void;
 }
 
 function DeckFinishedCard({
@@ -136,6 +139,7 @@ function DeckFinishedCard({
   onRefresh,
   onOpenLiked,
   refreshing = false,
+  onResurfacePassed,
 }: DeckFinishedCardProps) {
   return (
     <View style={styles.finishedCard}>
@@ -159,6 +163,18 @@ function DeckFinishedCard({
       >
         <Text style={styles.secondaryCtaText}>{refreshing ? 'Yükleniyor…' : 'Yenile'}</Text>
       </PressableScale>
+      {onResurfacePassed ? (
+        <PressableScale
+          onPress={onResurfacePassed}
+          disabled={refreshing}
+          style={styles.outlineCta}
+          accessibilityRole="button"
+          accessibilityLabel="Geçtiklerimi tekrar göster"
+          accessibilityState={{ disabled: refreshing, busy: refreshing }}
+        >
+          <Text style={styles.outlineCtaText}>{refreshing ? 'Yükleniyor…' : 'Geçtiklerimi tekrar göster'}</Text>
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
@@ -467,6 +483,14 @@ export default function FeedScreen() {
     setRefreshing(false);
     setRefreshEmpty(result === 'empty');
   }, [deckRefresher]);
+
+  const passedCount = useAppStore((state) => state.passedProductIds.length);
+  const handleResurfacePassed = useCallback((): void => {
+    resurfacePassed(useAppStore.getState().passedProductIds);
+    void handleDeckRefresh();
+  }, [handleDeckRefresh]);
+  const resurfaceHandler =
+    canResurfacePassed(passedCount) && feedQuery.mode !== 'search' ? handleResurfacePassed : undefined;
 
   const applyFeedQuery = useCallback(
     (next: FeedQuery, options?: { inputText?: string }): void => {
@@ -915,6 +939,7 @@ export default function FeedScreen() {
             subtitle="Ürünler yüklenemedi. Bağlantını kontrol edip tekrar dene."
             onRefresh={handleDeckRefresh}
             refreshing={refreshing}
+            onResurfacePassed={resurfaceHandler}
             onOpenLiked={handleOpenLiked}
           />
         ) : isCatalogExhausted && !isSearchMode ? (
@@ -924,6 +949,7 @@ export default function FeedScreen() {
               : 'Katalogdaki her şeyi gördün. Yeni ürünler eklendikçe burada belirir.'}
             onRefresh={handleDeckRefresh}
             refreshing={refreshing}
+            onResurfacePassed={resurfaceHandler}
             onOpenLiked={handleOpenLiked}
           />
         ) : !hasDeck ? (
@@ -937,6 +963,7 @@ export default function FeedScreen() {
             }
             onRefresh={isSearchMode ? handleClearSearch : handleDeckRefresh}
             refreshing={refreshing && !isSearchMode}
+            onResurfacePassed={resurfaceHandler}
             onOpenLiked={handleOpenLiked}
           />
         ) : (
@@ -1281,6 +1308,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.button,
     paddingVertical: spacing.lg,
     alignItems: 'center',
+  },
+  outlineCta: {
+    alignSelf: 'stretch',
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  outlineCtaText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   secondaryCtaText: {
     color: colors.text,
