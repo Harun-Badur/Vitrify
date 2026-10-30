@@ -52,6 +52,6 @@ describe('Deck finished screen wiring (source contract)', () => {
     expect(screen).toContain('createDeckRefresher');
     expect(screen).toContain('Yükleniyor…');
     expect(screen).toContain('Şimdilik yeni ürün yok, daha sonra tekrar dene');
-    expect(screen).toMatch(/!(refreshing && !hasDeck)/);
+    expect(screen).toContain('!(refreshing && !hasDeck)');
   });
 });
