@@ -34,13 +34,12 @@ import {
   Heart,
 } from 'lucide-react-native';
 import DiscoverProductImage from './DiscoverProductImage';
-import { DiscoverSizesLine, DiscoverVariantInline } from './DiscoverVariantRow';
+import DiscoverVariantInline from './DiscoverVariantRow';
 import {
   activeVariantIndex,
-  fallbackColor,
-  planVariantRow,
   selectedImageFor,
   storeProductFor,
+  VARIANT_ROW_HEIGHT,
   type VariantSelectionState,
 } from '../lib/discoverVariants';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
@@ -737,16 +736,6 @@ function SwipeCard({
     setIsImageLoading(false);
   }, [clearVariant, shownVariantImage]);
 
-  const variantPlan = useMemo(
-    () => planVariantRow(product.colorVariants, product.sizeOptions),
-    [product.colorVariants, product.sizeOptions],
-  );
-  const showVariantInline =
-    variantPlan.showColors ||
-    (variantPlan.showSizes && !variantPlan.sizesOnSecondLine) ||
-    (!variantPlan.showColors && fallbackColor(product) !== null);
-  const inlineSizes = variantPlan.showSizes && !variantPlan.sizesOnSecondLine;
-
   const handleSelectColor = useCallback((index: number): void => {
     const variants = product.colorVariants;
     const imageUrl = variants?.[index]?.imageUrl?.trim();
@@ -955,19 +944,12 @@ function SwipeCard({
                     </View>
                   ) : null}
                 </View>
-                {showVariantInline ? (
-                  <DiscoverVariantInline
-                    product={product}
-                    showColors={variantPlan.showColors}
-                    showSizes={inlineSizes}
-                    selectedIndex={selectedVariantIndex}
-                    onSelectColor={handleSelectColor}
-                  />
-                ) : null}
+                <DiscoverVariantInline
+                  product={product}
+                  selectedIndex={selectedVariantIndex}
+                  onSelectColor={handleSelectColor}
+                />
               </View>
-              {variantPlan.showSizes && variantPlan.sizesOnSecondLine ? (
-                <DiscoverSizesLine sizes={product.sizeOptions ?? []} />
-              ) : null}
             </View>
           </View>
         </Animated.View>
@@ -1233,19 +1215,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  // Fixed height: color/size row and price share one line; footer height never varies.
   purchaseRow: {
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 10,
-    rowGap: 6,
+    height: VARIANT_ROW_HEIGHT,
   },
   priceRow: {
-    flex: 1,
-    minWidth: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    flexWrap: 'wrap',
   },
   previousPrice: {
     color: colors.textSecondary,

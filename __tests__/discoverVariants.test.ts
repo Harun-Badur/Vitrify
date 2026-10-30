@@ -2,11 +2,11 @@ import { resolveSwatch } from '../lib/colorSwatch';
 import {
   activeVariantIndex,
   fallbackColor,
-  planVariantRow,
+  fitVariantRow,
+  VARIANT_ROW_HEIGHT,
+  chipWidth,
   selectedImageFor,
   storeProductFor,
-  visibleColors,
-  visibleSizes,
 } from '../lib/discoverVariants';
 import type { Product } from '../types/product';
 
@@ -40,31 +40,45 @@ describe('resolveSwatch', () => {
   });
 });
 
-describe('planVariantRow', () => {
-  const sizes = (n: number) => Array.from({ length: n }, (_, i) => ({ label: String(i) }));
-  const colors = (n: number) => Array.from({ length: n }, (_, i) => ({ name: 'Siyah', url: `u${i}` }));
-  it('keeps one line for <=5 sizes and <=4 colors', () => {
-    expect(planVariantRow(colors(4), sizes(5)).sizesOnSecondLine).toBe(false);
+describe('fitVariantRow (single line, no second row)', () => {
+  const labels = (n: number) => Array.from({ length: n }, (_, i) => ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '36', '38', '40', '42', '44'][i % 12]);
+  const used = (w: number, colors: number, sizes: string[]) => {
+    const fit = fitVariantRow(w, colors, sizes);
+    const colorSpan = fit.colorCount ? fit.colorCount * 26 + (fit.colorCount - 1) * 6 + (fit.colorOverflow ? 26 : 0) + (fit.chipCount + fit.hiddenSizes > 0 ? 13 : 0) : 0;
+    const chips = sizes.slice(0, fit.chipCount).reduce((a, l, i) => a + (i ? 4 : 0) + chipWidth(l), 0)
+      + (fit.hiddenSizes ? 4 + chipWidth(`+${fit.hiddenSizes}`) : 0);
+    return { fit, total: colorSpan + chips };
+  };
+  it('never needs more than the measured width (long and short prices)', () => {
+    for (const width of [90, 140, 180, 220, 260]) {
+      for (const colors of [0, 1, 3, 8]) {
+        for (const n of [0, 3, 5, 12]) {
+          const { fit, total } = used(width, colors, labels(n));
+          if (fit.chipCount + fit.hiddenSizes > 0 || fit.colorCount > 0) {
+            expect(total).toBeLessThanOrEqual(width);
+          }
+          expect(fit.chipCount + fit.hiddenSizes).toBeLessThanOrEqual(n);
+        }
+      }
+    }
   });
-  it('moves sizes below when sizes>5 or colors>4', () => {
-    expect(planVariantRow(colors(4), sizes(6)).sizesOnSecondLine).toBe(true);
-    expect(planVariantRow(colors(5), sizes(3)).sizesOnSecondLine).toBe(true);
+  it('shows up to 3 colors then "+N", and collapses hidden sizes into one +K', () => {
+    const fit = fitVariantRow(240, 7, labels(12));
+    expect(fit.colorCount).toBeLessThanOrEqual(3);
+    expect(fit.colorOverflow).toBe(7 - fit.colorCount);
+    expect(fit.chipCount + fit.hiddenSizes).toBe(12);
+    expect(fit.hiddenSizes).toBeGreaterThan(0);
   });
-  it('hides absent sections, no placeholders', () => {
-    expect(planVariantRow(undefined, undefined)).toMatchObject({ showColors: false, showSizes: false });
-    expect(planVariantRow([], [])).toMatchObject({ showColors: false, showSizes: false });
-    expect(planVariantRow(colors(2), undefined)).toMatchObject({ showColors: true, showSizes: false });
-    expect(planVariantRow(undefined, sizes(2))).toMatchObject({ showColors: false, showSizes: true });
+  it('drops to 2 colors to keep at least 2 chips', () => {
+    const widths = Array.from({ length: 200 }, (_, k) => 100 + k)
+      .filter(w => { const f = fitVariantRow(w, 3, labels(7)); return f.colorCount === 2 && f.chipCount >= 2; });
+    expect(widths.length).toBeGreaterThan(0);
+    expect(widths.every(w => fitVariantRow(w, 3, labels(7)).colorOverflow === 1)).toBe(true);
   });
-  it('caps colors at 4 + overflow, sizes with +N', () => {
-    expect(visibleColors(colors(4)).overflow).toBe(0);
-    const capped = visibleColors(colors(7));
-    expect(capped.shown).toHaveLength(4);
-    expect(capped.overflow).toBe(3);
-    const s = visibleSizes(sizes(14));
-    expect(s.shown.length + s.overflow).toBe(14);
-    expect(s.overflow).toBeGreaterThan(0);
-    expect(visibleSizes(sizes(5)).overflow).toBe(0);
+  it('handles missing data: sizes only, colors only, none', () => {
+    expect(fitVariantRow(200, 0, labels(3))).toMatchObject({ colorCount: 0, chipCount: 3, hiddenSizes: 0 });
+    expect(fitVariantRow(200, 2, [])).toMatchObject({ colorCount: 2, chipCount: 0, hiddenSizes: 0 });
+    expect(fitVariantRow(200, 0, [])).toMatchObject({ colorCount: 0, chipCount: 0, hiddenSizes: 0 });
   });
 });
 
@@ -100,18 +114,28 @@ describe('selection', () => {
   });
 });
 
-describe('DiscoverVariantRow rendering (source contract)', () => {
+describe('footer height is constant (source contract)', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const src: string = require('fs').readFileSync(require('path').join(__dirname, '../components/DiscoverVariantRow.tsx'), 'utf8');
-  it('prefers the variant image preview, hex only as fallback', () => {
-    expect(src.indexOf('imageUrl ? (')).toBeGreaterThan(-1);
-    expect(src).toMatch(/imageUrl \? \([\s\S]*<Image[\s\S]*\) : \([\s\S]*swatch\.hex/);
+  const read = (rel: string): string => require('fs').readFileSync(require('path').join(__dirname, rel), 'utf8');
+  const row = read('../components/DiscoverVariantRow.tsx');
+  const card = read('../components/SwipeCard.tsx');
+  it('uses one fixed row height shared by the price row and the variant slot', () => {
+    expect(VARIANT_ROW_HEIGHT).toBe(28);
+    expect(row).toMatch(/height: VARIANT_ROW_HEIGHT/);
+    expect(card).toMatch(/purchaseRow: \{[^}]*height: VARIANT_ROW_HEIGHT/);
+    expect(card).not.toMatch(/purchaseRow: \{[^}]*flexWrap/);
   });
-  it('uppercases size labels and uses the compact sizes', () => {
-    expect(src).toContain('size.label.toUpperCase()');
-    expect(src).toMatch(/const DOT = 26;/);
-    expect(src).toMatch(/height: 24, minWidth: 26, paddingHorizontal: 7, borderRadius: 8/);
-    expect(src).toMatch(/fontSize: 11, fontWeight: '400'/);
-    expect(src).toMatch(/height: 16/);
+  it('has no second-line sizes and always mounts the variant slot', () => {
+    expect(card).not.toMatch(/sizesOnSecondLine|DiscoverSizesLine/);
+    expect(row).not.toMatch(/flexWrap/);
+    expect(card).toMatch(/<DiscoverVariantInline\s/);
+    expect(card).not.toMatch(/showVariantInline/);
+  });
+  it('prefers the variant image preview, hex only as fallback; uppercase compact chips', () => {
+    expect(row).toMatch(/imageUrl \? \([\s\S]*<Image[\s\S]*\) : \([\s\S]*swatch\.hex/);
+    expect(row).toContain('size.label.toUpperCase()');
+    expect(row).toMatch(/const DOT = 26;/);
+    expect(row).toMatch(/height: 24, minWidth: 24, paddingHorizontal: 6, borderRadius: 8/);
+    expect(row).toMatch(/columnGap: 4/);
   });
 });
