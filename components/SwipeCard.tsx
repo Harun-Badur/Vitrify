@@ -58,6 +58,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
+import { perfColdStartFirstCard, perfHasPendingSwipe, perfLog, perfNow, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
   colors,
@@ -211,6 +212,8 @@ function SwipeCard({
   const [hasImageError, setHasImageError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const imageCachedRef = useRef(false);
+  const perfLoadStartRef = useRef<{ index: number; at: number } | null>(null);
+  const perfLoadedRef = useRef<Set<number>>(new Set());
 
   const imagesKey =
     Array.isArray(product.images) && product.images.length > 0
@@ -711,15 +714,35 @@ function SwipeCard({
     [pageIndex],
   );
 
+  useEffect(() => {
+    // The next card's image may have loaded while it was still a neighbour.
+    if (!__DEV__ || !isCurrent || !perfHasPendingSwipe() || !perfLoadedRef.current.has(0)) return;
+    const swipeMs = perfTakeSwipe();
+    if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: true });
+  }, [isCurrent]);
+
   const handleImageLoadStart = useCallback((): void => {
+    if (__DEV__) perfLoadStartRef.current = { index: imageIndex, at: perfNow() };
     if (!imageCachedRef.current) {
       setIsImageLoading(true);
     }
-  }, []);
+  }, [imageIndex]);
 
   const handleImageLoad = useCallback((): void => {
+    if (__DEV__) {
+      const started = perfLoadStartRef.current;
+      perfLoadedRef.current.add(imageIndex);
+      if (started && started.index === imageIndex && isCurrent) {
+        perfLog(imageIndex === 0 ? 'gallery_first_image' : 'gallery_extra_image', { ms: perfNow() - started.at, idx: imageIndex });
+      }
+      if (isCurrent && imageIndex === 0) {
+        perfColdStartFirstCard();
+        const swipeMs = perfTakeSwipe();
+        if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: false });
+      }
+    }
     setIsImageLoading(false);
-  }, []);
+  }, [imageIndex, isCurrent]);
 
   const clearVariant = useCallback((): void => {
     setVariantSelection(null);

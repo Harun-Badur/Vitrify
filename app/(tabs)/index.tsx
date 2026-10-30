@@ -1,4 +1,5 @@
 import { useOwnedState } from '../../hooks/useOwnedState';
+import { perfLog, perfNow } from '../../lib/perfLog';
 import { useDiscoverPerfTrace } from '../../hooks/useDiscoverPerfTrace';
 import {
   useCallback,
@@ -473,6 +474,7 @@ export default function FeedScreen() {
   const handleDeckRefresh = useCallback(async (): Promise<void> => {
     setRefreshEmpty(false);
     setRefreshing(true);
+    const perfStart = perfNow();
     let result: Awaited<ReturnType<typeof deckRefresher>> = 'busy';
     try {
       result = await deckRefresher();
@@ -480,6 +482,7 @@ export default function FeedScreen() {
       result = 'ready'; // loadFeed reports its own error state; nothing to add here.
     }
     if (result === 'busy') return;
+    perfLog('deck_refresh', { ms: perfNow() - perfStart, n: useAppStore.getState().currentProducts.length });
     setRefreshing(false);
     setRefreshEmpty(result === 'empty');
   }, [deckRefresher]);

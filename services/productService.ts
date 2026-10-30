@@ -39,6 +39,7 @@ import type {
 } from '../types/recommendation';
 import { DEFAULT_FEED_MODE } from '../types/recommendation';
 import { recordCount, span } from '../lib/perfTrace';
+import { perfLog, perfNow } from '../lib/perfLog';
 
 export { filterProducts } from '../src/intelligence/filters/productFilters';
 export type { ProductFilters } from '../src/intelligence/filters/productFilters';
@@ -484,6 +485,7 @@ const fetchEdgeFeed = async (
     controller.abort();
   }, EDGE_TIMEOUT_MS);
 
+  const perfStart = perfNow();
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -507,6 +509,16 @@ const fetchEdgeFeed = async (
     let payload: unknown;
     try { payload = await response.json(); } catch { throw new FeedServiceError('FEED_RESPONSE'); }
     const parsed = parseFeedResponse(payload);
+    if (__DEV__) {
+      perfLog('recs_feed', {
+        ms: perfNow() - perfStart,
+        n: parsed?.items.length ?? 0,
+        kb: Math.round((Number(response.headers?.get?.('content-length')) || JSON.stringify(payload).length) / 1024),
+        tab: mode === 'trend' ? 'trend' : 'sana_ozel',
+        gender: productPref === 'kadin' ? 'kadin' : productPref === 'erkek' ? 'erkek' : 'tumu',
+        page: excludeIds.length > 0 ? 'next' : 'first',
+      });
+    }
     if (!parsed) throw new FeedServiceError('FEED_RESPONSE');
     edgeSupportsPagination = typeof parsed.has_more === 'boolean';
     // Preserve the first legacy ranking, but never reuse a finite legacy response as a next page.
