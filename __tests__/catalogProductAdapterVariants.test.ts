@@ -22,9 +22,15 @@ const row = (extra: Record<string, unknown> = {}): FeedProductRow =>
   }) as FeedProductRow;
 
 describe('variant columns flag', () => {
-  it('is off by default and leaves the select untouched', () => {
-    expect(PRODUCT_VARIANT_COLUMNS_ENABLED).toBe(false);
-    expect(withVariantColumns('id, title')).toBe('id, title');
+  it('is on (migration applied) and appends the columns by default', () => {
+    expect(PRODUCT_VARIANT_COLUMNS_ENABLED).toBe(true);
+    expect(withVariantColumns('id, title')).toBe(
+      'id, title, color_variants, size_options, variants_fetched_at',
+    );
+  });
+
+  it('leaves the select untouched when disabled', () => {
+    expect(withVariantColumns('id, title', false)).toBe('id, title');
   });
 
   it('appends the three columns when enabled', () => {

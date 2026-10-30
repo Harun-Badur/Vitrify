@@ -10,7 +10,7 @@ export const DISCOVER_CATALOG_PAGE_SIZE = 80;
  * products.color_variants / size_options / variants_fetched_at ship in a migration that is applied
  * by hand. Keep false until it is live; selecting a missing column would fail the whole catalog query.
  */
-export const PRODUCT_VARIANT_COLUMNS_ENABLED = false;
+export const PRODUCT_VARIANT_COLUMNS_ENABLED = true;
 
 export const withVariantColumns = (
   columns: string,
