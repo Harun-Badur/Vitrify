@@ -23,6 +23,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
+import TouchClaim from '../../components/TouchClaim';
 import ShadowedIcon from '../../components/ShadowedIcon';
 import { DISCOVER_EDGE_MARGIN, RAIL_COLUMN_WIDTH } from '../../components/DiscoverActionRail';
 import {
@@ -963,11 +964,14 @@ export default function FeedScreen() {
         ]}
       >
         <View style={styles.segmentWrap}>
-          <FeedModeSegment
-            value={feedMode}
-            onChange={handleFeedModeChange}
-            overlay
-        />
+          <TouchClaim>
+            <FeedModeSegment
+              value={feedMode}
+              onChange={handleFeedModeChange}
+              overlay
+            />
+          </TouchClaim>
+        <TouchClaim>
         <View style={[styles.headerActions, { right: headerActionsRight }]}>
           <PressableScale
             onPress={() => {
@@ -990,6 +994,8 @@ export default function FeedScreen() {
             {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
           </PressableScale>
         </View>
+        </TouchClaim>
+        <TouchClaim>
         <View style={[styles.searchBar, { right: headerActionsRight + FILTER_HIT_SIZE * 2 + spacing.xs }, !isSearchInputOpen && styles.searchClosed]}
           accessibilityElementsHidden={!isSearchInputOpen}
           importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
@@ -1018,6 +1024,7 @@ export default function FeedScreen() {
             </PressableScale>
           ) : null}
         </View>
+        </TouchClaim>
         </View>
         {isSearchMode && showSearchBanner && searchBannerText ? (
           <View style={styles.searchMetaBlock}>

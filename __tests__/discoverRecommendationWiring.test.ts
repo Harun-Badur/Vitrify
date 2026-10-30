@@ -8,6 +8,7 @@ import { anchorContext } from '../src/recommendationCache/feedPacket';
 import { serializeFinal } from '../src/recommendationCache/codec';
 const getDiscoverRecommendations = jest.fn<Promise<ReturnType<typeof realService.getDiscoverRecommendations>>, [Parameters<typeof realService.getDiscoverRecommendations>[0], unknown?]>();
 import { loadWardrobe } from '../services/wardrobeService';
+jest.mock('../components/TouchClaim', () => ({ __esModule: true, default: ({ children }: { children: unknown }) => children }));
 jest.mock('../services/wardrobeService', () => ({ loadWardrobe: jest.fn(() => new Promise(() => {})) }));
 import { fetchRecommendationCatalog } from '../services/productService';
 import { getSupabaseClient } from '../lib/supabase';

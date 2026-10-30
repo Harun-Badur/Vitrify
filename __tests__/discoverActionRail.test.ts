@@ -180,6 +180,21 @@ describe('device-robust alignment', () => {
     expect(tree.root.findAllByType('View')[0].props.onStartShouldSetResponder()).toBe(true);
   });
 
+  it('rail and header controls are RNGH touch targets via an inert Manual gesture (device-log fix)', () => {
+    // Cihaz logu: tap2/pan/tap1 kart jestleri, rail/header butonuyla aynı anda başladı;
+    // RNGH Android arka planı/handler'ı olmayan ViewGroup'ları dokunuş hedefi saymıyor.
+    const claim = read('components/TouchClaim.tsx');
+    expect(claim).toMatch(/Gesture\.Manual\(\)/);
+    expect(claim).not.toMatch(/Gesture\.(Tap|Pan|Native)\(/);
+    const card = read('components/SwipeCard.tsx');
+    expect(card).toMatch(/<TouchClaim>\s*<DiscoverActionRail/);
+    const index = read('app/(tabs)/index.tsx');
+    expect(index).toMatch(/<TouchClaim>\s*<FeedModeSegment/);
+    expect(index).toMatch(/<TouchClaim>\s*<View style=\{\[styles\.headerActions/);
+    expect(index).toMatch(/<TouchClaim>\s*<View style=\{\[styles\.searchBar/);
+    expect(card + index + read('components/DiscoverActionRail.tsx')).not.toMatch(/console\.log\('\[(BTN|ENLARGE|CARD-TOUCH)\]/);
+  });
+
   it('first segment label starts at the 16dp content edge and caps font scaling', () => {
     const seg = read('components/FeedModeSegment.tsx');
     expect(seg).toMatch(/overlayOption: \{ paddingHorizontal: 0, marginRight: 22 \}/);

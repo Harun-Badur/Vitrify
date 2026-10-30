@@ -7,6 +7,7 @@ import SwipeCard, { type SwipeCardProps } from '../components/SwipeCard';
 import { getDiscoverRecommendations } from '../src/intelligence/recommendations/getDiscoverRecommendations';
 import { formatTryPrice, type Product, type OutfitRole } from '../types/product';
 
+jest.mock('../components/TouchClaim', () => ({ __esModule: true, default: ({ children }: { children: unknown }) => children }));
 jest.mock('react-native', () => {
   const flatten = (style: unknown): Record<string, unknown> => Array.isArray(style)
     ? Object.assign({}, ...style.map(flatten)) : typeof style === 'object' && style !== null ? style as Record<string, unknown> : {};

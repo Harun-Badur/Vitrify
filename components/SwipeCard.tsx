@@ -38,6 +38,7 @@ import {
 import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
+import TouchClaim from './TouchClaim';
 import DiscoverActionRail, { DISCOVER_EDGE_MARGIN } from './DiscoverActionRail';
 import InsightWhySheet from './InsightWhySheet';
 import type { InsightChip as InsightChipModel } from '../lib/insightChip';
@@ -840,6 +841,7 @@ function SwipeCard({
           style={[styles.railAnchor, { height: imageBottom, paddingTop: railTopInset }]}
           pointerEvents="box-none"
         >
+          <TouchClaim>
           <DiscoverActionRail
             onTry={handleVirtualTryOn}
             onStore={handleStorePress}
@@ -848,6 +850,7 @@ function SwipeCard({
             onWhy={insightChip ? openInsight : undefined}
             maxHeight={imageBottom - RAIL_BOTTOM_PADDING - railTopInset}
           />
+          </TouchClaim>
         </View>
       ) : null}
       {recommendations !== undefined ? (

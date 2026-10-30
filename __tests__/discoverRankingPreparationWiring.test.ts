@@ -18,6 +18,7 @@ const mockSwipeRight = jest.fn();
 const mockUndoPass = jest.fn();
 const mockSwipeCardRender = jest.fn();
 const mockRouter = { push: jest.fn() };
+jest.mock('../components/TouchClaim', () => ({ __esModule: true, default: ({ children }: { children: unknown }) => children }));
 jest.mock('../services/discoverRecommendationCacheService', () => ({ loadDiscoverRecommendationPacket: jest.fn() }));
 const mockState = {
   feedPreparationRevision: 1,
