@@ -5,17 +5,15 @@ import DiscoverActionRail from '../components/DiscoverActionRail';
 import ShadowedIcon from '../components/ShadowedIcon';
 
 jest.mock('react-native', () => ({
-  Text: 'Text', View: 'View',
+  Text: 'Text', View: 'View', Image: 'Image',
   StyleSheet: { create: (styles: unknown) => styles, flatten: (s: unknown) => s },
-}));
-jest.mock('lucide-react-native', () => ({
-  Heart: 'Heart', ShoppingBag: 'ShoppingBag', Sparkles: 'Sparkles', BadgeCheck: 'BadgeCheck',
 }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
 
 interface TestNode {
   props: Record<string, any>;
   findAllByType: (type: ElementType | string) => TestNode[];
+  findByType: (type: ElementType | string) => TestNode;
   findAllByProps: (props: Record<string, unknown>) => TestNode[];
 }
 const renderer = jest.requireActual('react-test-renderer') as {
@@ -67,16 +65,17 @@ describe('DiscoverActionRail', () => {
     const h = handlers();
     const idle = mount(createElement(DiscoverActionRail, { ...h, liked: false, onWhy: jest.fn() }));
     const liked = mount(createElement(DiscoverActionRail, { ...h, liked: true, onWhy: jest.fn() }));
-    const fillOf = (tree: { root: TestNode }): unknown => tree.root.findAllByType('Heart').pop()!.props.fill;
-    expect(fillOf(idle)).toBe('none');
-    expect(fillOf(liked)).not.toBe('none');
+    const iconNames = (tree: { root: TestNode }): unknown[] => tree.root.findAllByType(ShadowedIcon).map(n => n.props.name);
+    expect(iconNames(idle)).toContain('heart');
+    expect(iconNames(idle)).not.toContain('heart-liked');
+    expect(iconNames(liked)).toContain('heart-liked');
     const labels = (tree: { root: TestNode }) => tree.root.findAllByType('Text').map(t => t.props.children);
     expect(labels(idle)).toEqual(expect.arrayContaining(['Dene', 'Mağaza', 'Beğen', 'Uyumlu', 'AI']));
     expect(labels(idle).filter(c => c === 'AI')).toHaveLength(1);
   });
 });
 
-describe('touch absorption and halo icons', () => {
+describe('touch absorption and shadowed icons', () => {
   it('rail root claims every touch inside its rectangle, gaps and labels included', () => {
     const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     const host = tree.root.findAllByType('View')[0];
@@ -88,21 +87,30 @@ describe('touch absorption and halo icons', () => {
     for (const button of buttons(tree)) {
       expect(button.findAllByType('Text').length).toBeGreaterThanOrEqual(1);
     }
-    expect(tree.root.findAllByType('BadgeCheck').length).toBeGreaterThan(0);
+    expect(tree.root.findAllByType(ShadowedIcon).map(n => n.props.name)).toEqual([
+      'sparkles', 'shopping-bag', 'heart', 'badge-check',
+    ]);
   });
 
-  it('soft shadow is two unfilled translucent wide strokes under a thin white outline', () => {
-    const tree = mount(createElement(ShadowedIcon, { icon: 'Heart' as never, size: 24 }));
-    const [outer, inner, top] = tree.root.findAllByType('Heart');
-    expect(outer.props.fill).toBe('none');
-    expect(inner.props.fill).toBe('none');
-    expect(outer.props.strokeWidth).toBeGreaterThan(inner.props.strokeWidth);
-    expect(inner.props.strokeWidth).toBeGreaterThan(top.props.strokeWidth);
-    expect(outer.props.color).toBe('rgba(0, 0, 0, 0.2)');
-    expect(inner.props.color).toBe('rgba(0, 0, 0, 0.3)');
-    expect(top.props.fill).toBe('none');
-    expect(top.props.strokeWidth).toBe(1.6);
-    expect(top.props.color).toBe('#FFFFFF');
+  it('baked-shadow PNG overflows a layout box that stays at the requested size', () => {
+    const tree = mount(createElement(ShadowedIcon, { name: 'heart', size: 24 }));
+    const box = tree.root.findAllByType('View')[0];
+    expect(box.props.style).toEqual({ width: 24, height: 24 });
+    expect(box.props.pointerEvents).toBe('none');
+    const image = tree.root.findByType('Image');
+    const style = Object.assign({}, ...[image.props.style].flat());
+    expect(style).toMatchObject({ position: 'absolute', width: 32, height: 32, top: -4, left: -4 });
+    expect(image.props.source).toBeDefined();
+  });
+
+  it('ships light and dark variants at @1x/@2x/@3x for every icon', () => {
+    const names = ['sparkles', 'shopping-bag', 'heart', 'heart-liked', 'badge-check', 'search', 'sliders-horizontal'];
+    for (const name of names) for (const tone of ['light', 'dark']) for (const suffix of ['', '@2x', '@3x']) {
+      expect(fs.existsSync(path.join(root, 'assets/icons', `${name}-${tone}${suffix}.png`))).toBe(true);
+    }
+    const light = mount(createElement(ShadowedIcon, { name: 'search', size: 21 })).root.findByType('Image').props.source;
+    const dark = mount(createElement(ShadowedIcon, { name: 'search', size: 21, tone: 'dark' })).root.findByType('Image').props.source;
+    expect(light).not.toEqual(dark);
   });
 
   it('shrunk rail keeps every item at least 44dp to touch', () => {
@@ -112,8 +120,8 @@ describe('touch absorption and halo icons', () => {
       expect(style.minWidth).toBeGreaterThanOrEqual(44);
       expect(style.minHeight).toBeGreaterThanOrEqual(44);
     }
-    const sizes = tree.root.findAllByType('ShoppingBag').map(n => n.props.size);
-    expect(sizes).toContain(24);
+    const sizes = tree.root.findAllByType(ShadowedIcon).map(n => n.props.size);
+    expect(sizes).toEqual([19, 24, 24, 24]);
   });
 });
 
@@ -152,8 +160,8 @@ describe('SwipeCard presentation wiring (source contract)', () => {
 
   it('the header strip sits outside the deck and its tabs and icons are pressables', () => {
     expect(index).toMatch(/header: \{\s*position: 'absolute'[\s\S]*?zIndex: HEADER_Z_INDEX/);
-    expect(index).toMatch(/<ShadowedIcon icon=\{Search\}/);
-    expect(index).toMatch(/<ShadowedIcon icon=\{SlidersHorizontal\}/);
+    expect(index).toMatch(/<ShadowedIcon name="search" size=\{21\}/);
+    expect(index).toMatch(/<ShadowedIcon name="sliders-horizontal" size=\{21\}/);
     expect(read('components/FeedModeSegment.tsx')).not.toMatch(/opacity: isActive \? 1 : 0\.65/);
   });
 

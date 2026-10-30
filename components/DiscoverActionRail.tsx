@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { BadgeCheck, Heart, ShoppingBag, Sparkles } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import ShadowedIcon from './ShadowedIcon';
 import { INSIGHT_CHIP_COPY } from '../lib/insightChipTemplates';
@@ -34,7 +33,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         accessibilityLabel="Dene"
       >
         <View style={styles.tryCircle}>
-          <Sparkles color={colors.inverseText} size={TRY_ICON_SIZE} strokeWidth={1.6} />
+          <ShadowedIcon name="sparkles" size={TRY_ICON_SIZE} />
         </View>
         <Text style={styles.label}>Dene</Text>
       </PressableScale>
@@ -44,7 +43,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         accessibilityRole="button"
         accessibilityLabel="Mağazaya git"
       >
-        <ShadowedIcon icon={ShoppingBag} size={ICON_SIZE} />
+        <ShadowedIcon name="shopping-bag" size={ICON_SIZE} />
         <Text style={styles.label}>Mağaza</Text>
       </PressableScale>
       <PressableScale
@@ -54,12 +53,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         accessibilityLabel="Beğen"
         accessibilityState={{ selected: liked }}
       >
-        <ShadowedIcon
-          icon={Heart}
-          size={HEART_SIZE}
-          color={liked ? colors.accent : colors.inverseText}
-          fill={liked ? colors.accent : 'none'}
-        />
+        <ShadowedIcon name={liked ? 'heart-liked' : 'heart'} size={HEART_SIZE} />
         <Text style={styles.label}>Beğen</Text>
       </PressableScale>
       {onWhy ? (
@@ -70,7 +64,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
           accessibilityLabel="Neden bu öneri?"
         >
           <View>
-            <ShadowedIcon icon={BadgeCheck} size={ICON_SIZE} />
+            <ShadowedIcon name="badge-check" size={ICON_SIZE} />
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{INSIGHT_CHIP_COPY.aiBadge}</Text>
             </View>

@@ -22,7 +22,7 @@ import {
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, SlidersHorizontal, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import ShadowedIcon from '../../components/ShadowedIcon';
 import {
   runOnUI,
@@ -875,7 +875,7 @@ export default function FeedScreen() {
             accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
             accessibilityState={{ expanded: isSearchInputOpen }}
           >
-            <ShadowedIcon icon={Search} size={21} />
+            <ShadowedIcon name="search" size={21} />
           </PressableScale>
           <PressableScale
             onPress={() => setIsFilterOpen(true)}
@@ -883,7 +883,7 @@ export default function FeedScreen() {
             accessibilityRole="button"
             accessibilityLabel="Filtreler"
           >
-            <ShadowedIcon icon={SlidersHorizontal} size={21} />
+            <ShadowedIcon name="sliders-horizontal" size={21} />
             {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
           </PressableScale>
         </View>

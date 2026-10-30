@@ -1,47 +1,68 @@
-import type { ComponentType } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { colors } from '../lib/theme';
+import { Image, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 
-interface IconProps {
-  color?: string;
-  size?: number;
-  strokeWidth?: number;
-  fill?: string;
-}
+/** Pre-rendered by scripts/icons/generateRailIcons.cjs: 24dp glyph centred on a 32dp canvas. */
+const GLYPH = 24;
+const PAD = 4;
+
+export type ShadowedIconName =
+  | 'sparkles'
+  | 'shopping-bag'
+  | 'heart'
+  | 'heart-liked'
+  | 'badge-check'
+  | 'search'
+  | 'sliders-horizontal';
+
+/** light: white outline + dark shadow; dark: #111827 outline + white shadow. */
+export type ShadowedIconTone = 'light' | 'dark';
+
+const SOURCES: Record<ShadowedIconTone, Record<ShadowedIconName, ImageSourcePropType>> = {
+  light: {
+    sparkles: require('../assets/icons/sparkles-light.png'),
+    'shopping-bag': require('../assets/icons/shopping-bag-light.png'),
+    heart: require('../assets/icons/heart-light.png'),
+    'heart-liked': require('../assets/icons/heart-liked-light.png'),
+    'badge-check': require('../assets/icons/badge-check-light.png'),
+    search: require('../assets/icons/search-light.png'),
+    'sliders-horizontal': require('../assets/icons/sliders-horizontal-light.png'),
+  },
+  dark: {
+    sparkles: require('../assets/icons/sparkles-dark.png'),
+    'shopping-bag': require('../assets/icons/shopping-bag-dark.png'),
+    heart: require('../assets/icons/heart-dark.png'),
+    'heart-liked': require('../assets/icons/heart-liked-dark.png'),
+    'badge-check': require('../assets/icons/badge-check-dark.png'),
+    search: require('../assets/icons/search-dark.png'),
+    'sliders-horizontal': require('../assets/icons/sliders-horizontal-dark.png'),
+  },
+};
 
 interface ShadowedIconProps {
-  icon: ComponentType<IconProps>;
+  name: ShadowedIconName;
   size: number;
-  color?: string;
-  fill?: string;
+  tone?: ShadowedIconTone;
 }
 
-const STROKE = 1.6;
-/** Yumuşak gölge: blur yerine kademeli, saydam, dolgusuz iki geniş stroke. */
-const SOFT_INNER = { color: 'rgba(0, 0, 0, 0.3)', extra: 3 };
-const SOFT_OUTER = { color: 'rgba(0, 0, 0, 0.2)', extra: 6 };
-
 /**
- * Thin white outline icon with a soft shadow: the same shape redrawn underneath
- * with two wider, unfilled, translucent strokes. Stands in for drop-shadow,
- * which RN cannot apply to SVG, without blur or an offscreen layer.
+ * Thin outline icon with a real Gaussian shadow, baked into PNGs because
+ * react-native-svg filters are not trusted on low-end Android. The layout box
+ * stays `size`; the shadow padding overflows it.
  */
-export default function ShadowedIcon({ icon: Icon, size, color = colors.inverseText, fill }: ShadowedIconProps) {
+export default function ShadowedIcon({ name, size, tone = 'light' }: ShadowedIconProps) {
+  const scale = size / GLYPH;
+  const canvas = (GLYPH + PAD * 2) * scale;
   return (
     <View style={{ width: size, height: size }} pointerEvents="none">
-      <View style={styles.layer}>
-        <Icon color={SOFT_OUTER.color} size={size} strokeWidth={STROKE + SOFT_OUTER.extra} fill="none" />
-      </View>
-      <View style={styles.layer}>
-        <Icon color={SOFT_INNER.color} size={size} strokeWidth={STROKE + SOFT_INNER.extra} fill="none" />
-      </View>
-      <View style={styles.layer}>
-        <Icon color={color} size={size} strokeWidth={STROKE} fill={fill ?? 'none'} />
-      </View>
+      <Image
+        source={SOURCES[tone][name]}
+        fadeDuration={0}
+        style={[styles.image, { width: canvas, height: canvas, top: -PAD * scale, left: -PAD * scale }]}
+        accessibilityIgnoresInvertColors
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  layer: { position: 'absolute', top: 0, left: 0 },
+  image: { position: 'absolute' },
 });

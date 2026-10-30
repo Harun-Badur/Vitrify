@@ -169,7 +169,7 @@ const realService = jest.requireActual<
 
 
 jest.mock('react-native', () => ({
-  Platform: { OS: 'ios' }, View: 'View', Text: 'Text', TextInput: 'TextInput', StatusBar: {
+  Platform: { OS: 'ios' }, View: 'View', Image: 'Image', Text: 'Text', TextInput: 'TextInput', StatusBar: {
     setBarStyle: jest.fn(), pushStackEntry: jest.fn(), popStackEntry: jest.fn(),
   },
   StyleSheet: { create: (value: unknown) => value, absoluteFillObject: {}, hairlineWidth: 1 },
