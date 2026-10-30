@@ -239,11 +239,12 @@ describe('SwipeCard presentation wiring (source contract)', () => {
     expect(card).not.toMatch(/insightChipPairing|selectInsightChip/);
   });
 
-  it('single tap expands only after the double tap fails, without blocking pan', () => {
-    expect(card).toMatch(/\.maxDelay\(SINGLE_TAP_DELAY_MS\)/);
-    expect(card).toMatch(/requireExternalGestureToFail\(doubleTapGesture\)/);
-    expect(card).toMatch(/Gesture\.Exclusive\(doubleTapGesture, panGesture, singleTapGesture\)/);
-    expect(card).toMatch(/SINGLE_TAP_DELAY_MS = 250/);
+  it('has no single-tap expand; pinch zoom runs alongside double tap and pan, image area only', () => {
+    expect(card).not.toMatch(/singleTapGesture|setIsExpanded|<Modal/);
+    expect(card).toMatch(/Gesture\.Simultaneous\(\s*pinchGesture,\s*Gesture\.Exclusive\(doubleTapGesture, panGesture\)/);
+    expect(card).toMatch(/Gesture\.Pinch\(\)/);
+    expect(card).toMatch(/event\.focalY <= imageBottomSV\.value/);
+    expect(card).toMatch(/event\.y > imageBottomSV\.value/);
   });
 
   it('mounts the rail as a sibling of the card gesture tree so rail touches never reach it', () => {
