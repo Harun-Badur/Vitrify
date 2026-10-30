@@ -50,13 +50,13 @@ jest.mock('react-native-gesture-handler', () => {
   const builder = (): Record<string, jest.Mock> => {
     const chain: Record<string, jest.Mock> = {};
     for (const method of ['enabled', 'activeOffsetY', 'failOffsetX', 'onUpdate', 'onEnd',
-      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'requireExternalGestureToFail', 'maxDelay', 'minPointers', 'activeOffsetX', 'failOffsetY']) {
+      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'requireExternalGestureToFail', 'maxDelay', 'minPointers', 'maxPointers', 'onStart', 'onFinalize', 'activeOffsetX', 'failOffsetY']) {
       chain[method] = jest.fn(() => chain);
     }
     return chain;
   };
   return { GestureDetector: 'GestureDetector', Gesture: {
-    Pan: builder, Tap: builder, Native: builder, Exclusive: jest.fn(),
+    Pan: builder, Tap: jest.fn(builder), Native: builder, Pinch: jest.fn(builder), Exclusive: jest.fn(), Simultaneous: jest.fn(),
   } };
 });
 jest.mock('react-native-reanimated', () => ({
@@ -213,6 +213,23 @@ describe('SwipeCard exit animation ownership', () => {
     expect(new Set(passed).size).toBe(30);
     expect(passed).toHaveLength(38); // Eight deliberate revisits only.
     expect(props.onUndoPass).toHaveBeenCalledTimes(8);
+  });
+
+  it('has no single-tap expand; pinch is defined and info-area double taps are swallowed', async () => {
+    const view = tree.root.findAllByType('View').find(node => node.props.onLayout) as TestNode;
+    await renderer.act(() => { (view.props.onLayout as (e: unknown) => void)({
+      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 500 } } }); });
+    expect(tree.root.findAllByType('Modal')).toHaveLength(0);
+    const taps = jest.mocked(Gesture.Tap).mock.results.map(result => result.value as Record<string, jest.Mock>);
+    expect(taps.some(chain => chain.numberOfTaps.mock.calls[0]?.[0] === 1)).toBe(false);
+    expect(Gesture.Pinch).toHaveBeenCalled();
+    const [pinch, group] = jest.mocked(Gesture.Simultaneous).mock.calls.pop() as unknown[];
+    expect(pinch).toBeDefined();
+    expect(group).toBeUndefined(); // Exclusive(double, pan) is a nested child; the mock returns nothing.
+    expect(jest.mocked(Gesture.Exclusive)).toHaveBeenCalled();
+    const double = taps.filter(chain => chain.numberOfTaps.mock.calls[0]?.[0] === 2).pop()!;
+    await renderer.act(() => { double.onEnd.mock.calls[0][0]({ y: 620 }); });
+    expect(props.onAddToCloset).not.toHaveBeenCalled();
   });
 });
 

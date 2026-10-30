@@ -69,7 +69,9 @@ import {
   getRedirectLabel,
   openProductPage,
 } from '../../services/deeplinkService';
-import { fetchRecommendationCatalog } from '../../services/productService';
+import { fetchRecommendationCatalog, resetProductPrefCatalogCaches } from '../../services/productService';
+import { createDeckRefresher } from '../../lib/deckRefresh';
+import { canResurfacePassed, resurfacePassed } from '../../lib/resurfacePassed';
 import { effectiveProductPref, type ProductPref } from '../../lib/productPreferenceRules';
 import { DiscoverRecommendationCache } from '../../lib/discoverRecommendationCache';
 import { fingerprint } from '../../src/recommendationCache/fingerprint';
@@ -127,12 +129,17 @@ interface DeckFinishedCardProps {
   subtitle: string;
   onRefresh: () => void;
   onOpenLiked: () => void;
+  refreshing?: boolean;
+  /** GEÇİCİ (prototip): geçilenleri tekrar göster; yoksa buton çizilmez. */
+  onResurfacePassed?: () => void;
 }
 
 function DeckFinishedCard({
   subtitle,
   onRefresh,
   onOpenLiked,
+  refreshing = false,
+  onResurfacePassed,
 }: DeckFinishedCardProps) {
   return (
     <View style={styles.finishedCard}>
@@ -148,12 +155,26 @@ function DeckFinishedCard({
       </PressableScale>
       <PressableScale
         onPress={onRefresh}
+        disabled={refreshing}
         style={styles.secondaryCta}
         accessibilityRole="button"
-        accessibilityLabel="Yenile"
+        accessibilityLabel={refreshing ? 'Yükleniyor' : 'Yenile'}
+        accessibilityState={{ disabled: refreshing, busy: refreshing }}
       >
-        <Text style={styles.secondaryCtaText}>Yenile</Text>
+        <Text style={styles.secondaryCtaText}>{refreshing ? 'Yükleniyor…' : 'Yenile'}</Text>
       </PressableScale>
+      {onResurfacePassed ? (
+        <PressableScale
+          onPress={onResurfacePassed}
+          disabled={refreshing}
+          style={styles.outlineCta}
+          accessibilityRole="button"
+          accessibilityLabel="Geçtiklerimi tekrar göster"
+          accessibilityState={{ disabled: refreshing, busy: refreshing }}
+        >
+          <Text style={styles.outlineCtaText}>{refreshing ? 'Yükleniyor…' : 'Geçtiklerimi tekrar göster'}</Text>
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
@@ -435,6 +456,41 @@ export default function FeedScreen() {
       searchMode: q.mode === 'search',
     });
   }, [loadFeed, userId]);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshEmpty, setRefreshEmpty] = useState(false);
+  const deckRefresher = useMemo(
+    () => createDeckRefresher({
+      resetCaches: resetProductPrefCatalogCaches,
+      reload: () => {
+        const q = feedQueryRef.current;
+        return loadFeed(userId, { filters: q.filters, searchMode: q.mode === 'search' });
+      },
+      deckSize: () => useAppStore.getState().currentProducts.length,
+    }),
+    [loadFeed, userId],
+  );
+  const handleDeckRefresh = useCallback(async (): Promise<void> => {
+    setRefreshEmpty(false);
+    setRefreshing(true);
+    let result: Awaited<ReturnType<typeof deckRefresher>> = 'busy';
+    try {
+      result = await deckRefresher();
+    } catch {
+      result = 'ready'; // loadFeed reports its own error state; nothing to add here.
+    }
+    if (result === 'busy') return;
+    setRefreshing(false);
+    setRefreshEmpty(result === 'empty');
+  }, [deckRefresher]);
+
+  const passedCount = useAppStore((state) => state.passedProductIds.length);
+  const handleResurfacePassed = useCallback((): void => {
+    resurfacePassed(useAppStore.getState().passedProductIds);
+    void handleDeckRefresh();
+  }, [handleDeckRefresh]);
+  const resurfaceHandler =
+    canResurfacePassed(passedCount) && feedQuery.mode !== 'search' ? handleResurfacePassed : undefined;
 
   const applyFeedQuery = useCallback(
     (next: FeedQuery, options?: { inputText?: string }): void => {
@@ -832,7 +888,10 @@ export default function FeedScreen() {
   const hasDeck = currentProducts.length > 0;
   // Katalogda ürün var ama hepsi beğenildi/geçildi: tekrar yüklemek işe yaramaz.
   const isCatalogExhausted = !hasDeck && hasMore === false && seenCount > 0;
-  const isLoading = feedStatus === 'loading' || feedStatus === 'idle' || (!hasDeck && isFetchingNext);
+  const isLoading = (feedStatus === 'loading' || feedStatus === 'idle' || (!hasDeck && isFetchingNext))
+    && !(refreshing && !hasDeck);
+  /** Boş deste: blok header'ın altından başlar, kalan alanda ortalanır. */
+  const finishedLayout = !isLoading && !hasDeck;
   const isSearchMode = feedQuery.mode === 'search';
   const activeFilterCount = countActiveFilters(feedQuery.filters);
   const searchBannerText = useMemo(() => {
@@ -868,6 +927,8 @@ export default function FeedScreen() {
               !isLoading && hasDeck
                 ? 0
                 : layout.deckPadding + discoverCardLiftPx,
+            paddingTop: finishedLayout ? railTopInset - spacing.lg : 0,
+            justifyContent: finishedLayout ? 'center' : 'flex-start',
           },
         ]}
       >
@@ -876,13 +937,19 @@ export default function FeedScreen() {
         ) : !hasDeck && feedStatus === 'error' ? (
           <DeckFinishedCard
             subtitle="Ürünler yüklenemedi. Bağlantını kontrol edip tekrar dene."
-            onRefresh={reloadFeed}
+            onRefresh={handleDeckRefresh}
+            refreshing={refreshing}
+            onResurfacePassed={resurfaceHandler}
             onOpenLiked={handleOpenLiked}
           />
         ) : isCatalogExhausted && !isSearchMode ? (
           <DeckFinishedCard
-            subtitle="Katalogdaki her şeyi gördün. Yeni ürünler eklendikçe burada belirir."
-            onRefresh={reloadFeed}
+            subtitle={refreshEmpty
+              ? 'Şimdilik yeni ürün yok, daha sonra tekrar dene'
+              : 'Katalogdaki her şeyi gördün. Yeni ürünler eklendikçe burada belirir.'}
+            onRefresh={handleDeckRefresh}
+            refreshing={refreshing}
+            onResurfacePassed={resurfaceHandler}
             onOpenLiked={handleOpenLiked}
           />
         ) : !hasDeck ? (
@@ -890,9 +957,13 @@ export default function FeedScreen() {
             subtitle={
               isSearchMode
                 ? 'Bu aramayla eşleşen ürün yok. Filtreleri gevşet veya temizle.'
-                : 'Beğendiğin parçalar dolabına eklendi. Yeni öneriler yakında.'
+                : refreshEmpty
+                  ? 'Şimdilik yeni ürün yok, daha sonra tekrar dene'
+                  : 'Beğendiğin parçalar dolabına eklendi. Yeni öneriler yakında.'
             }
-            onRefresh={isSearchMode ? handleClearSearch : reloadFeed}
+            onRefresh={isSearchMode ? handleClearSearch : handleDeckRefresh}
+            refreshing={refreshing && !isSearchMode}
+            onResurfacePassed={resurfaceHandler}
             onOpenLiked={handleOpenLiked}
           />
         ) : (
@@ -1237,6 +1308,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.button,
     paddingVertical: spacing.lg,
     alignItems: 'center',
+  },
+  outlineCta: {
+    alignSelf: 'stretch',
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  outlineCtaText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   secondaryCtaText: {
     color: colors.text,

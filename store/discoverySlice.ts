@@ -8,6 +8,7 @@ import { logger } from '../lib/logger';
 import { setLastFeedMode } from '../lib/recsFeedState';
 import { recordSessionProductAction } from '../lib/sessionIntent';
 import { deletePassedProduct, insertPassedProduct } from '../services/likeService';
+import { effectivePassedIds, notePassedAgain } from '../lib/resurfacePassed';
 import { fetchFeedProducts, FeedServiceError, resetProductPrefCatalogCaches, type FeedSource } from '../services/productService';
 import type { Product } from '../types/product';
 import { DEFAULT_FEED_MODE, type FeedMode } from '../types/recommendation';
@@ -90,7 +91,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       ...deliveredIds,
       ...get().currentProducts.map(product => product.id),
       ...get().likedProducts.map(item => item.product.id),
-      ...get().passedProductIds,
+      ...effectivePassedIds(get().passedProductIds),
     ])];
     return ({
     invalidateDiscoveryWork: () => { generation++; mutationGeneration++; context = null; deliveredIds.clear(); passVersions.clear(); passWrites.clear(); pendingUndo = null; set({ feedWarning: null,preferenceWriteError:null }); },
@@ -125,7 +126,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           get().feedMode,
           filters,
           searchMode ? 'search' : get().feedMode,
-          [...new Set([...get().likedProducts.map(item => item.product.id), ...get().passedProductIds])],
+          [...new Set([...get().likedProducts.map(item => item.product.id), ...effectivePassedIds(get().passedProductIds)])],
           get().productPref,
         );
         const result = await (userId ? trackOwnerWork(userId, request) : request);
@@ -142,7 +143,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           currentProducts: excludeSeen(
             [...new Map(result.products.map(product => [product.id, product])).values()],
             state.likedProducts,
-            state.passedProductIds,
+            effectivePassedIds(state.passedProductIds),
           ),
           feedStatus: 'success',
           feedWarning: result.warning ?? null,
@@ -185,7 +186,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           return true;
         });
         set(state => ({
-          currentProducts: [...state.currentProducts, ...excludeSeen(incoming, state.likedProducts, state.passedProductIds)],
+          currentProducts: [...state.currentProducts, ...excludeSeen(incoming, state.likedProducts, effectivePassedIds(state.passedProductIds))],
           feedPreparationRevision: state.feedPreparationRevision + 1,
           hasMore: result.hasMore ?? incoming.length > 0,
           isFetchingNext: false,
@@ -213,7 +214,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           get().feedMode,
           filters,
           searchMode ? 'search' : get().feedMode,
-          [...new Set([...get().likedProducts.map(item => item.product.id), ...get().passedProductIds])],
+          [...new Set([...get().likedProducts.map(item => item.product.id), ...effectivePassedIds(get().passedProductIds)])],
           get().productPref,
         );
         const result = await (userId ? trackOwnerWork(userId, request) : request);
@@ -227,7 +228,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           [...new Map(result.products.map(product => [product.id, product])).values()]
             .filter(product => !headIds.has(product.id)),
           get().likedProducts,
-          get().passedProductIds,
+          effectivePassedIds(get().passedProductIds),
         );
         deliveredIds = new Set([...headIds, ...tail.map(product => product.id)]);
         set(state => ({
@@ -266,6 +267,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       passVersions.set(product.id, version);
       const capturedGeneration = mutationGeneration;
 
+      notePassedAgain(product.id);
       set((state) => ({
         currentProducts: removeProduct(state.currentProducts, product.id),
         passedProductIds: appendUniqueId(state.passedProductIds, product.id),

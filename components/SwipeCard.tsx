@@ -8,7 +8,6 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   Dimensions,
   type LayoutChangeEvent,
   StyleSheet,
@@ -33,10 +32,16 @@ import Animated, {
 import {
   ChevronRight,
   Heart,
-  X,
 } from 'lucide-react-native';
-import PressableScale from './PressableScale';
 import DiscoverProductImage from './DiscoverProductImage';
+import DiscoverVariantInline from './DiscoverVariantRow';
+import {
+  activeVariantIndex,
+  selectedImageFor,
+  storeProductFor,
+  VARIANT_ROW_HEIGHT,
+  type VariantSelectionState,
+} from '../lib/discoverVariants';
 import DiscoverRecommendations, { type RecommendationStatus } from './DiscoverRecommendations';
 import TouchClaim from './TouchClaim';
 import DiscoverActionRail, { DISCOVER_EDGE_MARGIN } from './DiscoverActionRail';
@@ -78,6 +83,8 @@ const HEART_BURST_IN_MS = 160;
 const HEART_BURST_OUT_MS = 260;
 const HEART_BURST_PEAK_SCALE = 1.18;
 /** Soft crossfade when bitmap arrives; pairs with surface placeholder (no white flash). */
+const PINCH_MAX_SCALE = 4;
+const PINCH_RELEASE_SPRING = { damping: 22, stiffness: 260, mass: 0.6 } as const;
 const IMAGE_CROSSFADE_MS = 0;
 const RAIL_BOTTOM_PADDING = 26;
 
@@ -239,7 +246,14 @@ function SwipeCard({
     galleryX.value = -next * pageWidthSV.value;
   }, [product.id, images, galleryX, imageCountSV, imageIndexSV, pageWidthSV]);
 
-  const selectedImageUrl = images[imageIndex] ?? product.imageUrl;
+  const [variantSelection, setVariantSelection] = useState<VariantSelectionState | null>(null);
+  const [variantShown, setVariantShown] = useState<VariantSelectionState | null>(null);
+  const selectedVariantIndex = activeVariantIndex(variantSelection, product.id);
+  const shownVariantImage = selectedImageFor(
+    product.colorVariants,
+    activeVariantIndex(variantShown, product.id),
+  );
+  const selectedImageUrl = shownVariantImage ?? images[imageIndex] ?? product.imageUrl;
 
   useEffect(() => {
     let cancelled = false;
@@ -270,11 +284,16 @@ function SwipeCard({
     () => stripBrandPrefix(product.title, product.brand),
     [product.title, product.brand],
   );
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isInsightOpen, setIsInsightOpen] = useState(false);
   const [isLikedLocal, setIsLikedLocal] = useState(false);
   /** Görselin alt kenarı (kart koordinatı); ray bu kenara göre konumlanır. */
   const [imageBottom, setImageBottom] = useState(0);
+  /** Tek/çift dokunuş yalnız fotoğraf alanında geçerli; alt bilgi dokunuşları yutulur. */
+  const imageBottomSV = useSharedValue(0);
+  const zoomScale = useSharedValue(1);
+  const zoomFocalX = useSharedValue(0);
+  const zoomFocalY = useSharedValue(0);
+  const pinchActive = useSharedValue(false);
   const likeSourceRef = useRef<LikeInputSource>('double_tap');
 
   const hasExited = useSharedValue(false);
@@ -368,6 +387,7 @@ function SwipeCard({
       const { width, y, height } = event.nativeEvent.layout;
       const bottom = y + height;
       setImageBottom((current) => (Math.abs(current - bottom) > 0.5 ? bottom : current));
+      imageBottomSV.value = bottom;
       if (!(width > 0)) {
         return;
       }
@@ -377,7 +397,7 @@ function SwipeCard({
       pageWidthSV.value = width;
       galleryX.value = -imageIndexSV.value * width;
     },
-    [galleryX, imageIndexSV, pageWidthSV],
+    [galleryX, imageBottomSV, imageIndexSV, pageWidthSV],
   );
 
   const handleRequireAuth = useCallback((): void => {
@@ -390,14 +410,14 @@ function SwipeCard({
 
   const handleBuy = useCallback((): void => {
     try {
-      onBuy(product);
+      onBuy(storeProductFor(product, selectedVariantIndex));
     } catch (error) {
       logger.error('Pazaryeri sayfası açılamadı', {
         error,
         productId: product.id,
       });
     }
-  }, [onBuy, product]);
+  }, [onBuy, product, selectedVariantIndex]);
 
   const handleUndoPass = useCallback(async (animationId: number): Promise<void> => {
     let restored = false;
@@ -446,8 +466,9 @@ function SwipeCard({
     .enabled(isCurrent)
     .activeOffsetY([-PAN_ACTIVE_OFFSET_Y_PX, PAN_ACTIVE_OFFSET_Y_PX])
     .failOffsetX([-PAN_FAIL_OFFSET_X_PX, PAN_FAIL_OFFSET_X_PX])
+    .maxPointers(1)
     .onUpdate((event) => {
-      if (hasExited.value) {
+      if (hasExited.value || pinchActive.value) {
         return;
       }
       dragOffset.value = event.translationY;
@@ -546,8 +567,8 @@ function SwipeCard({
     .maxDelay(SINGLE_TAP_DELAY_MS)
     .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
     .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
-    .onEnd(() => {
-      if (hasExited.value) {
+    .onEnd((event) => {
+      if (hasExited.value || event.y > imageBottomSV.value) {
         return;
       }
       if (!canLike) {
@@ -557,21 +578,43 @@ function SwipeCard({
       playHeartThenLike();
     });
 
-  /** Tek dokunuş: çift dokunuş başarısız olunca görseli büyütür. */
-  const singleTapGesture = Gesture.Tap()
+  /**
+   * İki parmakla yakınlaştırma: yalnız fotoğraf alanında, 1–4x, bırakınca 1'e döner.
+   * Tamamı UI thread'de; alt bilgi alanında başlayan pinch yok sayılır.
+   */
+  const pinchGesture = Gesture.Pinch()
     .enabled(isCurrent)
-    .numberOfTaps(1)
-    .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
-    .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
-    .requireExternalGestureToFail(doubleTapGesture)
-    .onEnd(() => {
-      if (hasExited.value) {
+    .onStart((event) => {
+      pinchActive.value = !hasExited.value && event.focalY <= imageBottomSV.value;
+    })
+    .onUpdate((event) => {
+      if (!pinchActive.value) {
         return;
       }
-      runOnJS(setIsExpanded)(true);
+      zoomFocalX.value = event.focalX;
+      zoomFocalY.value = event.focalY;
+      zoomScale.value = Math.min(PINCH_MAX_SCALE, Math.max(1, event.scale));
+    })
+    .onFinalize(() => {
+      pinchActive.value = false;
+      zoomScale.value = withSpring(1, PINCH_RELEASE_SPRING);
     });
 
-  const cardGesture = Gesture.Exclusive(doubleTapGesture, panGesture, singleTapGesture);
+  const cardGesture = Gesture.Simultaneous(
+    pinchGesture,
+    Gesture.Exclusive(doubleTapGesture, panGesture),
+  );
+
+  const zoomStyle = useAnimatedStyle(() => {
+    const scale = zoomScale.value;
+    return {
+      transform: [
+        { translateX: (pageWidthSV.value / 2 - zoomFocalX.value) * (scale - 1) },
+        { translateY: (imageBottomSV.value / 2 - zoomFocalY.value) * (scale - 1) },
+        { scale },
+      ],
+    };
+  });
 
   /**
    * Image-only horizontal pager. Separation from card vertical via offsets only:
@@ -661,12 +704,7 @@ function SwipeCard({
     transform: [{ translateX: galleryX.value }],
   }));
 
-  const imageSource = useMemo(
-    () => ({ uri: selectedImageUrl }),
-    [selectedImageUrl],
-  );
-
-  const showGalleryPager = imageCount > 1;
+  const showGalleryPager = imageCount > 1 && shownVariantImage === null;
 
   const slotTranslateStyle = useMemo(
     () => ({ transform: [{ translateY: pageIndex * CARD_HEIGHT }] }),
@@ -683,10 +721,69 @@ function SwipeCard({
     setIsImageLoading(false);
   }, []);
 
+  const clearVariant = useCallback((): void => {
+    setVariantSelection(null);
+    setVariantShown(null);
+  }, []);
+
   const handleImageError = useCallback((): void => {
+    if (shownVariantImage !== null) {
+      // Variant image failed: fall back to the previous photo instead of an error card.
+      clearVariant();
+      return;
+    }
     setHasImageError(true);
     setIsImageLoading(false);
-  }, []);
+  }, [clearVariant, shownVariantImage]);
+
+  const handleSelectColor = useCallback((index: number): void => {
+    const variants = product.colorVariants;
+    const imageUrl = variants?.[index]?.imageUrl?.trim();
+    const productId = product.id;
+    if (activeVariantIndex(variantSelection, productId) === index) {
+      clearVariant();
+      return;
+    }
+    setVariantSelection({ productId, index });
+    if (!imageUrl) {
+      setVariantShown(null);
+      return;
+    }
+    // Keep the current photo until the variant image is cached; failure keeps the old photo.
+    void Image.prefetch(imageUrl).then(
+      (ok) => {
+        if (ok) {
+          setVariantShown({ productId, index });
+        } else {
+          setVariantSelection((current) =>
+            current?.productId === productId && current.index === index ? null : current);
+        }
+      },
+      () => {
+        setVariantSelection((current) =>
+          current?.productId === productId && current.index === index ? null : current);
+      },
+    );
+  }, [clearVariant, product.colorVariants, product.id, variantSelection]);
+
+  // Selection is per card: drop it when this slot is reused for another product.
+  useEffect(() => {
+    setVariantSelection((current) => (current?.productId === product.id ? current : null));
+    setVariantShown((current) => (current?.productId === product.id ? current : null));
+  }, [product.id]);
+
+  // Current card only: warm one or two unselected color images shortly after it settles.
+  useEffect(() => {
+    if (!isCurrent || !product.colorVariants || product.colorVariants.length < 2) return;
+    const timer = setTimeout(() => {
+      (product.colorVariants ?? [])
+        .map((variant, index) => ({ url: variant.imageUrl?.trim(), index }))
+        .filter((item) => item.url && item.index !== selectedVariantIndex)
+        .slice(0, 2)
+        .forEach((item) => { void Image.prefetch(item.url as string); });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [isCurrent, product.colorVariants, selectedVariantIndex]);
 
   return (
     <Animated.View
@@ -704,6 +801,7 @@ function SwipeCard({
         >
           <View style={styles.card}>
             <View style={styles.imageWrap} onLayout={handleImagePagerLayout}>
+              <Animated.View style={[StyleSheet.absoluteFill, zoomStyle]} collapsable={false}>
               {hasImageError ? (
                 <View style={styles.imageFallback}>
                   <Text style={styles.imageFallbackText}>
@@ -780,6 +878,8 @@ function SwipeCard({
                 />
               )}
 
+              </Animated.View>
+
               {isImageLoading && !hasImageError ? (
                 <View style={styles.imageLoading} pointerEvents="none">
                   <ActivityIndicator color={colors.accent} />
@@ -819,7 +919,7 @@ function SwipeCard({
                     <Text style={styles.brand} numberOfLines={1} maxFontSizeMultiplier={1.15}>
                       {product.brand}
                     </Text>
-                    <ChevronRight size={16} color={colors.textSecondary} />
+                    <ChevronRight size={14} color={colors.textSecondary} style={styles.chevron} />
                   </View>
                 ) : null}
                 <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail" maxFontSizeMultiplier={1.15}>
@@ -844,6 +944,11 @@ function SwipeCard({
                     </View>
                   ) : null}
                 </View>
+                <DiscoverVariantInline
+                  product={product}
+                  selectedIndex={selectedVariantIndex}
+                  onSelectColor={handleSelectColor}
+                />
               </View>
             </View>
           </View>
@@ -895,29 +1000,6 @@ function SwipeCard({
           }}
         />
       ) : null}
-      <Modal
-        visible={isCurrent && isExpanded}
-        animationType="fade"
-        onRequestClose={() => setIsExpanded(false)}
-      >
-        <View style={styles.expandedSurface}>
-          <Image
-            source={imageSource}
-            style={styles.image}
-            contentFit="contain"
-            cachePolicy="memory-disk"
-            accessibilityLabel={product.title}
-          />
-          <PressableScale
-            onPress={() => setIsExpanded(false)}
-            style={styles.closeExpanded}
-            accessibilityRole="button"
-            accessibilityLabel="Genişletilmiş görseli kapat"
-          >
-            <X size={24} color={colors.inverseText} />
-          </PressableScale>
-        </View>
-      </Modal>
     </Animated.View>
   );
 }
@@ -934,18 +1016,6 @@ const styles = StyleSheet.create({
     right: DISCOVER_EDGE_MARGIN,
     justifyContent: 'flex-end',
     paddingBottom: RAIL_BOTTOM_PADDING,
-  },
-  expandedSurface: { flex: 1, backgroundColor: colors.backdrop },
-  closeExpanded: {
-    position: 'absolute',
-    right: 16,
-    top: 56,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.inverseSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   slot: {
     ...StyleSheet.absoluteFill,
@@ -1081,8 +1151,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 0,
     maxWidth: '45%',
-    marginRight: 8,
-    gap: spacing.xs,
+    marginRight: 0,
+  },
+  // lucide glyph spans x 9..15 of 24: ~5.25dp inner padding per side at 14dp.
+  // Visible gaps: brand->stroke 2dp, stroke->title 5dp.
+  chevron: {
+    flexShrink: 0,
+    marginLeft: -3.25,
+    marginRight: -0.25,
   },
   identityRow: {
     flex: 1,
@@ -1139,19 +1215,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  // Fixed height: color/size row and price share one line; footer height never varies.
   purchaseRow: {
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 10,
-    rowGap: 6,
+    height: VARIANT_ROW_HEIGHT,
   },
   priceRow: {
-    flex: 1,
-    minWidth: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    flexWrap: 'wrap',
   },
   previousPrice: {
     color: colors.textSecondary,
