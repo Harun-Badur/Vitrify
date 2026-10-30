@@ -289,6 +289,36 @@ describe('Discover product block motion', () => {
     expect(mainStyle).toMatchObject({ flex: 1, height: 'auto', width: '100%' });
   });
 
+  it.each([[0, 'auto'], [1, 'none']] as const)(
+    'page %i renders its own rail in the card slot (shares the slide), outside the photo gesture tree, touchable=%s',
+    async (pageIndex, pointerEvents) => {
+      await renderer.act(async () => {
+        tree = renderer.create(createElement(SwipeCard, {
+          product: product('rail-anchor', 'top'), pageIndex, insightChip: null,
+          pageHeight: { value: 700 } as SharedValue<number>, dragOffset: { value: 0 } as SharedValue<number>,
+          onAddToCloset: jest.fn(), onPass: jest.fn(), onVirtualTryOn: jest.fn(),
+          onBuy: jest.fn(), onImpression: jest.fn(),
+        }));
+        await Promise.resolve();
+      });
+      await renderer.act(async () => {
+        const wrap = tree.root.findAllByType('View').find(node => typeof node.props.onLayout === 'function')!;
+        (wrap.props.onLayout as (event: unknown) => void)({
+          nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 500 } },
+        });
+      });
+      const rail = tree.root.findByType('DiscoverActionRail');
+      expect(rail.props.whyVisible).toBe(false);
+      const ancestors: TestNode[] = [];
+      for (let parent: TestNode | null = rail.parent; parent; parent = parent.parent) ancestors.push(parent);
+      const slot = ancestors.find(node => node.props.collapsable === false && node.props.pointerEvents !== undefined);
+      expect(slot?.props.pointerEvents).toBe(pointerEvents);
+      // Foto jest ağacının içinde değil: kart GestureDetector'ının torunu olamaz.
+      expect(ancestors.some(node => node.props.gesture !== undefined)).toBe(false);
+      expect(tree.root.findByProps({ slot: 'main' })).toBeDefined();
+    },
+  );
+
   it('keeps all three already mounted recommendation cards and images when next becomes current', async () => {
     const anchor = product('next', 'top');
     const recommendations = getDiscoverRecommendations({ wardrobeItems: [], catalogProducts: [anchor,

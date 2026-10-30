@@ -11,6 +11,12 @@ jest.mock('react-native', () => ({
   StyleSheet: { create: (styles: unknown) => styles, flatten: (s: unknown) => s },
 }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
+jest.mock('react-native-reanimated', () => ({
+  __esModule: true, default: { View: 'AnimatedView' },
+  useSharedValue: (value: number) => jest.requireActual<typeof import('react')>('react').useRef({ value }).current,
+  useAnimatedStyle: (factory: () => Record<string, unknown>) => ({ get current() { return factory(); } }),
+  withTiming: jest.fn((value: number) => value),
+}));
 
 interface TestNode {
   props: Record<string, any>;
@@ -30,31 +36,45 @@ const mount = (element: ReactElement): { root: TestNode } => {
   renderer.act(() => { tree = renderer.create(element); });
   return tree;
 };
-const handlers = () => ({ onTry: jest.fn(), onStore: jest.fn(), onLike: jest.fn() });
+const handlers = () => ({ onTry: jest.fn(), onStore: jest.fn(), onLike: jest.fn(), onWhy: jest.fn(), whyVisible: true });
 const buttons = (tree: { root: TestNode }) => tree.root.findAllByType('PressableScale');
 
 describe('DiscoverActionRail', () => {
-  it('orders Dene, Mağaza, Beğen and appends Uyumlu last only when a handler exists', () => {
-    const h = handlers();
-    const without = mount(createElement(DiscoverActionRail, { ...h, liked: false }));
-    expect(buttons(without).map(b => b.props.accessibilityLabel)).toEqual(['Dene', 'Mağazaya git', 'Beğen']);
-    const onWhy = jest.fn();
-    const withWhy = mount(createElement(DiscoverActionRail, { ...h, liked: false, onWhy }));
-    expect(buttons(withWhy).map(b => b.props.accessibilityLabel)).toEqual([
-      'Dene', 'Mağazaya git', 'Beğen', 'Neden bu öneri?',
-    ]);
+  it('always renders Dene, Mağaza, Beğen, Uyumlu in that order, even without a chip', () => {
+    for (const whyVisible of [true, false]) {
+      const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, whyVisible }));
+      expect(buttons(tree).map(b => b.props.accessibilityLabel)).toEqual([
+        'Dene', 'Mağazaya git', 'Beğen', 'Neden bu öneri?',
+      ]);
+    }
+  });
+
+  it('reserves the Uyumlu slot when hidden: transparent, inert and out of accessibility', () => {
+    const hidden = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, whyVisible: false }));
+    const shown = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, whyVisible: true }));
+    const slot = (tree: { root: TestNode }) => tree.root.findByType('AnimatedView');
+    expect(slot(hidden).props.pointerEvents).toBe('none');
+    expect(slot(hidden).props.accessibilityElementsHidden).toBe(true);
+    expect(slot(hidden).props.importantForAccessibility).toBe('no-hide-descendants');
+    expect(slot(hidden).props.style.current.opacity).toBe(0);
+    expect(buttons(hidden)[3].props.disabled).toBe(true);
+    expect(slot(shown).props.pointerEvents).toBe('auto');
+    expect(slot(shown).props.accessibilityElementsHidden).toBe(false);
+    expect(slot(shown).props.style.current.opacity).toBe(1);
+    // Aynı ağaç ve aynı aralık: diğer butonlar Uyumlu çıkıp kayboldukça zıplamaz.
+    expect(buttons(hidden)).toHaveLength(buttons(shown).length);
+    expect(hidden.root.findAllByType('View')[0].props.style).toEqual(shown.root.findAllByType('View')[0].props.style);
   });
 
   it('wires each button to its handler and keeps a 44dp hit area', () => {
     const h = handlers();
-    const onWhy = jest.fn();
-    const tree = mount(createElement(DiscoverActionRail, { ...h, liked: false, onWhy }));
+    const tree = mount(createElement(DiscoverActionRail, { ...h, liked: false }));
     const [dene, store, like, why] = buttons(tree);
     renderer.act(() => { dene.props.onPress(); store.props.onPress(); like.props.onPress(); why.props.onPress(); });
     expect(h.onTry).toHaveBeenCalledTimes(1);
     expect(h.onStore).toHaveBeenCalledTimes(1);
     expect(h.onLike).toHaveBeenCalledTimes(1);
-    expect(onWhy).toHaveBeenCalledTimes(1);
+    expect(h.onWhy).toHaveBeenCalledTimes(1);
     for (const button of buttons(tree)) {
       const style = Object.assign({}, ...[button.props.style].flat());
       const slop = typeof button.props.hitSlop === 'number' ? button.props.hitSlop : 0;
@@ -65,8 +85,8 @@ describe('DiscoverActionRail', () => {
 
   it('fills the heart red once liked and marks the AI badge only on Uyumlu', () => {
     const h = handlers();
-    const idle = mount(createElement(DiscoverActionRail, { ...h, liked: false, onWhy: jest.fn() }));
-    const liked = mount(createElement(DiscoverActionRail, { ...h, liked: true, onWhy: jest.fn() }));
+    const idle = mount(createElement(DiscoverActionRail, { ...h, liked: false }));
+    const liked = mount(createElement(DiscoverActionRail, { ...h, liked: true }));
     const iconNames = (tree: { root: TestNode }): unknown[] => tree.root.findAllByType(ShadowedIcon).map(n => n.props.name);
     expect(iconNames(idle)).toContain('heart');
     expect(iconNames(idle)).not.toContain('heart-liked');
@@ -85,7 +105,7 @@ describe('touch absorption and shadowed icons', () => {
   });
 
   it('each item is one pressable holding both icon and label', () => {
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     for (const button of buttons(tree)) {
       expect(button.findAllByType('Text').length).toBeGreaterThanOrEqual(1);
     }
@@ -116,7 +136,7 @@ describe('touch absorption and shadowed icons', () => {
   });
 
   it('shrunk rail keeps every item at least 44dp to touch', () => {
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     for (const button of buttons(tree)) {
       const style = Object.assign({}, ...[button.props.style].flat());
       expect(style.width).toBeGreaterThanOrEqual(44);
@@ -138,14 +158,14 @@ describe('device-robust alignment', () => {
   });
 
   it('rail keeps all items under a tight maxHeight and applies the computed gap', () => {
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn(), maxHeight: 188 }));
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, maxHeight: 188 }));
     expect(buttons(tree)).toHaveLength(4);
     const host = tree.root.findAllByType('View')[0];
     expect(Object.assign({}, ...[host.props.style].flat())).toMatchObject({ width: RAIL_COLUMN_WIDTH, gap: 4 });
   });
 
   it('labels cap font scaling at 1.15', () => {
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     for (const text of tree.root.findAllByType('Text')) expect(text.props.maxFontSizeMultiplier).toBe(1.15);
   });
 
@@ -176,7 +196,7 @@ describe('device-robust alignment', () => {
     const card = read('components/SwipeCard.tsx');
     const detectorEnd = card.indexOf('</GestureDetector>', card.indexOf('<GestureDetector gesture={cardGesture}>'));
     expect(card.indexOf('styles.railAnchor')).toBeGreaterThan(detectorEnd);
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     expect(tree.root.findAllByType('View')[0].props.onStartShouldSetResponder()).toBe(true);
   });
 

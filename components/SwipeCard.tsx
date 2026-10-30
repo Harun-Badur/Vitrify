@@ -834,9 +834,11 @@ function SwipeCard({
           </View>
         </Animated.View>
       </GestureDetector>
-      {isCurrent && imageBottom > 0 ? (
+      {imageBottom > 0 ? (
         // Kartın jest ağacının KARDEŞİ: ray üzerinde başlayan dokunuş
-        // tek/çift dokunuş ve pan jestlerine hiç ulaşmaz.
+        // tek/çift dokunuş ve pan jestlerine hiç ulaşmaz. Peek kartlarda da çizilir
+        // (kartla aynı kaydırma kapsayıcısında kayar); slot pointerEvents'i yalnız
+        // öndeki kartın rayını dokunulabilir bırakır.
         <View
           style={[styles.railAnchor, { height: imageBottom, paddingTop: railTopInset }]}
           pointerEvents="box-none"
@@ -847,7 +849,8 @@ function SwipeCard({
             onStore={handleStorePress}
             onLike={handleLikeButton}
             liked={isLikedLocal}
-            onWhy={insightChip ? openInsight : undefined}
+            onWhy={openInsight}
+            whyVisible={insightChip !== null && insightChip !== undefined}
             maxHeight={imageBottom - RAIL_BOTTOM_PADDING - railTopInset}
           />
           </TouchClaim>

@@ -1,5 +1,6 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import PressableScale from './PressableScale';
 import ShadowedIcon from './ShadowedIcon';
 import { INSIGHT_CHIP_COPY } from '../lib/insightChipTemplates';
@@ -13,6 +14,8 @@ import { colors } from '../lib/theme';
 export const DISCOVER_EDGE_MARGIN = 16;
 export const RAIL_COLUMN_WIDTH = 44;
 export const DISCOVER_ICON_CENTER_FROM_RIGHT = DISCOVER_EDGE_MARGIN + RAIL_COLUMN_WIDTH / 2;
+const WHY_FADE_MS = 150;
+const RAIL_ITEM_COUNT = 4;
 const RAIL_GAP = 6;
 const RAIL_MIN_GAP = 4;
 const LABEL_MAX_FONT_SCALE = 1.15;
@@ -35,8 +38,9 @@ interface DiscoverActionRailProps {
   onStore: () => void;
   onLike: () => void;
   liked: boolean;
-  /** Yalnız insight chip varsa verilir; rayın en altında görünür. */
-  onWhy?: () => void;
+  onWhy: () => void;
+  /** Uyumlu'nun yeri her zaman ayrılır; chip yokken yalnız şeffaf, etkisiz ve erişilebilirlikten gizli. */
+  whyVisible: boolean;
   /** Ray için kullanılabilir yükseklik (header altı boşluğu düşülmüş). */
   maxHeight?: number;
 }
@@ -44,8 +48,13 @@ interface DiscoverActionRailProps {
 /** Boşluklar ve etiketler dahil tüm ray dikdörtgeni dokunuşu yutar. */
 const claimTouch = (): boolean => true;
 
-function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, maxHeight }: DiscoverActionRailProps) {
-  const gap = computeRailGap(onWhy ? 4 : 3, maxHeight);
+function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, maxHeight }: DiscoverActionRailProps) {
+  const gap = computeRailGap(RAIL_ITEM_COUNT, maxHeight);
+  const whyOpacity = useSharedValue(whyVisible ? 1 : 0);
+  useEffect(() => {
+    whyOpacity.value = withTiming(whyVisible ? 1 : 0, { duration: WHY_FADE_MS });
+  }, [whyVisible, whyOpacity]);
+  const whyStyle = useAnimatedStyle(() => ({ opacity: whyOpacity.value }));
   return (
     <View style={[styles.rail, { gap }]} onStartShouldSetResponder={claimTouch}>
       <PressableScale
@@ -78,9 +87,15 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, maxHeight }:
         <ShadowedIcon name={liked ? 'heart-liked' : 'heart'} size={HEART_SIZE} />
         <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Beğen</Text>
       </PressableScale>
-      {onWhy ? (
+      <Animated.View
+        style={whyStyle}
+        pointerEvents={whyVisible ? 'auto' : 'none'}
+        accessibilityElementsHidden={!whyVisible}
+        importantForAccessibility={whyVisible ? 'auto' : 'no-hide-descendants'}
+      >
         <PressableScale
           onPress={onWhy}
+          disabled={!whyVisible}
           style={styles.item}
           accessibilityRole="button"
           accessibilityLabel="Neden bu öneri?"
@@ -93,7 +108,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, maxHeight }:
           </View>
           <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Uyumlu</Text>
         </PressableScale>
-      ) : null}
+      </Animated.View>
     </View>
   );
 }
