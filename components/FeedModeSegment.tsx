@@ -56,6 +56,7 @@ export default function FeedModeSegment({
 
   return (
     <View
+      collapsable={false}
       style={[styles.track, overlay && styles.overlayTrack]}
       accessibilityRole="tablist"
       accessibilityLabel="Keşif modu"

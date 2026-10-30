@@ -56,7 +56,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
   }, [whyVisible, whyOpacity]);
   const whyStyle = useAnimatedStyle(() => ({ opacity: whyOpacity.value }));
   return (
-    <View style={[styles.rail, { gap }]} onStartShouldSetResponder={claimTouch}>
+    <View style={[styles.rail, { gap }]} collapsable={false} onStartShouldSetResponder={claimTouch}>
       <PressableScale
         onPress={onTry}
         style={styles.item}

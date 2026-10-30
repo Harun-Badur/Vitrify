@@ -210,8 +210,8 @@ describe('device-robust alignment', () => {
     expect(card).toMatch(/<TouchClaim>\s*<DiscoverActionRail/);
     const index = read('app/(tabs)/index.tsx');
     expect(index).toMatch(/<TouchClaim>\s*<FeedModeSegment/);
-    expect(index).toMatch(/<TouchClaim>\s*<View style=\{\[styles\.headerActions/);
-    expect(index).toMatch(/<TouchClaim>\s*<View style=\{\[styles\.searchBar/);
+    expect(index).toMatch(/<TouchClaim>\s*<View collapsable=\{false\} style=\{\[styles\.headerActions/);
+    expect(index).toMatch(/<TouchClaim>\s*<View collapsable=\{false\} style=\{\[styles\.searchBar/);
     expect(card + index + read('components/DiscoverActionRail.tsx')).not.toMatch(/console\.log\('\[(BTN|ENLARGE|CARD-TOUCH)\]/);
   });
 
@@ -272,5 +272,40 @@ describe('SwipeCard presentation wiring (source contract)', () => {
   it('the header only adds readable shadows, no new layers', () => {
     expect(index).toMatch(/textShadowColor/);
     expect(index).not.toMatch(/LinearGradient|BlurView/);
+  });
+});
+
+describe('GestureDetector children are never view-flattened', () => {
+  const files = [
+    'app/(tabs)/liked.tsx', 'app/(tabs)/style.tsx', 'app/(tabs)/index.tsx',
+    'components/SwipeCard.tsx', 'components/VirtualTryOnModal.tsx', 'components/TouchClaim.tsx',
+  ];
+  const tagAfter = (source: string, from: number): string => {
+    const start = source.indexOf('<', source.indexOf('>', from) + 1);
+    let depth = 0, i = start;
+    for (; i < source.length; i++) {
+      if (source[i] === '{') depth++;
+      else if (source[i] === '}') depth--;
+      else if (source[i] === '>' && depth === 0 && source[i - 1] !== '=') break;
+    }
+    return source.slice(start, i + 1);
+  };
+
+  it.each(files)('%s: direct child has collapsable={false}', file => {
+    const source = read(file);
+    const detectors = [...source.matchAll(/<GestureDetector\b/g)];
+    if (file.endsWith('TouchClaim.tsx')) {
+      expect(source).toMatch(/\{children\}/);
+      return;
+    }
+    for (const match of detectors) expect(tagAfter(source, match.index!)).toMatch(/collapsable=\{false\}/);
+  });
+
+  it('TouchClaim children (rail, segment, header groups) set collapsable={false}', () => {
+    expect(read('components/DiscoverActionRail.tsx')).toMatch(/styles\.rail, \{ gap \}\]\} collapsable=\{false\}/);
+    expect(read('components/FeedModeSegment.tsx')).toMatch(/collapsable=\{false\}\s*style=\{\[styles\.track/);
+    const index = read('app/(tabs)/index.tsx');
+    expect(index).toMatch(/<View collapsable=\{false\} style=\{\[styles\.headerActions/);
+    expect(index).toMatch(/<View collapsable=\{false\} style=\{\[styles\.searchBar/);
   });
 });

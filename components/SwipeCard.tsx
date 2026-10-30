@@ -696,6 +696,7 @@ function SwipeCard({
     >
       <GestureDetector gesture={cardGesture}>
         <Animated.View
+          collapsable={false}
           style={[styles.shadowWrap, styles.shadowWrapFront,
             recommendations !== undefined && styles.pageContent]}
           accessibilityRole="image"

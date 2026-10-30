@@ -972,7 +972,7 @@ export default function FeedScreen() {
             />
           </TouchClaim>
         <TouchClaim>
-        <View style={[styles.headerActions, { right: headerActionsRight }]}>
+        <View collapsable={false} style={[styles.headerActions, { right: headerActionsRight }]}>
           <PressableScale
             onPress={() => {
               setIsSearchInputOpen(open => !open);
@@ -996,7 +996,7 @@ export default function FeedScreen() {
         </View>
         </TouchClaim>
         <TouchClaim>
-        <View style={[styles.searchBar, { right: headerActionsRight + FILTER_HIT_SIZE * 2 + spacing.xs }, !isSearchInputOpen && styles.searchClosed]}
+        <View collapsable={false} style={[styles.searchBar, { right: headerActionsRight + FILTER_HIT_SIZE * 2 + spacing.xs }, !isSearchInputOpen && styles.searchClosed]}
           accessibilityElementsHidden={!isSearchInputOpen}
           importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
           pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
