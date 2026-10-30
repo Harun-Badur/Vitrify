@@ -85,6 +85,34 @@ export interface Product {
   reasons?: string[];
   /** products.feed_eligible when the row was read with it; only feed paths require true. */
   feedEligible?: boolean;
+  /** Scraped color siblings (products.color_variants); absent until the variant migration is live. */
+  colorVariants?: ColorVariant[];
+  sizeOptions?: SizeOption[];
+  variantsFetchedAt?: string;
+}
+
+export interface ColorVariant {
+  /** null when the source page does not expose the sibling color's name (FLO). */
+  name: string | null;
+  url: string;
+  imageUrl?: string;
+}
+
+export interface SizeOption {
+  label: string;
+  inStock?: boolean;
+}
+
+export interface ColorVariant {
+  /** null when the source page does not expose the sibling color's name (FLO). */
+  name: string | null;
+  url: string;
+  imageUrl?: string;
+}
+
+export interface SizeOption {
+  label: string;
+  inStock?: boolean;
 }
 
 export interface LikedProduct {
@@ -111,6 +139,9 @@ export interface FeedProductRow {
   affiliate_url: string | null;
   created_at?: string | null;
   feed_eligible?: boolean | null;
+  color_variants?: unknown;
+  size_options?: unknown;
+  variants_fetched_at?: string | null;
 }
 
 export const GARMENT_CATEGORY_LABEL: Record<GarmentCategory, string> = {

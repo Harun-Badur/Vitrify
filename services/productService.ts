@@ -2,7 +2,7 @@ import { isActiveCatalogRecord } from '../lib/catalogEligibility';
 import { catalogMetadataRepair } from '../lib/catalogMetadata';
 import { FEED_ELIGIBLE_COLUMN, isFeedEligibleProduct, isFeedEligibleRow } from '../lib/feedEligibility';
 import { measureDiscoverStage, measureDiscoverStageSync, recordDiscoverStage } from '../lib/discoverStageTiming';
-import { DISCOVER_CATALOG_PAGE_SIZE, isRecord, isFeedProductRow, isAttributeRow, mapFeedRow } from './catalogProductAdapter';
+import { DISCOVER_CATALOG_PAGE_SIZE, isRecord, isFeedProductRow, isAttributeRow, mapFeedRow, withVariantColumns } from './catalogProductAdapter';
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import { getProductRepository, productsById } from './productRepository';
 import { track } from '../lib/analytics';
@@ -218,10 +218,12 @@ const queryCatalogPage = async (
     catalogCacheClient = client;
   }
 
-  const productSelectWithImages =
-    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible';
-  const productSelectLegacy =
-    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible';
+  const productSelectWithImages = withVariantColumns(
+    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible',
+  );
+  const productSelectLegacy = withVariantColumns(
+    'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible',
+  );
 
   const genders = allowedGendersFor(productPref);
   let productsResult: {
