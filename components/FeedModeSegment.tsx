@@ -94,13 +94,8 @@ export default function FeedModeSegment({
               style={[
                 styles.label,
                 isActive ? styles.labelActive : null,
-                overlay && {
-                  color: colors.inverseText,
-                  fontSize: 12,
-                  textShadowColor: 'rgba(0, 0, 0, 0.55)',
-                  textShadowOffset: { width: 0, height: 1 },
-                  textShadowRadius: 3,
-                },
+                overlay && styles.overlayLabel,
+                overlay && !isActive && styles.overlayLabelInactive,
               ]}
               numberOfLines={1}
             >
@@ -116,6 +111,15 @@ export default function FeedModeSegment({
 const styles = StyleSheet.create({
   overlayTrack: { padding: 0, backgroundColor: 'transparent' },
   overlayOption: { paddingHorizontal: 6, marginRight: 10 },
+  overlayLabel: {
+    color: colors.inverseText,
+    fontSize: 16,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  overlayLabelInactive: { color: 'rgba(255, 255, 255, 0.85)' },
   overlayActiveOption: { borderBottomWidth: 1, borderBottomColor: colors.inverseText },
   track: {
     alignSelf: 'flex-start',

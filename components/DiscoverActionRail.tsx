@@ -7,8 +7,8 @@ import { colors } from '../lib/theme';
 
 const TRY_SIZE = 38;
 const TRY_ICON_SIZE = 19;
-const ICON_SIZE = 24;
-const HEART_SIZE = 24;
+const ICON_SIZE = 21;
+const HEART_SIZE = 21;
 const HIT_SIZE = 44;
 
 interface DiscoverActionRailProps {
