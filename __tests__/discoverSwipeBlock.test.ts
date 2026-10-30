@@ -56,7 +56,7 @@ jest.mock('react-native-gesture-handler', () => {
     return chain;
   };
   return { GestureDetector: 'GestureDetector', Gesture: {
-    Pan: builder, Tap: builder, Native: builder, Exclusive: jest.fn(),
+    Pan: builder, Tap: jest.fn(builder), Native: builder, Exclusive: jest.fn(),
   } };
 });
 jest.mock('react-native-reanimated', () => ({
@@ -213,6 +213,19 @@ describe('SwipeCard exit animation ownership', () => {
     expect(new Set(passed).size).toBe(30);
     expect(passed).toHaveLength(38); // Eight deliberate revisits only.
     expect(props.onUndoPass).toHaveBeenCalledTimes(8);
+  });
+
+  it('opens the photo only for taps inside the image area; info-area taps are swallowed', async () => {
+    const view = tree.root.findAllByType('View').find(node => node.props.onLayout) as TestNode;
+    await renderer.act(() => { (view.props.onLayout as (e: unknown) => void)({
+      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 500 } } }); });
+    const taps = jest.mocked(Gesture.Tap).mock.results.map(result => result.value as Record<string, jest.Mock>);
+    const single = taps.filter(chain => chain.numberOfTaps.mock.calls[0]?.[0] === 1).pop()!;
+    const modal = () => tree.root.findByType('Modal').props.visible;
+    await renderer.act(() => { single.onEnd.mock.calls[0][0]({ y: 620 }); });
+    expect(modal()).toBe(false);
+    await renderer.act(() => { single.onEnd.mock.calls[0][0]({ y: 200 }); });
+    expect(modal()).toBe(true);
   });
 });
 

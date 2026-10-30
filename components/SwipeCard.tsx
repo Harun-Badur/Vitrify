@@ -291,6 +291,8 @@ function SwipeCard({
   const [isLikedLocal, setIsLikedLocal] = useState(false);
   /** Görselin alt kenarı (kart koordinatı); ray bu kenara göre konumlanır. */
   const [imageBottom, setImageBottom] = useState(0);
+  /** Tek/çift dokunuş yalnız fotoğraf alanında geçerli; alt bilgi dokunuşları yutulur. */
+  const imageBottomSV = useSharedValue(0);
   const likeSourceRef = useRef<LikeInputSource>('double_tap');
 
   const hasExited = useSharedValue(false);
@@ -384,6 +386,7 @@ function SwipeCard({
       const { width, y, height } = event.nativeEvent.layout;
       const bottom = y + height;
       setImageBottom((current) => (Math.abs(current - bottom) > 0.5 ? bottom : current));
+      imageBottomSV.value = bottom;
       if (!(width > 0)) {
         return;
       }
@@ -393,7 +396,7 @@ function SwipeCard({
       pageWidthSV.value = width;
       galleryX.value = -imageIndexSV.value * width;
     },
-    [galleryX, imageIndexSV, pageWidthSV],
+    [galleryX, imageBottomSV, imageIndexSV, pageWidthSV],
   );
 
   const handleRequireAuth = useCallback((): void => {
@@ -562,8 +565,8 @@ function SwipeCard({
     .maxDelay(SINGLE_TAP_DELAY_MS)
     .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
     .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
-    .onEnd(() => {
-      if (hasExited.value) {
+    .onEnd((event) => {
+      if (hasExited.value || event.y > imageBottomSV.value) {
         return;
       }
       if (!canLike) {
@@ -580,8 +583,8 @@ function SwipeCard({
     .maxDuration(DOUBLE_TAP_MAX_DURATION_MS)
     .maxDistance(DOUBLE_TAP_MAX_DISTANCE_PX)
     .requireExternalGestureToFail(doubleTapGesture)
-    .onEnd(() => {
-      if (hasExited.value) {
+    .onEnd((event) => {
+      if (hasExited.value || event.y > imageBottomSV.value) {
         return;
       }
       runOnJS(setIsExpanded)(true);
