@@ -112,3 +112,7 @@ venv/
 .tmp/
 /reports/
 NUL
+
+# Variant pilot output and page cache (local only)
+/scripts/data/variants_pilot.json
+/scripts/data/.variants-cache/
