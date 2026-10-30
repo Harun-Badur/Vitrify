@@ -161,6 +161,25 @@ describe('device-robust alignment', () => {
     expect(index).toMatch(/\(insets\.top > 0 \? insets\.top : layout\.statusBarFallback\)/);
   });
 
+  it('header controls cannot leak taps to the card: RNGH walks children last-first, ignoring zIndex', () => {
+    const index = read('app/(tabs)/index.tsx');
+    const bodyAt = index.indexOf('styles.body,');
+    const headerAt = index.indexOf('styles.header,');
+    expect(bodyAt).toBeGreaterThan(-1);
+    expect(headerAt).toBeGreaterThan(bodyAt);
+    const headerOpen = index.lastIndexOf('<View', headerAt);
+    expect(index.slice(headerOpen, headerAt)).toMatch(/pointerEvents="box-none"/);
+    expect(index).toMatch(/header: \{\s*position: 'absolute'[\s\S]*?zIndex: HEADER_Z_INDEX/);
+  });
+
+  it('rail and its labels/gaps are later siblings of the card detector and claim every touch', () => {
+    const card = read('components/SwipeCard.tsx');
+    const detectorEnd = card.indexOf('</GestureDetector>', card.indexOf('<GestureDetector gesture={cardGesture}>'));
+    expect(card.indexOf('styles.railAnchor')).toBeGreaterThan(detectorEnd);
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    expect(tree.root.findAllByType('View')[0].props.onStartShouldSetResponder()).toBe(true);
+  });
+
   it('first segment label starts at the 16dp content edge and caps font scaling', () => {
     const seg = read('components/FeedModeSegment.tsx');
     expect(seg).toMatch(/overlayOption: \{ paddingHorizontal: 0, marginRight: 22 \}/);

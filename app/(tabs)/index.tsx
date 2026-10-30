@@ -861,83 +861,6 @@ export default function FeedScreen() {
     >
       <View
         style={[
-          styles.header,
-          {
-            paddingLeft: Math.max(insets.left, spacing.lg),
-            paddingRight: Math.max(insets.right, spacing.lg),
-            paddingTop:
-              (insets.top > 0 ? insets.top : layout.statusBarFallback) +
-              layout.headerPaddingTop,
-          },
-        ]}
-      >
-        <View style={styles.segmentWrap}>
-          <FeedModeSegment
-            value={feedMode}
-            onChange={handleFeedModeChange}
-            overlay
-        />
-        <View style={[styles.headerActions, { right: headerActionsRight }]}>
-          <PressableScale
-            onPress={() => {
-              setIsSearchInputOpen(open => !open);
-            }}
-            style={styles.filterHit}
-            accessibilityRole="button"
-            accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
-            accessibilityState={{ expanded: isSearchInputOpen }}
-          >
-            <ShadowedIcon name="search" size={21} />
-          </PressableScale>
-          <PressableScale
-            onPress={() => setIsFilterOpen(true)}
-            style={styles.filterHit}
-            accessibilityRole="button"
-            accessibilityLabel="Filtreler"
-          >
-            <ShadowedIcon name="sliders-horizontal" size={21} />
-            {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
-          </PressableScale>
-        </View>
-        <View style={[styles.searchBar, { right: headerActionsRight + FILTER_HIT_SIZE * 2 + spacing.xs }, !isSearchInputOpen && styles.searchClosed]}
-          accessibilityElementsHidden={!isSearchInputOpen}
-          importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
-          pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
-          <TextInput
-            ref={searchInputRef}
-            value={searchInput}
-            onChangeText={handleSearchChange}
-            onSubmitEditing={() => commitSearchText(searchInput)}
-            placeholder="Ne arıyorsun?"
-            placeholderTextColor={colors.inverseText}
-            style={[styles.searchInput, styles.headerTextShadow]}
-            autoCorrect={false}
-            autoCapitalize="none"
-            returnKeyType="search"
-            accessibilityLabel="Ürün ara"
-          />
-          {isSearchMode || searchInput.trim().length > 0 ? (
-            <PressableScale
-              onPress={handleClearSearch}
-              style={styles.clearHit}
-              accessibilityRole="button"
-              accessibilityLabel="Aramayı temizle"
-            >
-              <X color={colors.inverseText} size={16} />
-            </PressableScale>
-          ) : null}
-        </View>
-        </View>
-        {isSearchMode && showSearchBanner && searchBannerText ? (
-          <View style={styles.searchMetaBlock}>
-            <View style={styles.fallbackBanner}>
-              <Text style={styles.fallbackBannerText}>{searchBannerText}</Text>
-            </View>
-          </View>
-        ) : null}
-      </View>
-      <View
-        style={[
           styles.body,
           {
             paddingBottom:
@@ -1019,6 +942,90 @@ export default function FeedScreen() {
             </View>
           </View>
         )}
+      </View>
+      {/*
+        Header, deste (body) KARDEŞİNDEN SONRA gelir: RNGH Android'de dokunuşu çizim
+        sırasına (zIndex) değil çocuk sırasına göre arar; header'ın önce olması, header
+        butonlarına dokunuşu da kartın tek dokunuş (büyütme) jestine gönderiyordu.
+        box-none: yalnız header kontrolleri hedef olur, boş şerit desteye geçer.
+      */}
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.header,
+          {
+            paddingLeft: Math.max(insets.left, spacing.lg),
+            paddingRight: Math.max(insets.right, spacing.lg),
+            paddingTop:
+              (insets.top > 0 ? insets.top : layout.statusBarFallback) +
+              layout.headerPaddingTop,
+          },
+        ]}
+      >
+        <View style={styles.segmentWrap}>
+          <FeedModeSegment
+            value={feedMode}
+            onChange={handleFeedModeChange}
+            overlay
+        />
+        <View style={[styles.headerActions, { right: headerActionsRight }]}>
+          <PressableScale
+            onPress={() => {
+              setIsSearchInputOpen(open => !open);
+            }}
+            style={styles.filterHit}
+            accessibilityRole="button"
+            accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
+            accessibilityState={{ expanded: isSearchInputOpen }}
+          >
+            <ShadowedIcon name="search" size={21} />
+          </PressableScale>
+          <PressableScale
+            onPress={() => setIsFilterOpen(true)}
+            style={styles.filterHit}
+            accessibilityRole="button"
+            accessibilityLabel="Filtreler"
+          >
+            <ShadowedIcon name="sliders-horizontal" size={21} />
+            {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
+          </PressableScale>
+        </View>
+        <View style={[styles.searchBar, { right: headerActionsRight + FILTER_HIT_SIZE * 2 + spacing.xs }, !isSearchInputOpen && styles.searchClosed]}
+          accessibilityElementsHidden={!isSearchInputOpen}
+          importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
+          pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
+          <TextInput
+            ref={searchInputRef}
+            value={searchInput}
+            onChangeText={handleSearchChange}
+            onSubmitEditing={() => commitSearchText(searchInput)}
+            placeholder="Ne arıyorsun?"
+            placeholderTextColor={colors.inverseText}
+            style={[styles.searchInput, styles.headerTextShadow]}
+            autoCorrect={false}
+            autoCapitalize="none"
+            returnKeyType="search"
+            accessibilityLabel="Ürün ara"
+          />
+          {isSearchMode || searchInput.trim().length > 0 ? (
+            <PressableScale
+              onPress={handleClearSearch}
+              style={styles.clearHit}
+              accessibilityRole="button"
+              accessibilityLabel="Aramayı temizle"
+            >
+              <X color={colors.inverseText} size={16} />
+            </PressableScale>
+          ) : null}
+        </View>
+        </View>
+        {isSearchMode && showSearchBanner && searchBannerText ? (
+          <View style={styles.searchMetaBlock}>
+            <View style={styles.fallbackBanner}>
+              <Text style={styles.fallbackBannerText}>{searchBannerText}</Text>
+            </View>
+          </View>
+        ) : null}
       </View>
       {hintStatus === 'visible' && !isLoading && !isSearchMode && hasDeck ? (
         <SwipeHintOverlay onDismiss={handleDismissHint} />
