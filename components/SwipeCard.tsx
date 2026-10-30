@@ -904,7 +904,7 @@ function SwipeCard({
                     <Text style={styles.brand} numberOfLines={1} maxFontSizeMultiplier={1.15}>
                       {product.brand}
                     </Text>
-                    <ChevronRight size={16} color={colors.textSecondary} />
+                    <ChevronRight size={14} color={colors.textSecondary} style={styles.chevron} />
                   </View>
                 ) : null}
                 <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail" maxFontSizeMultiplier={1.15}>
@@ -1178,8 +1178,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 0,
     maxWidth: '45%',
-    marginRight: 6,
-    gap: 4,
+    marginRight: 0,
+  },
+  // lucide glyph spans x 9..15 of 24: ~5.25dp inner padding per side at 14dp.
+  // Visible gaps: brand->stroke 2dp, stroke->title 5dp.
+  chevron: {
+    flexShrink: 0,
+    marginLeft: -3.25,
+    marginRight: -0.25,
   },
   identityRow: {
     flex: 1,

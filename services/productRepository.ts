@@ -3,7 +3,7 @@ import { logger } from '../lib/logger';
 import { getSupabaseClient } from '../lib/supabase';
 import type { ProductAttributeContext, ProductSemanticAttributeRow } from '../src/intelligence/product/productIntelligence';
 import { enrichProduct } from '../src/intelligence/style/productStyle';
-import { isAttributeRow, isFeedProductRow, mapFeedRow } from './catalogProductAdapter';
+import { isAttributeRow, isFeedProductRow, mapFeedRow, withVariantColumns } from './catalogProductAdapter';
 
 export interface ProductRepositoryLoad {
   products: readonly Product[];
@@ -118,7 +118,7 @@ async function loadProductsById(client: Client, ids: readonly string[]): Promise
   // Bound query URLs without changing the Discover candidate pool or pagination.
   for (let offset = 0; offset < ids.length; offset += 80) {
     const batch = ids.slice(offset, offset + 80);
-    const columns = 'id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible';
+    const columns = withVariantColumns('id, provider, external_id, title, brand, price, current_price, previous_price, last_price_checked_at, currency, image_url, images, product_url, category, affiliate_url, colors, sizes, created_at, feed_eligible');
     let result: QueryResult = await client.from('products').select(columns).in('id', batch);
     if (result.error && /column .*images.* does not exist/i.test(result.error.message)) {
       result = await client.from('products').select(columns.replace(', images', '')).in('id', batch);
