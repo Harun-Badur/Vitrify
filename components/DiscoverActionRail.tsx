@@ -6,10 +6,10 @@ import ShadowedIcon from './ShadowedIcon';
 import { INSIGHT_CHIP_COPY } from '../lib/insightChipTemplates';
 import { colors } from '../lib/theme';
 
-const TRY_SIZE = 44;
-const TRY_ICON_SIZE = 22;
-const ICON_SIZE = 26;
-const HEART_SIZE = 28;
+const TRY_SIZE = 38;
+const TRY_ICON_SIZE = 19;
+const ICON_SIZE = 24;
+const HEART_SIZE = 24;
 const HIT_SIZE = 44;
 
 interface DiscoverActionRailProps {
@@ -34,7 +34,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy }: DiscoverAc
         accessibilityLabel="Dene"
       >
         <View style={styles.tryCircle}>
-          <Sparkles color={colors.inverseText} size={TRY_ICON_SIZE} strokeWidth={2} />
+          <Sparkles color={colors.inverseText} size={TRY_ICON_SIZE} strokeWidth={1.6} />
         </View>
         <Text style={styles.label}>Dene</Text>
       </PressableScale>
@@ -87,7 +87,7 @@ export default memo(DiscoverActionRail);
 const styles = StyleSheet.create({
   rail: {
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
   item: {
     minWidth: HIT_SIZE,
@@ -106,21 +106,21 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -6,
-    right: -14,
+    top: -5,
+    right: -12,
     backgroundColor: colors.inverseText,
     borderRadius: 8,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
+    paddingHorizontal: 4,
+    paddingVertical: 0,
   },
   badgeText: {
     color: colors.accent,
-    fontSize: 10,
+    fontSize: 8.5,
     fontWeight: '800',
   },
   label: {
     color: colors.inverseText,
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
     textShadowColor: 'rgba(0, 0, 0, 0.65)',
     textShadowOffset: { width: 0, height: 1 },

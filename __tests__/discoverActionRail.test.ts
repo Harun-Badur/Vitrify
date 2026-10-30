@@ -91,15 +91,29 @@ describe('touch absorption and halo icons', () => {
     expect(tree.root.findAllByType('BadgeCheck').length).toBeGreaterThan(0);
   });
 
-  it('halo copy is an unfilled thicker dark stroke under a white outline', () => {
-    const tree = mount(createElement(ShadowedIcon, { icon: 'Heart' as never, size: 28 }));
-    const [halo, top] = tree.root.findAllByType('Heart');
-    expect(halo.props.fill).toBe('none');
-    expect(halo.props.strokeWidth).toBeCloseTo(4.2);
-    expect(halo.props.color).toBe('rgba(0, 0, 0, 0.4)');
+  it('soft shadow is two unfilled translucent wide strokes under a thin white outline', () => {
+    const tree = mount(createElement(ShadowedIcon, { icon: 'Heart' as never, size: 24 }));
+    const [outer, inner, top] = tree.root.findAllByType('Heart');
+    expect(outer.props.fill).toBe('none');
+    expect(inner.props.fill).toBe('none');
+    expect(outer.props.strokeWidth).toBeGreaterThan(inner.props.strokeWidth);
+    expect(inner.props.strokeWidth).toBeGreaterThan(top.props.strokeWidth);
+    expect(outer.props.color).toBe('rgba(0, 0, 0, 0.2)');
+    expect(inner.props.color).toBe('rgba(0, 0, 0, 0.3)');
     expect(top.props.fill).toBe('none');
-    expect(top.props.strokeWidth).toBe(2);
+    expect(top.props.strokeWidth).toBe(1.6);
     expect(top.props.color).toBe('#FFFFFF');
+  });
+
+  it('shrunk rail keeps every item at least 44dp to touch', () => {
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, onWhy: jest.fn() }));
+    for (const button of buttons(tree)) {
+      const style = Object.assign({}, ...[button.props.style].flat());
+      expect(style.minWidth).toBeGreaterThanOrEqual(44);
+      expect(style.minHeight).toBeGreaterThanOrEqual(44);
+    }
+    const sizes = tree.root.findAllByType('ShoppingBag').map(n => n.props.size);
+    expect(sizes).toContain(24);
   });
 });
 

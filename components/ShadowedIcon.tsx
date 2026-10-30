@@ -16,20 +16,24 @@ interface ShadowedIconProps {
   fill?: string;
 }
 
-const HALO_COLOR = 'rgba(0, 0, 0, 0.4)';
-const STROKE = 2;
-const HALO_EXTRA_STROKE = 2.2;
+const STROKE = 1.6;
+/** Yumuşak gölge: blur yerine kademeli, saydam, dolgusuz iki geniş stroke. */
+const SOFT_INNER = { color: 'rgba(0, 0, 0, 0.3)', extra: 3 };
+const SOFT_OUTER = { color: 'rgba(0, 0, 0, 0.2)', extra: 6 };
 
 /**
- * Outline icon with a dark halo: the same shape redrawn underneath with a
- * thicker, unfilled stroke. Stands in for drop-shadow, which RN cannot apply to
- * SVG, without blur or an offscreen layer.
+ * Thin white outline icon with a soft shadow: the same shape redrawn underneath
+ * with two wider, unfilled, translucent strokes. Stands in for drop-shadow,
+ * which RN cannot apply to SVG, without blur or an offscreen layer.
  */
 export default function ShadowedIcon({ icon: Icon, size, color = colors.inverseText, fill }: ShadowedIconProps) {
   return (
     <View style={{ width: size, height: size }} pointerEvents="none">
       <View style={styles.layer}>
-        <Icon color={HALO_COLOR} size={size} strokeWidth={STROKE + HALO_EXTRA_STROKE} fill="none" />
+        <Icon color={SOFT_OUTER.color} size={size} strokeWidth={STROKE + SOFT_OUTER.extra} fill="none" />
+      </View>
+      <View style={styles.layer}>
+        <Icon color={SOFT_INNER.color} size={size} strokeWidth={STROKE + SOFT_INNER.extra} fill="none" />
       </View>
       <View style={styles.layer}>
         <Icon color={color} size={size} strokeWidth={STROKE} fill={fill ?? 'none'} />

@@ -875,7 +875,7 @@ export default function FeedScreen() {
             accessibilityLabel={isSearchInputOpen ? 'Aramayı kapat' : 'Aramayı aç'}
             accessibilityState={{ expanded: isSearchInputOpen }}
           >
-            <ShadowedIcon icon={Search} size={24} />
+            <ShadowedIcon icon={Search} size={21} />
           </PressableScale>
           <PressableScale
             onPress={() => setIsFilterOpen(true)}
