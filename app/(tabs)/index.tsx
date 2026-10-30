@@ -24,7 +24,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 import ShadowedIcon from '../../components/ShadowedIcon';
-import { DISCOVER_ICON_CENTER_FROM_RIGHT } from '../../components/DiscoverActionRail';
+import { DISCOVER_EDGE_MARGIN, RAIL_COLUMN_WIDTH } from '../../components/DiscoverActionRail';
 import {
   runOnUI,
   useSharedValue,
@@ -90,9 +90,8 @@ import { getProductImages, type Product } from '../../types/product';
 import type { FeedMode } from '../../types/recommendation';
 
 const TOAST_DURATION_MS = 1600;
-const FILTER_HIT_SIZE = 40;
-/** Filtre ikon merkezi rail sütunuyla aynı dikey eksende. */
-const HEADER_ACTIONS_RIGHT = DISCOVER_ICON_CENTER_FROM_RIGHT - FILTER_HIT_SIZE / 2;
+/** Filtre kutusu rail sütunuyla birebir aynı 44dp: merkezler aynı dikey eksende. */
+const FILTER_HIT_SIZE = RAIL_COLUMN_WIDTH;
 const SEARCH_TRACK_DEBOUNCE_MS = 500;
 /** Header, clip sınırında kesilen kartın üstünde kalır. */
 const HEADER_Z_INDEX = 7;
@@ -161,6 +160,11 @@ function DeckFinishedCard({
 export default function FeedScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  /**
+   * İkon grubu, header'ın sağ padding'i çıkarılarak rail ile aynı sağ referansa
+   * (ekran kenarından DISCOVER_EDGE_MARGIN) oturur.
+   */
+  const headerActionsRight = DISCOVER_EDGE_MARGIN - Math.max(insets.right, spacing.lg);
   /** Header alt kenarı + 16dp: Keşfet rayının üst sınırı. */
   const railTopInset =
     (insets.top > 0 ? insets.top : layout.statusBarFallback) +
@@ -873,7 +877,7 @@ export default function FeedScreen() {
             onChange={handleFeedModeChange}
             overlay
         />
-        <View style={styles.headerActions}>
+        <View style={[styles.headerActions, { right: headerActionsRight }]}>
           <PressableScale
             onPress={() => {
               setIsSearchInputOpen(open => !open);
@@ -895,7 +899,7 @@ export default function FeedScreen() {
             {activeFilterCount > 0 ? <View style={styles.filterDot} /> : null}
           </PressableScale>
         </View>
-        <View style={[styles.searchBar, !isSearchInputOpen && styles.searchClosed]}
+        <View style={[styles.searchBar, { right: headerActionsRight + FILTER_HIT_SIZE * 2 + spacing.xs }, !isSearchInputOpen && styles.searchClosed]}
           accessibilityElementsHidden={!isSearchInputOpen}
           importantForAccessibility={isSearchInputOpen ? 'auto' : 'no-hide-descendants'}
           pointerEvents={isSearchInputOpen ? 'auto' : 'none'}>
@@ -1070,7 +1074,6 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     position: 'absolute',
-    right: HEADER_ACTIONS_RIGHT + FILTER_HIT_SIZE * 2 + spacing.sm + spacing.xs,
     top: (FILTER_HIT_SIZE - 36) / 2,
     width: '30%',
     maxWidth: 120,
@@ -1088,10 +1091,8 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     position: 'absolute',
-    right: HEADER_ACTIONS_RIGHT,
     top: (layout.segmentHeight - FILTER_HIT_SIZE) / 2,
     flexDirection: 'row',
-    gap: spacing.sm,
   },
   searchClosed: {
     height: 0,

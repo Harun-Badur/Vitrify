@@ -153,7 +153,9 @@ describe('device-robust alignment', () => {
     expect(DISCOVER_ICON_CENTER_FROM_RIGHT).toBe(38);
     const index = read('app/(tabs)/index.tsx');
     const card = read('components/SwipeCard.tsx');
-    expect(index).toMatch(/HEADER_ACTIONS_RIGHT = DISCOVER_ICON_CENTER_FROM_RIGHT - FILTER_HIT_SIZE \/ 2/);
+    expect(index).toMatch(/FILTER_HIT_SIZE = RAIL_COLUMN_WIDTH/);
+    expect(index).toMatch(/headerActionsRight = DISCOVER_EDGE_MARGIN - Math\.max\(insets\.right, spacing\.lg\)/);
+    expect(index).toMatch(/styles\.headerActions, \{ right: headerActionsRight \}/);
     expect(card).toMatch(/right: DISCOVER_EDGE_MARGIN/);
     expect(index).toMatch(/railTopInset=\{railTopInset\}/);
     expect(index).toMatch(/\(insets\.top > 0 \? insets\.top : layout\.statusBarFallback\)/);
