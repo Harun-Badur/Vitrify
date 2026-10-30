@@ -121,7 +121,7 @@ describe('touch absorption and shadowed icons', () => {
       expect(style.minHeight).toBeGreaterThanOrEqual(44);
     }
     const sizes = tree.root.findAllByType(ShadowedIcon).map(n => n.props.size);
-    expect(sizes).toEqual([19, 21, 21, 21]);
+    expect(sizes).toEqual([13, 19, 19, 19]);
   });
 });
 
@@ -165,11 +165,11 @@ describe('SwipeCard presentation wiring (source contract)', () => {
     expect(read('components/FeedModeSegment.tsx')).not.toMatch(/opacity: isActive \? 1 : 0\.65/);
   });
 
-  it('segment labels share the rail label shadow: 16sp bold white, inactive 85%', () => {
+  it('segment labels share the rail label shadow: 14sp bold white, inactive 85%', () => {
     const seg = read('components/FeedModeSegment.tsx');
-    expect(seg).toMatch(/overlayLabel: \{[^}]*fontSize: 16[^}]*fontWeight: '700'[^}]*textShadowColor: 'rgba\(0, 0, 0, 0\.6\)'/);
+    expect(seg).toMatch(/overlayLabel: \{[^}]*fontSize: 14[^}]*fontWeight: '700'[^}]*textShadowColor: 'rgba\(0, 0, 0, 0\.6\)'/);
     expect(seg).toMatch(/overlayLabelInactive: \{ color: 'rgba\(255, 255, 255, 0\.85\)' \}/);
-    expect(read('components/DiscoverActionRail.tsx')).toMatch(/ICON_SIZE = 21/);
+    expect(read('components/DiscoverActionRail.tsx')).toMatch(/ICON_SIZE = 19/);
   });
 
   it('the header only adds readable shadows, no new layers', () => {

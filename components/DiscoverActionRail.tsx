@@ -5,10 +5,14 @@ import ShadowedIcon from './ShadowedIcon';
 import { INSIGHT_CHIP_COPY } from '../lib/insightChipTemplates';
 import { colors } from '../lib/theme';
 
-const TRY_SIZE = 38;
-const TRY_ICON_SIZE = 19;
-const ICON_SIZE = 21;
-const HEART_SIZE = 21;
+/**
+ * Görünen glyph boyutu search ikonuyla (21dp kutuda 19.6/24 → ~17.1dp) eşit:
+ * bag/heart/badge-check PNG'lerinde çizim 21.6/24 dolduğu için kutu 19dp.
+ */
+const TRY_SIZE = 28;
+const TRY_ICON_SIZE = 13;
+const ICON_SIZE = 19;
+const HEART_SIZE = 19;
 const HIT_SIZE = 44;
 
 interface DiscoverActionRailProps {
@@ -100,16 +104,16 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -5,
-    right: -12,
+    top: -4,
+    right: -10,
     backgroundColor: colors.inverseText,
     borderRadius: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
     paddingVertical: 0,
   },
   badgeText: {
     color: colors.accent,
-    fontSize: 8.5,
+    fontSize: 7.5,
     fontWeight: '800',
   },
   label: {

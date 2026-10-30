@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   overlayOption: { paddingHorizontal: 6, marginRight: 10 },
   overlayLabel: {
     color: colors.inverseText,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
