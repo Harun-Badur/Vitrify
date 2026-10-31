@@ -51,7 +51,7 @@ export const perfStartLagWatch = (): (() => void) => {
   lagTimer = setInterval(() => {
     const now = performance.now();
     const lag = now - expected;
-    if (lag > LAG_THRESHOLD_MS) perfLog('js_lag', { ms: lag });
+    if (lag > LAG_THRESHOLD_MS) perfLog('js_lag', { ms: lag, ...perfRenderFields() });
     expected = now + LAG_INTERVAL_MS;
   }, LAG_INTERVAL_MS);
   return () => { if (lagTimer !== null) clearInterval(lagTimer); lagTimer = null; };

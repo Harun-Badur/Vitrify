@@ -241,8 +241,10 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).stage(product, 'preparationStartedAt', 'ranking_miss');
                 let value: PreparedDiscoverRanking;
                 try {
+                  const perfPrep = perfNow();
                   value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
                     waitForTurn: () => rankings.waitForTurn(product, rankingSignal) })));
+                  perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep });
                 } catch (error) {
                   if (__DEV__ && !rankingSignal.aborted) trace?.cancel(product, attempt!, 'preparation_failed');
                   throw error;
@@ -260,7 +262,9 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               changed.delete(wake);
               if (prepared === undefined) break;
               if (!current(version)) break;
+              const perfSel = perfNow();
               result = await measureDiscoverStage('ranking.select', () => span('ranking_select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal })));
+              perfLog('rec_ranking_select', { ms: perfNow() - perfSel });
               // Empty-slot signal: how many complements this anchor got (0 = an empty combo).
               const complements = complementaryProductsForDisplay(result, product.id).length;
               if (complements === 0) mark('combo_empty');
@@ -289,9 +293,11 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).event(product, 'cancelled', 'stale_revision_publication', version);
                 return;
               }
+              const perfPacket = perfNow();
               onPacket({ sessionId: request.sessionId, generation: request.generation,
                 contextFingerprint: request.contextFingerprint, entries: [{ anchorProductId: anchor.id,
                   exposure: packetExposure, catalogVersion: context.catalogVersion, serialized: measureDiscoverStageSync('cache.serialize', () => serializeFinal(value, context)) }] });
+              perfLog('rec_packet', { ms: perfNow() - perfPacket });
             }).catch(error => {
               if (!controller.signal.aborted) { publications.delete(publicationKey); rejectCompletion(error); stop(); }
             });
