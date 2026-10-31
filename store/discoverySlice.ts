@@ -5,6 +5,7 @@ import { createAnalyticsAction } from '../lib/analyticsAction';
 import {isPreferenceOutcomeUnknown} from '../services/preferenceTransactionAdapter';
 import { hasAnyFilter, type FeedQueryFilters } from '../lib/feedQuery';
 import { logger } from '../lib/logger';
+import { captureFeedTimeout } from '../lib/sentry';
 import { perfLog, perfNow, perfRefreshStoreSet } from '../lib/perfLog';
 import { setLastFeedMode } from '../lib/recsFeedState';
 import { recordSessionProductAction } from '../lib/sessionIntent';
@@ -25,7 +26,7 @@ export interface DiscoverySlice {
   passedProductIds: string[];
   passedStack: Product[];
   feedStatus: FeedStatus;
-  feedWarning: 'LOCAL_RANK_FAILED' | null;
+  feedWarning: 'LOCAL_RANK_FAILED' | 'FEED_TIMEOUT' | null;
   feedSource: FeedSource | null;
   feedIsPersonalized: boolean;
   feedMode: FeedMode;
@@ -54,6 +55,19 @@ export interface DiscoverySlice {
 }
 
 const FEED_LIMIT = 20;
+/** Whole-call deadline; the Edge request itself has a shorter one, but session, catalog and fallback reads had none. */
+const FEED_DEADLINE_MS = 12_000;
+
+const withFeedDeadline = <T>(work: Promise<T>): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new FeedServiceError('FEED_TIMEOUT')), FEED_DEADLINE_MS);
+    // Settling the race first makes a later result or rejection of `work` a no-op, never unhandled.
+    work.then(
+      value => { clearTimeout(timer); resolve(value); },
+      (error: unknown) => { clearTimeout(timer); reject(error); },
+    );
+  });
+
 /** Current card plus the next/warm cards the screen has already prepared. */
 const PRESERVED_HEAD = 3;
 
@@ -120,6 +134,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       const searchMode = options?.searchMode === true || hasAnyFilter(filters);
       context = { userId, filters, searchMode };
       set({ feedStatus: 'loading', hasMore: true, isFetchingNext: false });
+      const startedAt = Date.now();
       try {
         const perfFeedStart = perfNow();
         const request = fetchFeedProducts(
@@ -131,7 +146,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           [...new Set([...get().likedProducts.map(item => item.product.id), ...effectivePassedIds(get().passedProductIds)])],
           get().productPref,
         );
-        const result = await (userId ? trackOwnerWork(userId, request) : request);
+        const result = await withFeedDeadline(userId ? trackOwnerWork(userId, request) : request);
         if (!current() || requestGeneration !== generation) return;
         perfLog('feed_call', { ms: perfNow() - perfFeedStart, n: result.products.length });
         deliveredIds = new Set(result.products.map(product => product.id));
@@ -162,6 +177,20 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         perfRefreshStoreSet();
       } catch (error) {
         if (!current() || requestGeneration !== generation) return;
+        if (error instanceof FeedServiceError && error.code === 'FEED_TIMEOUT') {
+          logger.warn('Feed zaman aşımı', { code: 'FEED_TIMEOUT' });
+          captureFeedTimeout(Math.round(Date.now() - startedAt));
+          // The deck already on screen stays usable; search results must not fall back to an unrelated deck.
+          const keepDeck = !searchMode && get().currentProducts.length > 0;
+          set({
+            feedStatus: keepDeck ? 'success' : 'error',
+            feedWarning: 'FEED_TIMEOUT',
+            feedIsPersonalized: keepDeck ? get().feedIsPersonalized : false,
+            feedFallback: false,
+            feedRelaxed: [],
+          });
+          return;
+        }
         logger.error('Feed yüklenemedi.', { code: 'FEED_FAILED', reason: error instanceof FeedServiceError ? error.code : 'FEED_UNKNOWN' });
         set({
           feedStatus: 'error',
@@ -182,7 +211,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       try {
         const request = fetchFeedProducts(FEED_LIMIT, userId, get().feedMode, filters,
           searchMode ? 'search' : get().feedMode, excluded, get().productPref);
-        const result = await (userId ? trackOwnerWork(userId, request) : request);
+        const result = await withFeedDeadline(userId ? trackOwnerWork(userId, request) : request);
         if (!current() || requestGeneration !== generation) return;
         const alreadyDelivered = new Set(excluded);
         const incoming = result.products.filter(product => {
