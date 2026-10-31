@@ -58,7 +58,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
-import { perfColdStartFirstCard, perfHasPendingSwipe, perfLog, perfNow, perfTakeSwipe } from '../lib/perfLog';
+import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfNow, perfPeekSwipe, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
   colors,
@@ -716,20 +716,23 @@ function SwipeCard({
 
   useEffect(() => {
     // The next card's image may have loaded while it was still a neighbour.
-    if (!__DEV__ || !isCurrent || !perfHasPendingSwipe() || !perfLoadedRef.current.has(0)) return;
+    if (!perfEnabled() || !isCurrent) return;
+    const toCurrent = perfPeekSwipe();
+    if (toCurrent !== null) perfLog('swipe_to_is_current', { ms: toCurrent });
+    if (!perfHasPendingSwipe() || !perfLoadedRef.current.has(0)) return;
     const swipeMs = perfTakeSwipe();
     if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: true });
   }, [isCurrent]);
 
   const handleImageLoadStart = useCallback((): void => {
-    if (__DEV__) perfLoadStartRef.current = { index: imageIndex, at: perfNow() };
+    if (perfEnabled()) perfLoadStartRef.current = { index: imageIndex, at: perfNow() };
     if (!imageCachedRef.current) {
       setIsImageLoading(true);
     }
   }, [imageIndex]);
 
   const handleImageLoad = useCallback((): void => {
-    if (__DEV__) {
+    if (perfEnabled()) {
       const started = perfLoadStartRef.current;
       perfLoadedRef.current.add(imageIndex);
       if (started && started.index === imageIndex && isCurrent) {
@@ -737,6 +740,8 @@ function SwipeCard({
       }
       if (isCurrent && imageIndex === 0) {
         perfColdStartFirstCard();
+        const refreshMs = perfTakeRefreshImage();
+        if (refreshMs !== null) perfLog('deck_refresh_first_image', { ms: refreshMs });
         const swipeMs = perfTakeSwipe();
         if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: false });
       }

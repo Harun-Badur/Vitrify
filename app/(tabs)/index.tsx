@@ -1,5 +1,5 @@
 import { useOwnedState } from '../../hooks/useOwnedState';
-import { perfLog, perfNow } from '../../lib/perfLog';
+import { perfArmRefresh, perfLog, perfNow } from '../../lib/perfLog';
 import { useDiscoverPerfTrace } from '../../hooks/useDiscoverPerfTrace';
 import {
   useCallback,
@@ -475,6 +475,7 @@ export default function FeedScreen() {
     setRefreshEmpty(false);
     setRefreshing(true);
     const perfStart = perfNow();
+    perfArmRefresh();
     let result: Awaited<ReturnType<typeof deckRefresher>> = 'busy';
     try {
       result = await deckRefresher();
@@ -629,7 +630,9 @@ export default function FeedScreen() {
             preparationInputs.current.session, product, products[1]);
         }
         noteSwipe();
+        const perfStoreStart = perfNow();
         swipeLeft(product);
+        perfLog('swipe_store_set', { ms: perfNow() - perfStoreStart });
       } catch (error) {
         logger.error('Geçme işlenemedi', { error, productId: product.id });
       }
