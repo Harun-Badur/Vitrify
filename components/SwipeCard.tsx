@@ -158,7 +158,7 @@ export interface SwipeCardProps {
 const formatPrice = (product: Product): string =>
   formatTryPrice(getDisplayPrice(product));
 
-function GalleryDot({ active }: { active: boolean }) {
+function GalleryDotView({ active }: { active: boolean }) {
   const progress = useSharedValue(active ? 1 : 0);
 
   useEffect(() => {
@@ -178,6 +178,9 @@ function GalleryDot({ active }: { active: boolean }) {
 
   return <Animated.View style={[styles.galleryDot, animatedStyle]} />;
 }
+
+/** Only `active` can change what a dot shows; the dots of a card must not re-render with the card. */
+const GalleryDot = React.memo(GalleryDotView);
 
 function SwipeCard({
   product,
