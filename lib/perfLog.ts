@@ -26,9 +26,42 @@ export const perfLog = (tag: string, fields: Record<string, PerfValue>): void =>
   try { console.log(formatPerfLine(tag, fields)); } catch { /* Measurement cannot fail work. */ }
 };
 
+const renderCounts: Record<string, number> = {};
+
+/** Counts a component render; the counts since the last swipe are attached to the swipe timings. */
+export const perfCountRender = (name: string): void => {
+  if (perfEnabled()) renderCounts[name] = (renderCounts[name] ?? 0) + 1;
+};
+
+/** Renders per component since the last swipe, as log fields (r_<name>=n). */
+export const perfRenderFields = (): Record<string, number> => {
+  const fields: Record<string, number> = {};
+  for (const name of Object.keys(renderCounts)) fields[`r_${name}`] = renderCounts[name];
+  return fields;
+};
+
+const LAG_INTERVAL_MS = 16;
+const LAG_THRESHOLD_MS = 50;
+let lagTimer: ReturnType<typeof setInterval> | null = null;
+
+/** Logs every JS event-loop stall over 50 ms (timer fired late by more than the threshold). */
+export const perfStartLagWatch = (): (() => void) => {
+  if (!perfEnabled() || lagTimer !== null) return () => {};
+  let expected = performance.now() + LAG_INTERVAL_MS;
+  lagTimer = setInterval(() => {
+    const now = performance.now();
+    const lag = now - expected;
+    if (lag > LAG_THRESHOLD_MS) perfLog('js_lag', { ms: lag });
+    expected = now + LAG_INTERVAL_MS;
+  }, LAG_INTERVAL_MS);
+  return () => { if (lagTimer !== null) clearInterval(lagTimer); lagTimer = null; };
+};
+
 /** A swipe committed; the next card's first image time is measured from here. */
 export const perfMarkSwipe = (): void => {
-  if (perfEnabled()) swipeAt = performance.now();
+  if (!perfEnabled()) return;
+  swipeAt = performance.now();
+  for (const name of Object.keys(renderCounts)) renderCounts[name] = 0;
 };
 
 /** Elapsed ms since the pending swipe without clearing it; null when none is pending. */

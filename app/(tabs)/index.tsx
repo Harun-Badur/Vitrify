@@ -1,5 +1,5 @@
 import { useOwnedState } from '../../hooks/useOwnedState';
-import { perfArmRefresh, perfLog, perfNow } from '../../lib/perfLog';
+import { perfArmRefresh, perfCountRender, perfLog, perfNow, perfStartLagWatch } from '../../lib/perfLog';
 import { useDiscoverPerfTrace } from '../../hooks/useDiscoverPerfTrace';
 import {
   useCallback,
@@ -181,6 +181,8 @@ function DeckFinishedCard({
 }
 
 export default function FeedScreen() {
+  perfCountRender('index');
+  useEffect(() => perfStartLagWatch(), []);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   /**
@@ -398,6 +400,7 @@ export default function FeedScreen() {
             });
           }
         }, recommendationSession, () => {
+          perfLog('recs_cache_alert', {});
           Alert.alert('Öneri servisine ulaşılamadı', 'Önbellek okunamadı; mevcut verilerle öneriler hazırlanıyor.');
         }).catch(() => {
           if (__DEV__) discoverPrefetchTrace(recommendationSession).diagnostic('workerStartBlocked', {

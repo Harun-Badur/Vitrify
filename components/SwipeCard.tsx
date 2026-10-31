@@ -58,7 +58,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
-import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfNow, perfPeekSwipe, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
+import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfCountRender, perfNow, perfPeekSwipe, perfRenderFields, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
   colors,
@@ -204,6 +204,7 @@ function SwipeCard({
   onHideInsightKind,
   railTopInset = 0,
 }: SwipeCardProps) {
+  perfCountRender('card');
   const isCurrent = pageIndex === 0;
   /** Pose slot index — parent atomically writes on deck remap; do not sync from React. */
   const pageIndexSV = useSharedValue<number>(pageIndex);
@@ -718,10 +719,10 @@ function SwipeCard({
     // The next card's image may have loaded while it was still a neighbour.
     if (!perfEnabled() || !isCurrent) return;
     const toCurrent = perfPeekSwipe();
-    if (toCurrent !== null) perfLog('swipe_to_is_current', { ms: toCurrent });
+    if (toCurrent !== null) perfLog('swipe_to_is_current', { ms: toCurrent, ...perfRenderFields() });
     if (!perfHasPendingSwipe() || !perfLoadedRef.current.has(0)) return;
     const swipeMs = perfTakeSwipe();
-    if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: true });
+    if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: true, ...perfRenderFields() });
   }, [isCurrent]);
 
   const handleImageLoadStart = useCallback((): void => {
@@ -743,7 +744,7 @@ function SwipeCard({
         const refreshMs = perfTakeRefreshImage();
         if (refreshMs !== null) perfLog('deck_refresh_first_image', { ms: refreshMs });
         const swipeMs = perfTakeSwipe();
-        if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: false });
+        if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: false, ...perfRenderFields() });
       }
     }
     setIsImageLoading(false);

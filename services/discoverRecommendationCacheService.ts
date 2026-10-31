@@ -4,6 +4,7 @@ import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import { perfLog, perfNow } from '../lib/perfLog';
 import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
@@ -43,7 +44,10 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
   let timer: ReturnType<typeof setTimeout> | undefined;
   let onAbort = () => {};
   let reported = false;
-  const report = () => {
+  const perfStart = perfNow();
+  // Closed reason labels and PostgREST codes only; never row data, ids or tokens.
+  const report = (reason = 'unknown') => {
+    perfLog('recs_cache_failed', { reason, ms: perfNow() - perfStart });
     if (signal.aborted || reported) return;
     reported = true;
     logger.warn('Öneri önbelleği okunamadı', { code: 'RECOMMENDATION_CACHE_FAILED' });
@@ -51,7 +55,7 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
   };
   const stopped = new Promise<CachedFinal[]>(resolve => {
     onAbort = () => { controller.abort(); resolve([]); };
-    timer = setTimeout(() => { mark('cache_read_timeout'); report(); onAbort(); }, CACHE_READ_TIMEOUT_MS);
+    timer = setTimeout(() => { mark('cache_read_timeout'); report('timeout'); onAbort(); }, CACHE_READ_TIMEOUT_MS);
     signal.addEventListener('abort', onAbort, { once: true });
   });
   try {
@@ -61,12 +65,12 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
       .in('scope', scopes)
       .in('anchor_product_id', request.anchors.map(anchor => anchor.id)).abortSignal(controller.signal).limit(1000);
     const pending = Promise.resolve(query).then(({ data, error }) => {
-      if (error) { report(); return []; }
+      if (error) { report(`pg_${String(error.code ?? 'none')}`); return []; }
       return data ?? [];
-    }).catch(() => { report(); return []; });
+    }).catch(() => { report('rejected'); return []; });
     return await Promise.race([stopped, ownerId ? trackOwnerWork(ownerId, pending) : pending]);
   } catch {
-    report();
+    report('threw');
     return [];
   } finally {
     clearTimeout(timer);
