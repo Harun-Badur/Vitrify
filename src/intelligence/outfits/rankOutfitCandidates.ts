@@ -12,6 +12,7 @@ import type { Product } from '../../../types/product';
 import { catalogCompatibility, catalogSemanticKey } from './catalogCompatibility';
 import { cooperativeSort, runCooperatively, runSynchronously, type CooperativeWorkOptions } from '../cooperativeWork';
 import { searchOutfitCandidatesAsync, type OutfitCandidateInput } from './generateOutfitCandidates';
+import { perfLog } from '../../../lib/perfLog';
 
 const compareText = (left: string, right: string): number =>
   left < right ? -1 : left > right ? 1 : 0;
@@ -254,6 +255,7 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
       return value.styleCount === boundary.styleCount && value.compatibility >= threshold;
     },
   }, options);
+  perfLog('rec_band', { n: candidates.length, optional: boundary.optionalCount, footwear: boundary.footwear });
   // ID ordering before a stable rank sort is unchanged, including genuinely equal evidence.
   return rankOutfitCandidatesAsync(candidates, anchor, options);
 };

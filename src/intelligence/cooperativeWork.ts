@@ -72,7 +72,8 @@ export const runCooperatively = async <T>(
   const { signal } = options;
   const diagnostic = __DEV__ ? options.diagnosticStage : undefined;
   const totalStarted = diagnostic ? performance.now() : 0;
-  let cpuMs = 0, maxSliceMs = 0, completed = false;
+  let cpuMs = 0, maxSliceMs = 0, completed = false, slices = 0, perfCpuMs = 0;
+  const perfStarted = perfEnabled() ? performance.now() : 0;
   try {
     await yieldToHost(signal);
     for (;;) {
@@ -89,6 +90,8 @@ export const runCooperatively = async <T>(
       } finally {
         if (perfEnabled()) {
           const sliceMs = performance.now() - started;
+          slices += 1;
+          perfCpuMs += sliceMs;
           if (sliceMs > 30) perfLog('rec_slice', { ms: sliceMs, stage: options.diagnosticStage ?? 'none' });
         }
         if (diagnostic) {
@@ -99,6 +102,10 @@ export const runCooperatively = async <T>(
       await yieldToHost(signal);
     }
   } finally {
+    if (perfEnabled() && completed) {
+      perfLog('rec_cpu', { stage: options.diagnosticStage ?? 'none', cpu: perfCpuMs,
+        wall: performance.now() - perfStarted, slices });
+    }
     if (diagnostic) {
       const elapsed = performance.now() - totalStarted;
       recordDiscoverStage(`cpu.${diagnostic}`, cpuMs, !completed);
