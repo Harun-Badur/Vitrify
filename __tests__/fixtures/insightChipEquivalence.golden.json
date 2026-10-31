@@ -1,0 +1,7626 @@
+{
+ "empty/plain/select": [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "empty/plain/sequence": [
+  [
+   "boyner-1294233",
+   null
+  ],
+  [
+   "boyner-15176448",
+   null
+  ],
+  [
+   "boyner-15343326",
+   null
+  ],
+  [
+   "boyner-15383784",
+   null
+  ],
+  [
+   "boyner-15512075",
+   null
+  ],
+  [
+   "boyner-15605761",
+   null
+  ],
+  [
+   "boyner-15647412",
+   null
+  ],
+  [
+   "boyner-15668208",
+   null
+  ],
+  [
+   "boyner-15690117",
+   null
+  ],
+  [
+   "boyner-15691146",
+   null
+  ],
+  [
+   "boyner-15709212",
+   null
+  ],
+  [
+   "boyner-15714044",
+   null
+  ],
+  [
+   "boyner-15742782",
+   null
+  ],
+  [
+   "boyner-15772029",
+   null
+  ],
+  [
+   "boyner-15775199",
+   null
+  ],
+  [
+   "boyner-15795287",
+   null
+  ],
+  [
+   "boyner-15805824",
+   null
+  ],
+  [
+   "boyner-15815058",
+   null
+  ],
+  [
+   "boyner-15837511",
+   null
+  ],
+  [
+   "boyner-15891188",
+   null
+  ],
+  [
+   "boyner-15896249",
+   null
+  ],
+  [
+   "boyner-15927675",
+   null
+  ],
+  [
+   "boyner-15969332",
+   null
+  ],
+  [
+   "boyner-1656182",
+   null
+  ],
+  [
+   "boyner-1716227",
+   null
+  ],
+  [
+   "boyner-1771558",
+   null
+  ],
+  [
+   "boyner-1775564",
+   null
+  ],
+  [
+   "defacto-2338282",
+   null
+  ],
+  [
+   "defacto-2339010",
+   null
+  ],
+  [
+   "defacto-2723671",
+   null
+  ],
+  [
+   "defacto-2805797",
+   null
+  ],
+  [
+   "defacto-2827545",
+   null
+  ],
+  [
+   "defacto-2843240",
+   null
+  ],
+  [
+   "defacto-2857264",
+   null
+  ],
+  [
+   "defacto-3141043",
+   null
+  ],
+  [
+   "defacto-3148996",
+   null
+  ],
+  [
+   "defacto-3157599",
+   null
+  ],
+  [
+   "defacto-3159839",
+   null
+  ],
+  [
+   "defacto-3195702",
+   null
+  ],
+  [
+   "defacto-3255037",
+   null
+  ],
+  [
+   "defacto-3277298",
+   null
+  ],
+  [
+   "defacto-3280820",
+   null
+  ],
+  [
+   "defacto-3287771",
+   null
+  ],
+  [
+   "defacto-3287863",
+   null
+  ],
+  [
+   "defacto-3288642",
+   null
+  ],
+  [
+   "defacto-3292577",
+   null
+  ],
+  [
+   "defacto-3300417",
+   null
+  ],
+  [
+   "defacto-3301212",
+   null
+  ],
+  [
+   "defacto-3315755",
+   null
+  ],
+  [
+   "defacto-3319753",
+   null
+  ],
+  [
+   "defacto-3320536",
+   null
+  ],
+  [
+   "defacto-3321495",
+   null
+  ],
+  [
+   "defacto-3330365",
+   null
+  ],
+  [
+   "defacto-3339043",
+   null
+  ],
+  [
+   "defacto-3353900",
+   null
+  ],
+  [
+   "defacto-3355637",
+   null
+  ],
+  [
+   "defacto-3374143",
+   null
+  ],
+  [
+   "defacto-3375205",
+   null
+  ],
+  [
+   "defacto-3375352",
+   null
+  ],
+  [
+   "defacto-3375353",
+   null
+  ],
+  [
+   "defacto-3375944",
+   null
+  ],
+  [
+   "defacto-3376033",
+   null
+  ],
+  [
+   "defacto-3377134",
+   null
+  ],
+  [
+   "defacto-3403514",
+   null
+  ],
+  [
+   "defacto-3407970",
+   null
+  ],
+  [
+   "defacto-3407972",
+   null
+  ],
+  [
+   "defacto-3408872",
+   null
+  ],
+  [
+   "defacto-3415590",
+   null
+  ],
+  [
+   "defacto-3416588",
+   null
+  ],
+  [
+   "defacto-3419058",
+   null
+  ],
+  [
+   "defacto-3421507",
+   null
+  ],
+  [
+   "defacto-3425820",
+   null
+  ],
+  [
+   "defacto-3427630",
+   null
+  ],
+  [
+   "defacto-3427631",
+   null
+  ],
+  [
+   "defacto-3430047",
+   null
+  ],
+  [
+   "defacto-3430099",
+   null
+  ],
+  [
+   "defacto-3430184",
+   null
+  ],
+  [
+   "defacto-3430227",
+   null
+  ],
+  [
+   "defacto-3430230",
+   null
+  ],
+  [
+   "defacto-3430252",
+   null
+  ]
+ ],
+ "empty/liked/select": [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "empty/liked/sequence": [
+  [
+   "boyner-1294233",
+   null
+  ],
+  [
+   "boyner-15176448",
+   null
+  ],
+  [
+   "boyner-15343326",
+   null
+  ],
+  [
+   "boyner-15383784",
+   null
+  ],
+  [
+   "boyner-15512075",
+   null
+  ],
+  [
+   "boyner-15605761",
+   null
+  ],
+  [
+   "boyner-15647412",
+   null
+  ],
+  [
+   "boyner-15668208",
+   null
+  ],
+  [
+   "boyner-15690117",
+   null
+  ],
+  [
+   "boyner-15691146",
+   null
+  ],
+  [
+   "boyner-15709212",
+   null
+  ],
+  [
+   "boyner-15714044",
+   null
+  ],
+  [
+   "boyner-15742782",
+   null
+  ],
+  [
+   "boyner-15772029",
+   null
+  ],
+  [
+   "boyner-15775199",
+   null
+  ],
+  [
+   "boyner-15795287",
+   null
+  ],
+  [
+   "boyner-15805824",
+   null
+  ],
+  [
+   "boyner-15815058",
+   null
+  ],
+  [
+   "boyner-15837511",
+   null
+  ],
+  [
+   "boyner-15891188",
+   null
+  ],
+  [
+   "boyner-15896249",
+   null
+  ],
+  [
+   "boyner-15927675",
+   null
+  ],
+  [
+   "boyner-15969332",
+   null
+  ],
+  [
+   "boyner-1656182",
+   null
+  ],
+  [
+   "boyner-1716227",
+   null
+  ],
+  [
+   "boyner-1771558",
+   null
+  ],
+  [
+   "boyner-1775564",
+   null
+  ],
+  [
+   "defacto-2338282",
+   null
+  ],
+  [
+   "defacto-2339010",
+   null
+  ],
+  [
+   "defacto-2723671",
+   null
+  ],
+  [
+   "defacto-2805797",
+   null
+  ],
+  [
+   "defacto-2827545",
+   null
+  ],
+  [
+   "defacto-2843240",
+   null
+  ],
+  [
+   "defacto-2857264",
+   null
+  ],
+  [
+   "defacto-3141043",
+   null
+  ],
+  [
+   "defacto-3148996",
+   null
+  ],
+  [
+   "defacto-3157599",
+   null
+  ],
+  [
+   "defacto-3159839",
+   null
+  ],
+  [
+   "defacto-3195702",
+   null
+  ],
+  [
+   "defacto-3255037",
+   null
+  ],
+  [
+   "defacto-3277298",
+   null
+  ],
+  [
+   "defacto-3280820",
+   null
+  ],
+  [
+   "defacto-3287771",
+   null
+  ],
+  [
+   "defacto-3287863",
+   null
+  ],
+  [
+   "defacto-3288642",
+   null
+  ],
+  [
+   "defacto-3292577",
+   null
+  ],
+  [
+   "defacto-3300417",
+   null
+  ],
+  [
+   "defacto-3301212",
+   null
+  ],
+  [
+   "defacto-3315755",
+   null
+  ],
+  [
+   "defacto-3319753",
+   null
+  ],
+  [
+   "defacto-3320536",
+   null
+  ],
+  [
+   "defacto-3321495",
+   null
+  ],
+  [
+   "defacto-3330365",
+   null
+  ],
+  [
+   "defacto-3339043",
+   null
+  ],
+  [
+   "defacto-3353900",
+   null
+  ],
+  [
+   "defacto-3355637",
+   null
+  ],
+  [
+   "defacto-3374143",
+   null
+  ],
+  [
+   "defacto-3375205",
+   null
+  ],
+  [
+   "defacto-3375352",
+   null
+  ],
+  [
+   "defacto-3375353",
+   null
+  ],
+  [
+   "defacto-3375944",
+   null
+  ],
+  [
+   "defacto-3376033",
+   null
+  ],
+  [
+   "defacto-3377134",
+   null
+  ],
+  [
+   "defacto-3403514",
+   null
+  ],
+  [
+   "defacto-3407970",
+   null
+  ],
+  [
+   "defacto-3407972",
+   null
+  ],
+  [
+   "defacto-3408872",
+   null
+  ],
+  [
+   "defacto-3415590",
+   null
+  ],
+  [
+   "defacto-3416588",
+   null
+  ],
+  [
+   "defacto-3419058",
+   null
+  ],
+  [
+   "defacto-3421507",
+   null
+  ],
+  [
+   "defacto-3425820",
+   null
+  ],
+  [
+   "defacto-3427630",
+   null
+  ],
+  [
+   "defacto-3427631",
+   null
+  ],
+  [
+   "defacto-3430047",
+   null
+  ],
+  [
+   "defacto-3430099",
+   null
+  ],
+  [
+   "defacto-3430184",
+   null
+  ],
+  [
+   "defacto-3430227",
+   null
+  ],
+  [
+   "defacto-3430230",
+   null
+  ],
+  [
+   "defacto-3430252",
+   null
+  ]
+ ],
+ "small/plain/select": [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "small/plain/sequence": [
+  [
+   "boyner-1294233",
+   null
+  ],
+  [
+   "boyner-15176448",
+   null
+  ],
+  [
+   "boyner-15343326",
+   null
+  ],
+  [
+   "boyner-15383784",
+   null
+  ],
+  [
+   "boyner-15512075",
+   null
+  ],
+  [
+   "boyner-15605761",
+   null
+  ],
+  [
+   "boyner-15647412",
+   null
+  ],
+  [
+   "boyner-15668208",
+   null
+  ],
+  [
+   "boyner-15690117",
+   null
+  ],
+  [
+   "boyner-15691146",
+   null
+  ],
+  [
+   "boyner-15709212",
+   null
+  ],
+  [
+   "boyner-15714044",
+   null
+  ],
+  [
+   "boyner-15742782",
+   null
+  ],
+  [
+   "boyner-15772029",
+   null
+  ],
+  [
+   "boyner-15775199",
+   null
+  ],
+  [
+   "boyner-15795287",
+   null
+  ],
+  [
+   "boyner-15805824",
+   null
+  ],
+  [
+   "boyner-15815058",
+   null
+  ],
+  [
+   "boyner-15837511",
+   null
+  ],
+  [
+   "boyner-15891188",
+   null
+  ],
+  [
+   "boyner-15896249",
+   null
+  ],
+  [
+   "boyner-15927675",
+   null
+  ],
+  [
+   "boyner-15969332",
+   null
+  ],
+  [
+   "boyner-1656182",
+   null
+  ],
+  [
+   "boyner-1716227",
+   null
+  ],
+  [
+   "boyner-1771558",
+   null
+  ],
+  [
+   "boyner-1775564",
+   null
+  ],
+  [
+   "defacto-2338282",
+   null
+  ],
+  [
+   "defacto-2339010",
+   null
+  ],
+  [
+   "defacto-2723671",
+   null
+  ],
+  [
+   "defacto-2805797",
+   null
+  ],
+  [
+   "defacto-2827545",
+   null
+  ],
+  [
+   "defacto-2843240",
+   null
+  ],
+  [
+   "defacto-2857264",
+   null
+  ],
+  [
+   "defacto-3141043",
+   null
+  ],
+  [
+   "defacto-3148996",
+   null
+  ],
+  [
+   "defacto-3157599",
+   null
+  ],
+  [
+   "defacto-3159839",
+   null
+  ],
+  [
+   "defacto-3195702",
+   null
+  ],
+  [
+   "defacto-3255037",
+   null
+  ],
+  [
+   "defacto-3277298",
+   null
+  ],
+  [
+   "defacto-3280820",
+   null
+  ],
+  [
+   "defacto-3287771",
+   null
+  ],
+  [
+   "defacto-3287863",
+   null
+  ],
+  [
+   "defacto-3288642",
+   null
+  ],
+  [
+   "defacto-3292577",
+   null
+  ],
+  [
+   "defacto-3300417",
+   null
+  ],
+  [
+   "defacto-3301212",
+   null
+  ],
+  [
+   "defacto-3315755",
+   null
+  ],
+  [
+   "defacto-3319753",
+   null
+  ],
+  [
+   "defacto-3320536",
+   null
+  ],
+  [
+   "defacto-3321495",
+   null
+  ],
+  [
+   "defacto-3330365",
+   null
+  ],
+  [
+   "defacto-3339043",
+   null
+  ],
+  [
+   "defacto-3353900",
+   null
+  ],
+  [
+   "defacto-3355637",
+   null
+  ],
+  [
+   "defacto-3374143",
+   null
+  ],
+  [
+   "defacto-3375205",
+   null
+  ],
+  [
+   "defacto-3375352",
+   null
+  ],
+  [
+   "defacto-3375353",
+   null
+  ],
+  [
+   "defacto-3375944",
+   null
+  ],
+  [
+   "defacto-3376033",
+   null
+  ],
+  [
+   "defacto-3377134",
+   null
+  ],
+  [
+   "defacto-3403514",
+   null
+  ],
+  [
+   "defacto-3407970",
+   null
+  ],
+  [
+   "defacto-3407972",
+   null
+  ],
+  [
+   "defacto-3408872",
+   null
+  ],
+  [
+   "defacto-3415590",
+   null
+  ],
+  [
+   "defacto-3416588",
+   null
+  ],
+  [
+   "defacto-3419058",
+   null
+  ],
+  [
+   "defacto-3421507",
+   null
+  ],
+  [
+   "defacto-3425820",
+   null
+  ],
+  [
+   "defacto-3427630",
+   null
+  ],
+  [
+   "defacto-3427631",
+   null
+  ],
+  [
+   "defacto-3430047",
+   null
+  ],
+  [
+   "defacto-3430099",
+   null
+  ],
+  [
+   "defacto-3430184",
+   null
+  ],
+  [
+   "defacto-3430227",
+   null
+  ],
+  [
+   "defacto-3430230",
+   null
+  ],
+  [
+   "defacto-3430252",
+   null
+  ]
+ ],
+ "small/liked/select": [
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "small/liked/sequence": [
+  [
+   "boyner-1294233",
+   null
+  ],
+  [
+   "boyner-15176448",
+   null
+  ],
+  [
+   "boyner-15343326",
+   null
+  ],
+  [
+   "boyner-15383784",
+   null
+  ],
+  [
+   "boyner-15512075",
+   null
+  ],
+  [
+   "boyner-15605761",
+   null
+  ],
+  [
+   "boyner-15647412",
+   null
+  ],
+  [
+   "boyner-15668208",
+   null
+  ],
+  [
+   "boyner-15690117",
+   null
+  ],
+  [
+   "boyner-15691146",
+   null
+  ],
+  [
+   "boyner-15709212",
+   null
+  ],
+  [
+   "boyner-15714044",
+   null
+  ],
+  [
+   "boyner-15742782",
+   null
+  ],
+  [
+   "boyner-15772029",
+   null
+  ],
+  [
+   "boyner-15775199",
+   null
+  ],
+  [
+   "boyner-15795287",
+   null
+  ],
+  [
+   "boyner-15805824",
+   null
+  ],
+  [
+   "boyner-15815058",
+   null
+  ],
+  [
+   "boyner-15837511",
+   null
+  ],
+  [
+   "boyner-15891188",
+   null
+  ],
+  [
+   "boyner-15896249",
+   null
+  ],
+  [
+   "boyner-15927675",
+   null
+  ],
+  [
+   "boyner-15969332",
+   null
+  ],
+  [
+   "boyner-1656182",
+   null
+  ],
+  [
+   "boyner-1716227",
+   null
+  ],
+  [
+   "boyner-1771558",
+   null
+  ],
+  [
+   "boyner-1775564",
+   null
+  ],
+  [
+   "defacto-2338282",
+   null
+  ],
+  [
+   "defacto-2339010",
+   null
+  ],
+  [
+   "defacto-2723671",
+   null
+  ],
+  [
+   "defacto-2805797",
+   null
+  ],
+  [
+   "defacto-2827545",
+   null
+  ],
+  [
+   "defacto-2843240",
+   null
+  ],
+  [
+   "defacto-2857264",
+   null
+  ],
+  [
+   "defacto-3141043",
+   null
+  ],
+  [
+   "defacto-3148996",
+   null
+  ],
+  [
+   "defacto-3157599",
+   null
+  ],
+  [
+   "defacto-3159839",
+   null
+  ],
+  [
+   "defacto-3195702",
+   null
+  ],
+  [
+   "defacto-3255037",
+   null
+  ],
+  [
+   "defacto-3277298",
+   null
+  ],
+  [
+   "defacto-3280820",
+   null
+  ],
+  [
+   "defacto-3287771",
+   null
+  ],
+  [
+   "defacto-3287863",
+   null
+  ],
+  [
+   "defacto-3288642",
+   null
+  ],
+  [
+   "defacto-3292577",
+   null
+  ],
+  [
+   "defacto-3300417",
+   null
+  ],
+  [
+   "defacto-3301212",
+   null
+  ],
+  [
+   "defacto-3315755",
+   null
+  ],
+  [
+   "defacto-3319753",
+   null
+  ],
+  [
+   "defacto-3320536",
+   null
+  ],
+  [
+   "defacto-3321495",
+   null
+  ],
+  [
+   "defacto-3330365",
+   null
+  ],
+  [
+   "defacto-3339043",
+   null
+  ],
+  [
+   "defacto-3353900",
+   null
+  ],
+  [
+   "defacto-3355637",
+   null
+  ],
+  [
+   "defacto-3374143",
+   null
+  ],
+  [
+   "defacto-3375205",
+   null
+  ],
+  [
+   "defacto-3375352",
+   null
+  ],
+  [
+   "defacto-3375353",
+   null
+  ],
+  [
+   "defacto-3375944",
+   null
+  ],
+  [
+   "defacto-3376033",
+   null
+  ],
+  [
+   "defacto-3377134",
+   null
+  ],
+  [
+   "defacto-3403514",
+   null
+  ],
+  [
+   "defacto-3407970",
+   null
+  ],
+  [
+   "defacto-3407972",
+   null
+  ],
+  [
+   "defacto-3408872",
+   null
+  ],
+  [
+   "defacto-3415590",
+   null
+  ],
+  [
+   "defacto-3416588",
+   null
+  ],
+  [
+   "defacto-3419058",
+   null
+  ],
+  [
+   "defacto-3421507",
+   null
+  ],
+  [
+   "defacto-3425820",
+   null
+  ],
+  [
+   "defacto-3427630",
+   null
+  ],
+  [
+   "defacto-3427631",
+   null
+  ],
+  [
+   "defacto-3430047",
+   null
+  ],
+  [
+   "defacto-3430099",
+   null
+  ],
+  [
+   "defacto-3430184",
+   null
+  ],
+  [
+   "defacto-3430227",
+   null
+  ],
+  [
+   "defacto-3430230",
+   null
+  ],
+  [
+   "defacto-3430252",
+   null
+  ]
+ ],
+ "mixed/plain/select": [
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1294233",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5002871973_250_01.jpg?v=17906442"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15176448",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/8683729040797_2009244377_0.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15343326",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8682010018378_2008534348_0.jpg?v=1734503010"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15383784",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8683864077832_2005462043_0.jpg?v=1738242970"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15512075",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8684112802640_2002768527_0.jpeg?v=1747117012"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15605761",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003274114_001_20251001141824220.jpg?v=1789365635"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15647412",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003309001_900_20250924155005484.jpg?v=1762512909"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15690117",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5401157647288_2007674002_20250710181352812.jpg?v=1761251089"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15691146",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003315807_1393_20251003161313355.jpg?v=1761283903"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15709212",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003320865_201_20251103213349996.jpg?v=1762233780"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15714044",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/125P5BKU5QJH8_3262_0_20251105000934905.jpg?v=1762411699"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15775199",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/2010054130_3228_0_20251224121627315.jpg?v=1767361061"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15795287",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/5003335384_452_20260625145404832.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15815058",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003346145_001_20260209164936428.jpg?v=1770701244"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15837511",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003351776_411_20260303154546195.jpg?v=1772603129"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15891188",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003345142_400_20260113191019314.jpg?v=1777276187"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15896249",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003378885_400_20260430140712304.jpg?v=1777555445"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15927675",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003356627_403_20260603152956863.jpg?v=1780490841"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15969332",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/112230221_2809_0_20260121120948600.jpg?v=1785398311"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1656182",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003032757_250_01.jpg?v=1729674757"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1716227",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003043375_001_20250711165303538.jpg?v=1752367993"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1771558",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003113088_001_01.jpg?v=17705917"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1775564",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003116739_650_01.jpg?v=1738235898"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  null,
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-2827545",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/A6647AX_23SM_ER233_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-2857264",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_23AU_BN192_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3141043",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/7/X7405AZ_24AU_GR253_04_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3159839",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/X3926AZ_24AU_NV163_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3195702",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E0811AX_NS_BG224_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3255037",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/D6259AX_25SP_BN495_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3280820",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E8888AX_25AU_BK27_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3287863",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E9488AX_25WN_IN231_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3288642",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E9753AX_25AU_BK81_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3292577",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_25AU_BG766_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3301212",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/F0857AX_25AU_GN536_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3315755",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C7710AX_25WN_KH109_01_04.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3320536",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_25AU_WT32_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3321495",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D7511AX_25WN_NV134_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3330365",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/F7150AX_25SM_BR154_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3339043",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/F9051AX_25HS_GD1_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3353900",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G2909AX_25AU_BN336_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3355637",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G3204AX_25AU_NM26_01_04.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3375352",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_KH522_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3375353",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_BK27_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3375944",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G8671AX_26SP_ER105_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3376033",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/B4844AX_26SP_BK81_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3377134",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/F7750AX_26SP_BK27_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3403514",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G6080AX_26SM_NV241_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3407970",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_WT36_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3407972",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_AR191_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3415590",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E0288AX_26SP_NV146_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3419058",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G2592AX_26AU_BK81_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3427630",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_BR304_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3427631",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_WT34_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430047",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H1547AX_26AU_BK27_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430099",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H1509AX_26AU_BN305_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430184",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H1610AX_26AU_BN604_01_04.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430227",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D2427AX_26AU_BK27_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430230",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C8284AX_26AU_BG721_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430252",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H2225AX_26AU_BG413_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  }
+ ],
+ "mixed/plain/sequence": [
+  [
+   "boyner-1294233",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1294233",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5002871973_250_01.jpg?v=17906442"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15176448",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15176448",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/8683729040797_2009244377_0.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15343326",
+   null
+  ],
+  [
+   "boyner-15383784",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15383784",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8683864077832_2005462043_0.jpg?v=1738242970"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15512075",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15512075",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8684112802640_2002768527_0.jpeg?v=1747117012"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15605761",
+   null
+  ],
+  [
+   "boyner-15647412",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15647412",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003309001_900_20250924155005484.jpg?v=1762512909"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15668208",
+   null
+  ],
+  [
+   "boyner-15690117",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15690117",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5401157647288_2007674002_20250710181352812.jpg?v=1761251089"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15691146",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15691146",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003315807_1393_20251003161313355.jpg?v=1761283903"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15709212",
+   null
+  ],
+  [
+   "boyner-15714044",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15714044",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/125P5BKU5QJH8_3262_0_20251105000934905.jpg?v=1762411699"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15742782",
+   null
+  ],
+  [
+   "boyner-15772029",
+   null
+  ],
+  [
+   "boyner-15775199",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15775199",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/2010054130_3228_0_20251224121627315.jpg?v=1767361061"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15795287",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15795287",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/5003335384_452_20260625145404832.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15805824",
+   null
+  ],
+  [
+   "boyner-15815058",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15815058",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003346145_001_20260209164936428.jpg?v=1770701244"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15837511",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15837511",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003351776_411_20260303154546195.jpg?v=1772603129"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15891188",
+   null
+  ],
+  [
+   "boyner-15896249",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15896249",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003378885_400_20260430140712304.jpg?v=1777555445"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15927675",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15927675",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003356627_403_20260603152956863.jpg?v=1780490841"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15969332",
+   null
+  ],
+  [
+   "boyner-1656182",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1656182",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003032757_250_01.jpg?v=1729674757"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-1716227",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1716227",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003043375_001_20250711165303538.jpg?v=1752367993"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-1771558",
+   null
+  ],
+  [
+   "boyner-1775564",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1775564",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003116739_650_01.jpg?v=1738235898"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-2338282",
+   null
+  ],
+  [
+   "defacto-2339010",
+   null
+  ],
+  [
+   "defacto-2723671",
+   null
+  ],
+  [
+   "defacto-2805797",
+   null
+  ],
+  [
+   "defacto-2827545",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-2827545",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/2/A6647AX_23SM_ER233_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-2843240",
+   null
+  ],
+  [
+   "defacto-2857264",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-2857264",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_23AU_BN192_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3141043",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3141043",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/7/X7405AZ_24AU_GR253_04_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3148996",
+   null
+  ],
+  [
+   "defacto-3157599",
+   null
+  ],
+  [
+   "defacto-3159839",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3159839",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/2/X3926AZ_24AU_NV163_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3195702",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3195702",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E0811AX_NS_BG224_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3255037",
+   null
+  ],
+  [
+   "defacto-3277298",
+   null
+  ],
+  [
+   "defacto-3280820",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3280820",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E8888AX_25AU_BK27_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3287771",
+   null
+  ],
+  [
+   "defacto-3287863",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3287863",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E9488AX_25WN_IN231_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3288642",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3288642",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E9753AX_25AU_BK81_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3292577",
+   null
+  ],
+  [
+   "defacto-3300417",
+   null
+  ],
+  [
+   "defacto-3301212",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3301212",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/2/F0857AX_25AU_GN536_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3315755",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3315755",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C7710AX_25WN_KH109_01_04.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3319753",
+   null
+  ],
+  [
+   "defacto-3320536",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3320536",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_25AU_WT32_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3321495",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3321495",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/D7511AX_25WN_NV134_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3330365",
+   null
+  ],
+  [
+   "defacto-3339043",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3339043",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/F9051AX_25HS_GD1_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3353900",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3353900",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/G2909AX_25AU_BN336_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3355637",
+   null
+  ],
+  [
+   "defacto-3374143",
+   null
+  ],
+  [
+   "defacto-3375205",
+   null
+  ],
+  [
+   "defacto-3375352",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3375352",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_KH522_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3375353",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3375353",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_BK27_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3375944",
+   null
+  ],
+  [
+   "defacto-3376033",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3376033",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/B4844AX_26SP_BK81_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3377134",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3377134",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/F7750AX_26SP_BK27_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3403514",
+   null
+  ],
+  [
+   "defacto-3407970",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3407970",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_WT36_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3407972",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3407972",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_AR191_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3408872",
+   null
+  ],
+  [
+   "defacto-3415590",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3415590",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E0288AX_26SP_NV146_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3416588",
+   null
+  ],
+  [
+   "defacto-3419058",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3419058",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/G2592AX_26AU_BK81_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3421507",
+   null
+  ],
+  [
+   "defacto-3425820",
+   null
+  ],
+  [
+   "defacto-3427630",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3427630",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_BR304_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3427631",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3427631",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_WT34_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430047",
+   null
+  ],
+  [
+   "defacto-3430099",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430099",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H1509AX_26AU_BN305_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430184",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430184",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H1610AX_26AU_BN604_01_04.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430227",
+   null
+  ],
+  [
+   "defacto-3430230",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430230",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C8284AX_26AU_BG721_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430252",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430252",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H2225AX_26AU_BG413_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ]
+ ],
+ "mixed/liked/select": [
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1294233",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5002871973_250_01.jpg?v=17906442"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15176448",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/8683729040797_2009244377_0.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15343326",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8682010018378_2008534348_0.jpg?v=1734503010"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15383784",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8683864077832_2005462043_0.jpg?v=1738242970"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15512075",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8684112802640_2002768527_0.jpeg?v=1747117012"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15605761",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003274114_001_20251001141824220.jpg?v=1789365635"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15647412",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003309001_900_20250924155005484.jpg?v=1762512909"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15690117",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5401157647288_2007674002_20250710181352812.jpg?v=1761251089"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15691146",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003315807_1393_20251003161313355.jpg?v=1761283903"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15709212",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003320865_201_20251103213349996.jpg?v=1762233780"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15714044",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/125P5BKU5QJH8_3262_0_20251105000934905.jpg?v=1762411699"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15775199",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/2010054130_3228_0_20251224121627315.jpg?v=1767361061"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15795287",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/5003335384_452_20260625145404832.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15815058",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003346145_001_20260209164936428.jpg?v=1770701244"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15837511",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003351776_411_20260303154546195.jpg?v=1772603129"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15891188",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003345142_400_20260113191019314.jpg?v=1777276187"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15896249",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003378885_400_20260430140712304.jpg?v=1777555445"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15927675",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003356627_403_20260603152956863.jpg?v=1780490841"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-15969332",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/112230221_2809_0_20260121120948600.jpg?v=1785398311"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1656182",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003032757_250_01.jpg?v=1729674757"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1716227",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003043375_001_20250711165303538.jpg?v=1752367993"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1771558",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003113088_001_01.jpg?v=17705917"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "boyner-1775564",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003116739_650_01.jpg?v=1738235898"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  null,
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-2827545",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/A6647AX_23SM_ER233_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-2857264",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_23AU_BN192_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3141043",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/7/X7405AZ_24AU_GR253_04_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3159839",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/X3926AZ_24AU_NV163_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3195702",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E0811AX_NS_BG224_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3255037",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/D6259AX_25SP_BN495_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3280820",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E8888AX_25AU_BK27_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3287863",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E9488AX_25WN_IN231_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3288642",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E9753AX_25AU_BK81_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3292577",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_25AU_BG766_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3301212",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/2/F0857AX_25AU_GN536_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3315755",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C7710AX_25WN_KH109_01_04.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "b1",
+     "label": "Dolabındaki lacivert jean",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3320536",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_25AU_WT32_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "b1",
+    "category": "lower_body",
+    "subcategory": "jean",
+    "colorSlugs": [
+     "navy"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3321495",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D7511AX_25WN_NV134_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3330365",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/F7150AX_25SM_BR154_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3339043",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/F9051AX_25HS_GD1_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3353900",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G2909AX_25AU_BN336_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3355637",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G3204AX_25AU_NM26_01_04.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3375352",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_KH522_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3375353",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_BK27_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3375944",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G8671AX_26SP_ER105_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3376033",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/B4844AX_26SP_BK81_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3377134",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/F7750AX_26SP_BK27_01_03.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3403514",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G6080AX_26SM_NV241_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3407970",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_WT36_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3407972",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_AR191_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3415590",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/E0288AX_26SP_NV146_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3419058",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/G2592AX_26AU_BK81_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  null,
+  null,
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3427630",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_BR304_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t3",
+     "label": "Dolabındaki bej blazer",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3427631",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_WT34_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t3",
+    "category": "upper_body",
+    "subcategory": "blazer",
+    "colorSlugs": [
+     "bej"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430047",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H1547AX_26AU_BK27_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430099",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H1509AX_26AU_BN305_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430184",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H1610AX_26AU_BN604_01_04.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430227",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/D2427AX_26AU_BK27_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430230",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/C8284AX_26AU_BG721_01_01.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  },
+  {
+   "kind": "wardrobe_match",
+   "label": "Dolabınla renk uyumlu",
+   "summary": "Dolabındaki bir parçayla renk uyumlu.",
+   "evidence": [
+    {
+     "id": "t1",
+     "label": "Dolabındaki beyaz tişört",
+     "source": "wardrobe"
+    },
+    {
+     "id": "defacto-3430252",
+     "label": "Bu ürün",
+     "source": "product",
+     "imageUrl": "https://dfcdn.defacto.com.tr/838/H2225AX_26AU_BG413_01_02.jpg"
+    }
+   ],
+   "matchedItem": {
+    "id": "t1",
+    "category": "upper_body",
+    "subcategory": "tisort",
+    "colorSlugs": [
+     "beyaz"
+    ]
+   }
+  }
+ ],
+ "mixed/liked/sequence": [
+  [
+   "boyner-1294233",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1294233",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5002871973_250_01.jpg?v=17906442"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15176448",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15176448",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/8683729040797_2009244377_0.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15343326",
+   null
+  ],
+  [
+   "boyner-15383784",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15383784",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8683864077832_2005462043_0.jpg?v=1738242970"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15512075",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15512075",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/8684112802640_2002768527_0.jpeg?v=1747117012"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15605761",
+   null
+  ],
+  [
+   "boyner-15647412",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15647412",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003309001_900_20250924155005484.jpg?v=1762512909"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15668208",
+   null
+  ],
+  [
+   "boyner-15690117",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15690117",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5401157647288_2007674002_20250710181352812.jpg?v=1761251089"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15691146",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15691146",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003315807_1393_20251003161313355.jpg?v=1761283903"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15709212",
+   null
+  ],
+  [
+   "boyner-15714044",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15714044",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/125P5BKU5QJH8_3262_0_20251105000934905.jpg?v=1762411699"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15742782",
+   null
+  ],
+  [
+   "boyner-15772029",
+   null
+  ],
+  [
+   "boyner-15775199",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15775199",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/2010054130_3228_0_20251224121627315.jpg?v=1767361061"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15795287",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15795287",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/325/451/Boynerimages/5003335384_452_20260625145404832.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15805824",
+   null
+  ],
+  [
+   "boyner-15815058",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15815058",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003346145_001_20260209164936428.jpg?v=1770701244"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15837511",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15837511",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003351776_411_20260303154546195.jpg?v=1772603129"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15891188",
+   null
+  ],
+  [
+   "boyner-15896249",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15896249",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003378885_400_20260430140712304.jpg?v=1777555445"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15927675",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-15927675",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003356627_403_20260603152956863.jpg?v=1780490841"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-15969332",
+   null
+  ],
+  [
+   "boyner-1656182",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1656182",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003032757_250_01.jpg?v=1729674757"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-1716227",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1716227",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003043375_001_20250711165303538.jpg?v=1752367993"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "boyner-1771558",
+   null
+  ],
+  [
+   "boyner-1775564",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "boyner-1775564",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://statics-mp.boyner.com.tr/mnresize/505/704/Boynerimages/5003116739_650_01.jpg?v=1738235898"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-2338282",
+   null
+  ],
+  [
+   "defacto-2339010",
+   null
+  ],
+  [
+   "defacto-2723671",
+   null
+  ],
+  [
+   "defacto-2805797",
+   null
+  ],
+  [
+   "defacto-2827545",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-2827545",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/2/A6647AX_23SM_ER233_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-2843240",
+   null
+  ],
+  [
+   "defacto-2857264",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-2857264",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_23AU_BN192_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3141043",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3141043",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/7/X7405AZ_24AU_GR253_04_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3148996",
+   null
+  ],
+  [
+   "defacto-3157599",
+   null
+  ],
+  [
+   "defacto-3159839",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3159839",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/2/X3926AZ_24AU_NV163_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3195702",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3195702",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E0811AX_NS_BG224_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3255037",
+   null
+  ],
+  [
+   "defacto-3277298",
+   null
+  ],
+  [
+   "defacto-3280820",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3280820",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E8888AX_25AU_BK27_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3287771",
+   null
+  ],
+  [
+   "defacto-3287863",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3287863",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E9488AX_25WN_IN231_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3288642",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3288642",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E9753AX_25AU_BK81_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3292577",
+   null
+  ],
+  [
+   "defacto-3300417",
+   null
+  ],
+  [
+   "defacto-3301212",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3301212",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/2/F0857AX_25AU_GN536_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3315755",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3315755",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C7710AX_25WN_KH109_01_04.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3319753",
+   null
+  ],
+  [
+   "defacto-3320536",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "b1",
+      "label": "Dolabındaki lacivert jean",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3320536",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/X7405AZ_25AU_WT32_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "b1",
+     "category": "lower_body",
+     "subcategory": "jean",
+     "colorSlugs": [
+      "navy"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3321495",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3321495",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/D7511AX_25WN_NV134_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3330365",
+   null
+  ],
+  [
+   "defacto-3339043",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3339043",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/F9051AX_25HS_GD1_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3353900",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3353900",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/G2909AX_25AU_BN336_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3355637",
+   null
+  ],
+  [
+   "defacto-3374143",
+   null
+  ],
+  [
+   "defacto-3375205",
+   null
+  ],
+  [
+   "defacto-3375352",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3375352",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_KH522_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3375353",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3375353",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/D7319AX_26SP_BK27_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3375944",
+   null
+  ],
+  [
+   "defacto-3376033",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3376033",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/B4844AX_26SP_BK81_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3377134",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3377134",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/F7750AX_26SP_BK27_01_03.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3403514",
+   null
+  ],
+  [
+   "defacto-3407970",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3407970",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_WT36_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3407972",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3407972",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C0099AX_26SM_AR191_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3408872",
+   null
+  ],
+  [
+   "defacto-3415590",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3415590",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/E0288AX_26SP_NV146_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3416588",
+   null
+  ],
+  [
+   "defacto-3419058",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3419058",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/G2592AX_26AU_BK81_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3421507",
+   null
+  ],
+  [
+   "defacto-3425820",
+   null
+  ],
+  [
+   "defacto-3427630",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3427630",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_BR304_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3427631",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t3",
+      "label": "Dolabındaki bej blazer",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3427631",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H3106AX_26SP_WT34_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t3",
+     "category": "upper_body",
+     "subcategory": "blazer",
+     "colorSlugs": [
+      "bej"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430047",
+   null
+  ],
+  [
+   "defacto-3430099",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430099",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H1509AX_26AU_BN305_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430184",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430184",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H1610AX_26AU_BN604_01_04.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430227",
+   null
+  ],
+  [
+   "defacto-3430230",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430230",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/C8284AX_26AU_BG721_01_01.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ],
+  [
+   "defacto-3430252",
+   {
+    "kind": "wardrobe_match",
+    "label": "Dolabınla renk uyumlu",
+    "summary": "Dolabındaki bir parçayla renk uyumlu.",
+    "evidence": [
+     {
+      "id": "t1",
+      "label": "Dolabındaki beyaz tişört",
+      "source": "wardrobe"
+     },
+     {
+      "id": "defacto-3430252",
+      "label": "Bu ürün",
+      "source": "product",
+      "imageUrl": "https://dfcdn.defacto.com.tr/838/H2225AX_26AU_BG413_01_02.jpg"
+     }
+    ],
+    "matchedItem": {
+     "id": "t1",
+     "category": "upper_body",
+     "subcategory": "tisort",
+     "colorSlugs": [
+      "beyaz"
+     ]
+    }
+   }
+  ]
+ ]
+}
