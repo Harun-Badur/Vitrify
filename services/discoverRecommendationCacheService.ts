@@ -4,7 +4,7 @@ import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import { perfLog, perfNow } from '../lib/perfLog';
+import { perfGenderLabel, perfLog, perfNow } from '../lib/perfLog';
 import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
@@ -248,7 +248,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                   const perfPrep = perfNow();
                   value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
                     waitForTurn: () => rankings.waitForTurn(product, rankingSignal) })));
-                  perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep });
+                  perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep, gender: perfGenderLabel(effectiveProductPref(request.productPref)) });
                 } catch (error) {
                   if (__DEV__ && !rankingSignal.aborted) trace?.cancel(product, attempt!, 'preparation_failed');
                   throw error;
