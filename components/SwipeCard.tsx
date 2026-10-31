@@ -58,6 +58,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
+import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfCountRender, perfNow, perfPeekSwipe, perfRenderFields, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
   colors,
@@ -203,6 +204,7 @@ function SwipeCard({
   onHideInsightKind,
   railTopInset = 0,
 }: SwipeCardProps) {
+  perfCountRender('card');
   const isCurrent = pageIndex === 0;
   /** Pose slot index — parent atomically writes on deck remap; do not sync from React. */
   const pageIndexSV = useSharedValue<number>(pageIndex);
@@ -211,6 +213,8 @@ function SwipeCard({
   const [hasImageError, setHasImageError] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const imageCachedRef = useRef(false);
+  const perfLoadStartRef = useRef<{ index: number; at: number } | null>(null);
+  const perfLoadedRef = useRef<Set<number>>(new Set());
 
   const imagesKey =
     Array.isArray(product.images) && product.images.length > 0
@@ -711,15 +715,40 @@ function SwipeCard({
     [pageIndex],
   );
 
+  useEffect(() => {
+    // The next card's image may have loaded while it was still a neighbour.
+    if (!perfEnabled() || !isCurrent) return;
+    const toCurrent = perfPeekSwipe();
+    if (toCurrent !== null) perfLog('swipe_to_is_current', { ms: toCurrent, ...perfRenderFields() });
+    if (!perfHasPendingSwipe() || !perfLoadedRef.current.has(0)) return;
+    const swipeMs = perfTakeSwipe();
+    if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: true, ...perfRenderFields() });
+  }, [isCurrent]);
+
   const handleImageLoadStart = useCallback((): void => {
+    if (perfEnabled()) perfLoadStartRef.current = { index: imageIndex, at: perfNow() };
     if (!imageCachedRef.current) {
       setIsImageLoading(true);
     }
-  }, []);
+  }, [imageIndex]);
 
   const handleImageLoad = useCallback((): void => {
+    if (perfEnabled()) {
+      const started = perfLoadStartRef.current;
+      perfLoadedRef.current.add(imageIndex);
+      if (started && started.index === imageIndex && isCurrent) {
+        perfLog(imageIndex === 0 ? 'gallery_first_image' : 'gallery_extra_image', { ms: perfNow() - started.at, idx: imageIndex });
+      }
+      if (isCurrent && imageIndex === 0) {
+        perfColdStartFirstCard();
+        const refreshMs = perfTakeRefreshImage();
+        if (refreshMs !== null) perfLog('deck_refresh_first_image', { ms: refreshMs });
+        const swipeMs = perfTakeSwipe();
+        if (swipeMs !== null) perfLog('swipe_to_next_image', { ms: swipeMs, cached: false, ...perfRenderFields() });
+      }
+    }
     setIsImageLoading(false);
-  }, []);
+  }, [imageIndex, isCurrent]);
 
   const clearVariant = useCallback((): void => {
     setVariantSelection(null);
@@ -1004,7 +1033,19 @@ function SwipeCard({
   );
 }
 
-export default React.memo(SwipeCard);
+/** Same shallow comparison as the default memo; under the PERF flag it logs which props changed. */
+const arePropsEqual = (prev: SwipeCardProps, next: SwipeCardProps): boolean => {
+  const prevRecord = prev as unknown as Record<string, unknown>;
+  const nextRecord = next as unknown as Record<string, unknown>;
+  const keys = Object.keys(nextRecord);
+  const changed = keys.filter(key => !Object.is(prevRecord[key], nextRecord[key]));
+  if (changed.length > 0 && perfEnabled()) {
+    perfLog('card_props_changed', { idx: next.pageIndex, props: changed.join(',') });
+  }
+  return changed.length === 0 && Object.keys(prevRecord).length === keys.length;
+};
+
+export default React.memo(SwipeCard, arePropsEqual);
 
 export const SWIPE_CARD_WIDTH = CARD_WIDTH;
 export const SWIPE_CARD_HEIGHT = CARD_HEIGHT;

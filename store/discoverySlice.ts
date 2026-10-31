@@ -5,6 +5,7 @@ import { createAnalyticsAction } from '../lib/analyticsAction';
 import {isPreferenceOutcomeUnknown} from '../services/preferenceTransactionAdapter';
 import { hasAnyFilter, type FeedQueryFilters } from '../lib/feedQuery';
 import { logger } from '../lib/logger';
+import { perfLog, perfNow, perfRefreshStoreSet } from '../lib/perfLog';
 import { setLastFeedMode } from '../lib/recsFeedState';
 import { recordSessionProductAction } from '../lib/sessionIntent';
 import { deletePassedProduct, insertPassedProduct } from '../services/likeService';
@@ -120,6 +121,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       context = { userId, filters, searchMode };
       set({ feedStatus: 'loading', hasMore: true, isFetchingNext: false });
       try {
+        const perfFeedStart = perfNow();
         const request = fetchFeedProducts(
           FEED_LIMIT,
           userId,
@@ -131,6 +133,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         );
         const result = await (userId ? trackOwnerWork(userId, request) : request);
         if (!current() || requestGeneration !== generation) return;
+        perfLog('feed_call', { ms: perfNow() - perfFeedStart, n: result.products.length });
         deliveredIds = new Set(result.products.map(product => product.id));
         logger.debug('Feed yüklendi', {
           source: result.source,
@@ -139,6 +142,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           relaxed: result.relaxed ?? [],
           searchMode,
         });
+        const perfSetStart = perfNow();
         set((state) => ({
           currentProducts: excludeSeen(
             [...new Map(result.products.map(product => [product.id, product])).values()],
@@ -154,6 +158,8 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           feedRelaxed: result.relaxed ?? [],
           hasMore: result.hasMore ?? true,
         }));
+        perfLog('feed_store_set', { ms: perfNow() - perfSetStart });
+        perfRefreshStoreSet();
       } catch (error) {
         if (!current() || requestGeneration !== generation) return;
         logger.error('Feed yüklenemedi.', { code: 'FEED_FAILED', reason: error instanceof FeedServiceError ? error.code : 'FEED_UNKNOWN' });

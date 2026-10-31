@@ -4,6 +4,7 @@ import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import { perfLog, perfNow } from '../lib/perfLog';
 import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
@@ -43,7 +44,10 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
   let timer: ReturnType<typeof setTimeout> | undefined;
   let onAbort = () => {};
   let reported = false;
-  const report = () => {
+  const perfStart = perfNow();
+  // Closed reason labels and PostgREST codes only; never row data, ids or tokens.
+  const report = (reason = 'unknown') => {
+    perfLog('recs_cache_failed', { reason, ms: perfNow() - perfStart });
     if (signal.aborted || reported) return;
     reported = true;
     logger.warn('Öneri önbelleği okunamadı', { code: 'RECOMMENDATION_CACHE_FAILED' });
@@ -51,7 +55,7 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
   };
   const stopped = new Promise<CachedFinal[]>(resolve => {
     onAbort = () => { controller.abort(); resolve([]); };
-    timer = setTimeout(() => { mark('cache_read_timeout'); report(); onAbort(); }, CACHE_READ_TIMEOUT_MS);
+    timer = setTimeout(() => { mark('cache_read_timeout'); report('timeout'); onAbort(); }, CACHE_READ_TIMEOUT_MS);
     signal.addEventListener('abort', onAbort, { once: true });
   });
   try {
@@ -61,12 +65,12 @@ export async function readCachedFinals(request: FeedPacketRequest, ownerId: stri
       .in('scope', scopes)
       .in('anchor_product_id', request.anchors.map(anchor => anchor.id)).abortSignal(controller.signal).limit(1000);
     const pending = Promise.resolve(query).then(({ data, error }) => {
-      if (error) { report(); return []; }
+      if (error) { report(`pg_${String(error.code ?? 'none')}`); return []; }
       return data ?? [];
-    }).catch(() => { report(); return []; });
+    }).catch(() => { report('rejected'); return []; });
     return await Promise.race([stopped, ownerId ? trackOwnerWork(ownerId, pending) : pending]);
   } catch {
-    report();
+    report('threw');
     return [];
   } finally {
     clearTimeout(timer);
@@ -206,9 +210,13 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
           if (!current(version)) break;
           // Shown/pinned anchors keep their final result, including undo.
           if (session.shown.has(product.id) && session.lookup(product) !== undefined) continue;
+          const perfCtx = perfNow();
           const anchor = repository.register([product])[0];
           let context = anchorContext(catalog, anchor, request.wardrobeItems, exposure);
+          perfLog('rec_context', { ms: perfNow() - perfCtx });
+          const perfKey = perfNow();
           let finalKey = measureDiscoverStageSync('cache.key', () => createFinalCacheKey(context));
+          perfLog('rec_final_key', { ms: perfNow() - perfKey });
           const finalHit = memory.getFinal(finalKey);
           if (__DEV__ && finalHit.status === 'hit') discoverPrefetchTrace(session).stage(product, 'finalReadyAt', 'final_memory_hit');
           let result = finalHit.status === 'hit' ? finalHit.value : undefined;
@@ -237,8 +245,10 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).stage(product, 'preparationStartedAt', 'ranking_miss');
                 let value: PreparedDiscoverRanking;
                 try {
+                  const perfPrep = perfNow();
                   value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
                     waitForTurn: () => rankings.waitForTurn(product, rankingSignal) })));
+                  perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep });
                 } catch (error) {
                   if (__DEV__ && !rankingSignal.aborted) trace?.cancel(product, attempt!, 'preparation_failed');
                   throw error;
@@ -256,7 +266,9 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               changed.delete(wake);
               if (prepared === undefined) break;
               if (!current(version)) break;
+              const perfSel = perfNow();
               result = await measureDiscoverStage('ranking.select', () => span('ranking_select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal })));
+              perfLog('rec_ranking_select', { ms: perfNow() - perfSel });
               // Empty-slot signal: how many complements this anchor got (0 = an empty combo).
               const complements = complementaryProductsForDisplay(result, product.id).length;
               if (complements === 0) mark('combo_empty');
@@ -285,9 +297,11 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).event(product, 'cancelled', 'stale_revision_publication', version);
                 return;
               }
+              const perfPacket = perfNow();
               onPacket({ sessionId: request.sessionId, generation: request.generation,
                 contextFingerprint: request.contextFingerprint, entries: [{ anchorProductId: anchor.id,
                   exposure: packetExposure, catalogVersion: context.catalogVersion, serialized: measureDiscoverStageSync('cache.serialize', () => serializeFinal(value, context)) }] });
+              perfLog('rec_packet', { ms: perfNow() - perfPacket });
             }).catch(error => {
               if (!controller.signal.aborted) { publications.delete(publicationKey); rejectCompletion(error); stop(); }
             });

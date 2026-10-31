@@ -10,6 +10,7 @@ import { AuthProvider, useAuthContext } from '../hooks/useAuthContext';
 import { PremiumProvider } from '../hooks/usePremium';
 import { useProductPrefGate } from '../hooks/useProductPrefGate';
 import { initAnalytics, track } from '../lib/analytics';
+import { perfEnabled, perfLog, perfMarkTouch, perfSetRoute, perfSinceTouch } from '../lib/perfLog';
 import { isExpoGo } from '../lib/expoGo';
 import { logger } from '../lib/logger';
 import { STACK_TRANSITION_MS } from '../lib/motion';
@@ -167,23 +168,52 @@ function AnalyticsRuntime() {
   return null;
 }
 
+/** Measurement only: labels the active route and times touch -> first frame of a route change. */
+function PerfRouteProbe() {
+  const pathname = usePathname();
+  const lastRoute = useRef<string | null>(null);
+  useEffect(() => {
+    if (!perfEnabled()) return;
+    const touchMs = perfSinceTouch();
+    const from = perfSetRoute(pathname);
+    if (lastRoute.current === null) { lastRoute.current = pathname; return; }
+    lastRoute.current = pathname;
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => {
+      const total = perfSinceTouch();
+      perfLog('nav_to_render', { to: perfSetRoute(pathname), from, ms: total ?? -1, to_effect_ms: touchMs ?? -1 });
+    }));
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
+  return null;
+}
+
+/** Measurement only: wraps the app in a pass-through View that stamps touches; absent unless the PERF flag is on. */
+function PerfTouchProbe({ children }: { children: React.ReactNode }) {
+  if (!perfEnabled()) return <>{children}</>;
+  return <View style={styles.flex} onStartShouldSetResponderCapture={() => { perfMarkTouch(); return false; }}>{children}</View>;
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
+      <PerfTouchProbe>
       <AppErrorBoundary>
         <AuthProvider>
           <PremiumProvider>
             <AnalyticsRuntime />
+            <PerfRouteProbe />
             <RootNavigator />
           </PremiumProvider>
         </AuthProvider>
         <StatusBar style="dark" />
       </AppErrorBoundary>
+      </PerfTouchProbe>
     </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   deletionText: { marginTop: spacing.md, paddingHorizontal: spacing.xl, textAlign: 'center', color: colors.textSecondary },
   root: {
     flex: 1,

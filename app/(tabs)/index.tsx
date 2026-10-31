@@ -1,6 +1,9 @@
 import { useOwnedState } from '../../hooks/useOwnedState';
+import { perfArmRefresh, perfCountRender, perfEnabled, perfLog, perfNow, perfStartLagWatch } from '../../lib/perfLog';
 import { useDiscoverPerfTrace } from '../../hooks/useDiscoverPerfTrace';
 import {
+  Profiler,
+  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -179,7 +182,23 @@ function DeckFinishedCard({
   );
 }
 
+/** Measurement only: React Profiler around the card deck; a pass-through unless the PERF flag is on. */
+function PerfProfiler({ children }: { children: ReactNode }) {
+  if (!perfEnabled()) return <>{children}</>;
+  return (
+    <Profiler
+      id="deck"
+      onRender={(_id, phase, actualDuration, baseDuration) =>
+        perfLog('deck_render', { ms: actualDuration, base: baseDuration, phase })}
+    >
+      {children}
+    </Profiler>
+  );
+}
+
 export default function FeedScreen() {
+  perfCountRender('index');
+  useEffect(() => perfStartLagWatch(), []);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   /**
@@ -397,6 +416,7 @@ export default function FeedScreen() {
             });
           }
         }, recommendationSession, () => {
+          perfLog('recs_cache_alert', {});
           Alert.alert('Öneri servisine ulaşılamadı', 'Önbellek okunamadı; mevcut verilerle öneriler hazırlanıyor.');
         }).catch(() => {
           if (__DEV__) discoverPrefetchTrace(recommendationSession).diagnostic('workerStartBlocked', {
@@ -473,6 +493,8 @@ export default function FeedScreen() {
   const handleDeckRefresh = useCallback(async (): Promise<void> => {
     setRefreshEmpty(false);
     setRefreshing(true);
+    const perfStart = perfNow();
+    perfArmRefresh();
     let result: Awaited<ReturnType<typeof deckRefresher>> = 'busy';
     try {
       result = await deckRefresher();
@@ -480,6 +502,7 @@ export default function FeedScreen() {
       result = 'ready'; // loadFeed reports its own error state; nothing to add here.
     }
     if (result === 'busy') return;
+    perfLog('deck_refresh', { ms: perfNow() - perfStart, n: useAppStore.getState().currentProducts.length });
     setRefreshing(false);
     setRefreshEmpty(result === 'empty');
   }, [deckRefresher]);
@@ -626,7 +649,9 @@ export default function FeedScreen() {
             preparationInputs.current.session, product, products[1]);
         }
         noteSwipe();
+        const perfStoreStart = perfNow();
         swipeLeft(product);
+        perfLog('swipe_store_set', { ms: perfNow() - perfStoreStart });
       } catch (error) {
         logger.error('Geçme işlenemedi', { error, productId: product.id });
       }
@@ -972,6 +997,7 @@ export default function FeedScreen() {
             collapsable={false}
             onLayout={handleDeckLayout}
           >
+            <PerfProfiler>
             <View style={styles.deck}>
               {deckPages.map(({ product, pageIndex }) => {
                 // The held session belongs to the previous preference: nothing it holds may reach the deck meanwhile.
@@ -1012,6 +1038,7 @@ export default function FeedScreen() {
                 />
               })}
             </View>
+            </PerfProfiler>
           </View>
         )}
       </View>

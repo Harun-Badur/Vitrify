@@ -12,6 +12,8 @@ import type { Product } from '../../../types/product';
 import { catalogCompatibility, catalogSemanticKey } from './catalogCompatibility';
 import { cooperativeSort, runCooperatively, runSynchronously, type CooperativeWorkOptions } from '../cooperativeWork';
 import { searchOutfitCandidatesAsync, type OutfitCandidateInput } from './generateOutfitCandidates';
+import { perfLog } from '../../../lib/perfLog';
+import { BAND_CAP_LIMIT, capCatalogBand, presentOptionalRoles } from './bandCap';
 
 const compareText = (left: string, right: string): number =>
   left < right ? -1 : left > right ? 1 : 0;
@@ -131,7 +133,8 @@ interface DiversityBoundary {
  * Full ranking of arbitrary input remains the reference path above.
  */
 export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCandidate>(
-  input: OutfitCandidateInput<T>, anchor: Product, options?: CooperativeWorkOptions,
+  fullInput: OutfitCandidateInput<T>, anchor: Product, options?: CooperativeWorkOptions,
+  bandLimit = BAND_CAP_LIMIT,
 ): Promise<RankedOutfitCandidate<T>[]> => {
   const tokens = createOutfitRankingTokenCache();
   const scores = new WeakMap<Product, number>();
@@ -142,6 +145,9 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
     scores.set(product, value);
     return value;
   };
+  // Only anchors whose band bound exceeds the limit lose their least compatible alternatives.
+  const capped = capCatalogBand(fullInput, anchor, score, bandLimit);
+  const input = fullInput;
   type Remaining = readonly (readonly OutfitCandidateItem<T>[])[];
   const futures = new WeakMap<Remaining, { footwear: boolean; capacity: number; sums: number[]; tags: Map<string, number> }>();
   const future = (groups: Remaining) => {
@@ -212,9 +218,10 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
     styleCount: evaluateOutfitMinimum(items, tokens).sharedStyleTags.length,
     compatibility: compatibilityForItems(items, anchor, scores),
   });
-  const searchInput = { ...input, maximalOnly: true };
   // Pass one visits lightweight leaves, never constructing candidate objects or sorting them.
-  await searchOutfitCandidatesAsync(searchInput, {
+  const findBoundary = async (source: OutfitCandidateInput<T>): Promise<DiversityBoundary | null> => {
+  best = null;
+  await searchOutfitCandidatesAsync(source, {
     canExtend: (items, groups, optionalCount) => {
       if (!best) return true;
       const remaining = future(groups), capacity = optionalCount + remaining.capacity;
@@ -234,10 +241,19 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
       return false;
     },
   }, options);
-  if (best === null) {
+  return best as DiversityBoundary | null;
+  };
+  let searchInput = { ...fullInput, maximalOnly: true };
+  let boundary = await findBoundary(searchInput);
+  if (boundary === null) {
     return [];
   }
-  const boundary: DiversityBoundary = best;
+  // The cap applies only when every present optional role fits, i.e. the band really is the cross product.
+  if (capped !== fullInput.catalogProducts && boundary.optionalCount === presentOptionalRoles(fullInput)) {
+    const cappedInput = { ...fullInput, catalogProducts: capped, maximalOnly: true };
+    const cappedBoundary = await findBoundary(cappedInput);
+    if (cappedBoundary !== null) { searchInput = cappedInput; boundary = cappedBoundary; }
+  }
   const threshold = boundary.compatibility - 0.12;
   // Pass two retains the complete diversity band, not a fixed number of winners.
   const candidates = await searchOutfitCandidatesAsync(searchInput, {
@@ -254,6 +270,7 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
       return value.styleCount === boundary.styleCount && value.compatibility >= threshold;
     },
   }, options);
+  perfLog('rec_band', { n: candidates.length, optional: boundary.optionalCount, footwear: boundary.footwear });
   // ID ordering before a stable rank sort is unchanged, including genuinely equal evidence.
   return rankOutfitCandidatesAsync(candidates, anchor, options);
 };

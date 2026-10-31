@@ -10,6 +10,7 @@ import { selectDiverseComplements, selectDiverseComplementsAsync } from './selec
 import { isCatalogPairEligible } from './catalogPairing';
 import type { CooperativeWorkOptions } from '../cooperativeWork';
 import { createRecommendationMemo } from '../../../lib/recommendationMemo';
+import { perfLog, perfNow } from '../../../lib/perfLog';
 
 export interface DiscoverRecommendationInput<T extends WardrobeItemForCandidate>
   extends OutfitCandidateInput<T> {
@@ -74,7 +75,11 @@ export const prepareDiscoverRankingAsync = async <T extends WardrobeItemForCandi
     recommendationMemo: createRecommendationMemo(),
     diagnosticStage: 'ranking',
   };
+  const perfInput = perfNow();
   const { outfitInput, requiredProduct } = prepareInput(input);
+  perfLog('rec_input', { ms: perfNow() - perfInput, pool: input.catalogProducts.length,
+    compatible: outfitInput.catalogProducts.length, wardrobe: input.wardrobeItems.length,
+    gender: input.catalogFilters?.gender ?? 'none' });
   const diverse = !!(input.firstOnly && requiredProduct);
   const ranked = diverse
     ? await rankDiversityCandidatesAsync(outfitInput, requiredProduct!, workOptions)

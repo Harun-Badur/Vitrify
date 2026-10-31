@@ -1,4 +1,5 @@
 import { recordDiscoverStage } from '../../lib/discoverStageTiming';
+import { perfEnabled, perfLog } from '../../lib/perfLog';
 import { withRecommendationMemo, type RecommendationMemo } from '../../lib/recommendationMemo';
 
 export interface CooperativeWorkOptions {
@@ -71,7 +72,9 @@ export const runCooperatively = async <T>(
   const { signal } = options;
   const diagnostic = __DEV__ ? options.diagnosticStage : undefined;
   const totalStarted = diagnostic ? performance.now() : 0;
-  let cpuMs = 0, maxSliceMs = 0, completed = false;
+  let cpuMs = 0, maxSliceMs = 0, completed = false, slices = 0, perfCpuMs = 0;
+  // Measurement reuses the clock reads the scheduler already makes; it adds none of its own.
+  let perfStarted = -1, lastRead = 0;
   try {
     await yieldToHost(signal);
     for (;;) {
@@ -79,13 +82,22 @@ export const runCooperatively = async <T>(
       checkAbort(signal);
       const budget = Math.max(1, options.sliceBudgetMs?.() ?? options.budgetMs ?? 4);
       const started = performance.now();
+      lastRead = started;
+      if (perfStarted < 0) perfStarted = started;
       try {
         for (;;) {
           const step = withRecommendationMemo(options.recommendationMemo, () => work.next());
           if (step.done) { completed = true; return step.value; }
-          if (performance.now() - started >= budget) break;
+          lastRead = performance.now();
+          if (lastRead - started >= budget) break;
         }
       } finally {
+        if (perfEnabled()) {
+          const sliceMs = lastRead - started;
+          slices += 1;
+          perfCpuMs += sliceMs;
+          if (sliceMs > 30) perfLog('rec_slice', { ms: sliceMs, stage: options.diagnosticStage ?? 'none' });
+        }
         if (diagnostic) {
           const elapsed = performance.now() - started;
           cpuMs += elapsed; maxSliceMs = Math.max(maxSliceMs, elapsed);
@@ -94,6 +106,10 @@ export const runCooperatively = async <T>(
       await yieldToHost(signal);
     }
   } finally {
+    if (perfEnabled() && completed) {
+      perfLog('rec_cpu', { stage: options.diagnosticStage ?? 'none', cpu: perfCpuMs,
+        wall: lastRead - perfStarted, slices });
+    }
     if (diagnostic) {
       const elapsed = performance.now() - totalStarted;
       recordDiscoverStage(`cpu.${diagnostic}`, cpuMs, !completed);

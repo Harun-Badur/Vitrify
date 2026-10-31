@@ -34,7 +34,10 @@ describe('exact diversity-band candidate search', () => {
       const anchor = products.find(p => p.outfitRole === role)!;
       const visited: string[][] = [];
       // A fixed clock counts scheduler checkpoints, without timing/profiling.
+      // [PERF] lines go through console.log, which may read the clock itself; they are not checkpoints.
+      jest.spyOn(console, 'log').mockImplementation(() => undefined);
       const clock = jest.spyOn(performance, 'now').mockReturnValue(0);
+      clock.mockClear();
       await generation.searchOutfitCandidatesAsync({ catalogProducts: products, wardrobeItems: [],
         requiredCatalogProductId: anchor.id }, {
         canExtend: items => { visited.push(items.map(item => item.sourceId)); return false; },

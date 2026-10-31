@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { DiscoverRecommendationCache } from '../lib/discoverRecommendationCache';
 import { createComboReadinessTracker } from '../lib/discoverPerf';
 import { perfTraceEnabled, startLongTaskWatch, stopLongTaskWatch } from '../lib/perfTrace';
+import { perfMarkSwipe } from '../lib/perfLog';
 import type { Product } from '../types/product';
 
 /**
@@ -33,5 +34,5 @@ export function useDiscoverPerfTrace(
     tracker.current.update(ready);
   }, [session, current, revision]);
 
-  return useCallback(() => tracker.current.swipe(), []);
+  return useCallback(() => { perfMarkSwipe(); tracker.current.swipe(); }, []);
 }
