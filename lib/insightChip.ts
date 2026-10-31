@@ -163,6 +163,16 @@ const chipSubject = (product: Product): PairItem => {
 const wardrobePair = (item: InsightWardrobeItem): PairItem =>
   fromWardrobe({ ...item, subcategory: reliableSubtype(item), colorSlugs: knownColors(item) });
 
+// The pairing view of a wardrobe item is a pure function of that item. Chips are assigned to every new
+// deck product against the whole wardrobe, so building it once per item (not per product and twice per
+// pass) removes most of the work done while the screen renders after a swipe.
+const wardrobePairs = new WeakMap<InsightWardrobeItem, PairItem>();
+const cachedWardrobePair = (item: InsightWardrobeItem): PairItem => {
+  let pair = wardrobePairs.get(item);
+  if (pair === undefined) { pair = wardrobePair(item); wardrobePairs.set(item, pair); }
+  return pair;
+};
+
 /** Eligible by the pairing decision AND a complementary (distinct body slot) role relation. */
 const isComplementary = (subject: PairItem, partner: PairItem): boolean => {
   if (subject.role.value === null) return false;
@@ -178,13 +188,17 @@ const candidateChips = (product: Product, context: InsightChipContext): Map<Insi
     // The pairing module decides (Faz 4 S4): the chip needs an eligible pair whose roles are
     // complementary and whose colors are both known. An unknown color or role means no chip.
     const subject = chipSubject(product);
+    const colors = new Map<InsightWardrobeItem, ReturnType<typeof colorCompatibility>>();
     const pairable = wardrobe.filter(item => {
-      const partner = wardrobePair(item);
-      return colorCompatibility(subject, partner) !== 'unknown' && isComplementary(subject, partner);
+      const partner = cachedWardrobePair(item);
+      const color = colorCompatibility(subject, partner);
+      if (color === 'unknown' || !isComplementary(subject, partner)) return false;
+      colors.set(item, color);
+      return true;
     });
-    const match = pairable.find(item => colorCompatibility(subject, wardrobePair(item)) === 'compatible');
+    const match = pairable.find(item => colors.get(item) === 'compatible');
     // The text names only the evidence the pairing module found; no evidence text, no chip.
-    const text = match ? evidenceCopy(pairEvidenceKinds(subject, wardrobePair(match), ACTIVE_CATALOG_PAIRING_POLICY)) : null;
+    const text = match ? evidenceCopy(pairEvidenceKinds(subject, cachedWardrobePair(match), ACTIVE_CATALOG_PAIRING_POLICY)) : null;
     if (match && text) {
       candidates.set('wardrobe_match', () => chip('wardrobe_match', [wardrobeEvidence(match), productEvidence(product)], match, text));
     }

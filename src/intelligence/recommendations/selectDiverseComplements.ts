@@ -29,9 +29,10 @@ function* selectionWork<T extends WardrobeItemForCandidate>(
   const best = ranked[0];
   if (!best) return null;
   let compatible: RankedOutfitCandidate<T>[] = [];
+  const bestFootwear = hasCoreFootwear(best.candidate.items);
   for (const entry of ranked) {
     if (entry.rankingValue.validRoles && entry.rankingValue.coreComplete &&
-    hasCoreFootwear(entry.candidate.items) === hasCoreFootwear(best.candidate.items) &&
+    hasCoreFootwear(entry.candidate.items) === bestFootwear &&
     entry.rankingValue.optionalRoleCount === best.rankingValue.optionalRoleCount &&
     entry.rankingValue.sharedStyleTags.length === best.rankingValue.sharedStyleTags.length &&
     (entry.rankingValue.compatibilityScore ?? 0) >= (best.rankingValue.compatibilityScore ?? 0) - NEAR_COMPATIBILITY_MARGIN) compatible.push(entry);

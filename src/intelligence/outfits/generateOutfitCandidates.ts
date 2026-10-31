@@ -5,6 +5,7 @@ import {
   hasCoreFootwear,
   isCatalogRoleCompatible,
   isValidOutfitItems,
+  markValidOutfitItems,
 } from '../pairing/outfitRules.ts';
 import {
   OUTFIT_ROLE_ORDER,
@@ -127,9 +128,10 @@ export const prepareOutfitItems = <T extends WardrobeItemForCandidate>(input: Ou
 
 /** Search callbacks see valid leaves before IDs, colors, reasons or candidate objects exist. */
 export interface OutfitCandidateSearch<T extends WardrobeItemForCandidate> {
+  /** `coreFootwear` is hasCoreFootwear(items), already computed by the search for this node. */
   canExtend: (items: readonly OutfitCandidateItem<T>[],
-    remaining: readonly (readonly OutfitCandidateItem<T>[])[], optionalCount: number) => boolean;
-  accept: (items: readonly OutfitCandidateItem<T>[], optionalCount: number) => boolean;
+    remaining: readonly (readonly OutfitCandidateItem<T>[])[], optionalCount: number, coreFootwear?: boolean) => boolean;
+  accept: (items: readonly OutfitCandidateItem<T>[], optionalCount: number, coreFootwear?: boolean) => boolean;
 }
 
 function* candidateWork<T extends WardrobeItemForCandidate>(
@@ -146,6 +148,8 @@ function* candidateWork<T extends WardrobeItemForCandidate>(
   const suffixGroups = Array.from({ length: OPTIONAL_ROLES.length + 1 }, (_, index) => remainingGroups.slice(index));
 
   const bases: OutfitCandidateItem<T>[][] = [];
+  // Bases whose hasHardConflict was already evaluated (and was false); single-piece bases are not.
+  const checkedBases = new WeakSet<OutfitCandidateItem<T>[]>();
   // Restrict only the core alternatives that the required role already excludes.
   // Singleton groups preserve the original order of all retained pairs.
   const tops = required?.role === 'one_piece' ? []
@@ -154,7 +158,7 @@ function* candidateWork<T extends WardrobeItemForCandidate>(
   for (const top of tops) {
     for (const bottom of bottoms) {
       yield;
-      if (!hasHardConflict([top, bottom])) bases.push([top, bottom]);
+      if (!hasHardConflict([top, bottom])) { const base = [top, bottom]; checkedBases.add(base); bases.push(base); }
     }
   }
   const onePieces = required?.role === 'top' || required?.role === 'bottom' ? []
@@ -173,18 +177,20 @@ function* candidateWork<T extends WardrobeItemForCandidate>(
     remainingOptionalCapacity[index] = remainingOptionalCapacity[index + 1] +
       Number((byRole.get(OPTIONAL_ROLES[index])?.length ?? 0) > 0);
   }
-  const collect = (items: OutfitCandidateItem<T>[], optionalCount: number): void => {
-    const footwear = Number(hasCoreFootwear(items));
+  const collect = (items: OutfitCandidateItem<T>[], optionalCount: number, coreFootwear: boolean, conflictChecked: boolean): void => {
+    const footwear = Number(coreFootwear);
     if (input.maximalOnly && (footwear < highestFootwear ||
       (footwear === highestFootwear && optionalCount < highestOptionalCount))) return;
-    if (!isValidOutfitItems(items)) return;
+    if (!isValidOutfitItems(items, conflictChecked)) return;
     if (input.maximalOnly && (footwear > highestFootwear || optionalCount > highestOptionalCount)) {
       candidates.clear();
       highestOptionalCount = optionalCount;
       highestFootwear = footwear;
     }
-    if (search && !search.accept(items, optionalCount)) return;
+    if (search && !search.accept(items, optionalCount, coreFootwear)) return;
     const ordered = [...items].sort(compareItems);
+    // Ranking re-asks the same question for this exact list; it is already proven valid.
+    markValidOutfitItems(ordered);
     const id = JSON.stringify(ordered.map((item) => [item.sourceType, item.sourceId, item.role]));
     if (candidates.has(id)) return;
     candidates.set(id, {
@@ -196,39 +202,40 @@ function* candidateWork<T extends WardrobeItemForCandidate>(
     });
   };
   function* extend(
-    items: OutfitCandidateItem<T>[], optionalIndex: number, optionalCount: number,
+    items: OutfitCandidateItem<T>[], optionalIndex: number, optionalCount: number, conflictChecked: boolean,
   ): Generator<void, void, void> {
     yield;
-    const footwearUpper = Number(hasCoreFootwear(items) ||
+    const coreFootwear = hasCoreFootwear(items);
+    const footwearUpper = Number(coreFootwear ||
       suffixGroups[optionalIndex].some(group => group.some(item => item.role === 'shoes')));
     if (input.maximalOnly && (footwearUpper < highestFootwear ||
       (footwearUpper === highestFootwear && optionalCount + remainingOptionalCapacity[optionalIndex] < highestOptionalCount))) return;
-    if (search && !search.canExtend(items, suffixGroups[optionalIndex], optionalCount)) return;
+    if (search && !search.canExtend(items, suffixGroups[optionalIndex], optionalCount, coreFootwear)) return;
     if (optionalIndex === OPTIONAL_ROLES.length) {
-      collect(items, optionalCount);
+      collect(items, optionalCount, coreFootwear, conflictChecked);
       return;
     }
     const role = OPTIONAL_ROLES[optionalIndex];
     if (required?.role === role) {
       const next = [...items, required];
-      if (!hasHardConflict(next)) yield* extend(next, optionalIndex + 1, optionalCount + 1);
+      if (!hasHardConflict(next)) yield* extend(next, optionalIndex + 1, optionalCount + 1, true);
       return;
     }
     function* withRole(): Generator<void, void, void> {
       for (const item of byRole.get(role) ?? []) {
         const next = [...items, item];
-        if (!hasHardConflict(next)) yield* extend(next, optionalIndex + 1, optionalCount + 1);
+        if (!hasHardConflict(next)) yield* extend(next, optionalIndex + 1, optionalCount + 1, true);
       }
     }
     if (input.maximalOnly) {
       yield* withRole();
-      yield* extend(items, optionalIndex + 1, optionalCount);
+      yield* extend(items, optionalIndex + 1, optionalCount, conflictChecked);
     } else {
-      yield* extend(items, optionalIndex + 1, optionalCount);
+      yield* extend(items, optionalIndex + 1, optionalCount, conflictChecked);
       yield* withRole();
     }
   }
-  for (const base of bases) yield* extend(base, 0, 0);
+  for (const base of bases) yield* extend(base, 0, 0, checkedBases.has(base));
   const values = [...candidates.values()];
   const compare = (left: OutfitCandidate<T>, right: OutfitCandidate<T>): number => compareText(left.id, right.id);
   return cooperative ? yield* cooperativeSort(values, compare) : values.sort(compare);

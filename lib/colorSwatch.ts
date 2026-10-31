@@ -13,9 +13,18 @@ const normalize = (name: string): string =>
   name.trim().toLocaleLowerCase('tr').replace(/ı/g, 'i').normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 /** Known single color name -> flat swatch; null/multi-color/unknown -> use the variant image. */
+const swatches = new Map<string, Swatch>();
+const IMAGE_SWATCH: Swatch = { kind: 'image' };
+
 export const resolveSwatch = (name: string | null | undefined): Swatch => {
   if (!name) return { kind: 'image' };
+  // The same few color names render on every card; normalizing (NFD + regexes) per render was measurable.
+  const known = swatches.get(name);
+  if (known) return known;
   const key = normalize(name);
   const hex = HEX[key];
-  return hex ? { kind: 'hex', hex, light: LIGHT.has(key) } : { kind: 'image' };
+  const swatch: Swatch = hex ? { kind: 'hex', hex, light: LIGHT.has(key) } : IMAGE_SWATCH;
+  if (swatches.size >= 256) swatches.clear();
+  swatches.set(name, swatch);
+  return swatch;
 };

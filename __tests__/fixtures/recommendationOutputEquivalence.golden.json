@@ -1,0 +1,2598 @@
+[
+ {
+  "anchorId": "boyner-1294233",
+  "poolInput": 80,
+  "rankedCount": 7,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:boyner-15605761:bottom",
+   "catalog:boyner-1294233:outerwear",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [
+   "boyner-15605761"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.35,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"boyner-15605761\",\"bottom\"],[\"catalog\",\"boyner-1294233\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15605761"
+  ]
+ },
+ {
+  "anchorId": "boyner-15176448",
+  "poolInput": 80,
+  "rankedCount": 134,
+  "finalIds": [
+   "catalog:defacto-3301212:top",
+   "catalog:boyner-15176448:bottom",
+   "catalog:boyner-1656182:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3301212",
+   "boyner-1716227",
+   "boyner-1656182"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "desenli"
+   ],
+   "compatibilityScore": 0.4000000000000001,
+   "id": "[[\"catalog\",\"defacto-3301212\",\"top\"],[\"catalog\",\"boyner-15176448\",\"bottom\"],[\"catalog\",\"boyner-1656182\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3301212",
+   "boyner-15969332",
+   "boyner-1656182"
+  ]
+ },
+ {
+  "anchorId": "boyner-15343326",
+  "poolInput": 80,
+  "rankedCount": 0,
+  "finalIds": [],
+  "displayIds": [],
+  "firstRankValue": null,
+  "exposedFinalIds": []
+ },
+ {
+  "anchorId": "boyner-15383784",
+  "poolInput": 80,
+  "rankedCount": 0,
+  "finalIds": [],
+  "displayIds": [],
+  "firstRankValue": null,
+  "exposedFinalIds": []
+ },
+ {
+  "anchorId": "boyner-15512075",
+  "poolInput": 80,
+  "rankedCount": 1728,
+  "finalIds": [
+   "catalog:defacto-3407970:top",
+   "catalog:boyner-15512075:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:boyner-15775199:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3407970",
+   "boyner-15775199",
+   "boyner-15647412"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "bej",
+    "desenli"
+   ],
+   "compatibilityScore": 0.225,
+   "id": "[[\"catalog\",\"defacto-3375944\",\"top\"],[\"catalog\",\"boyner-15512075\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"boyner-15775199\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3375944",
+   "defacto-3339043",
+   "boyner-15691146"
+  ]
+ },
+ {
+  "anchorId": "boyner-15605761",
+  "poolInput": 80,
+  "rankedCount": 7,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:boyner-15605761:bottom",
+   "catalog:boyner-1771558:outerwear",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [
+   "boyner-1771558"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.4,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"boyner-15605761\",\"bottom\"],[\"catalog\",\"boyner-1771558\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3280820"
+  ]
+ },
+ {
+  "anchorId": "boyner-15647412",
+  "poolInput": 80,
+  "rankedCount": 1720,
+  "finalIds": [
+   "catalog:defacto-3375944:top",
+   "catalog:boyner-15512075:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:boyner-15775199:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3375944",
+   "boyner-15512075",
+   "boyner-15775199"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "bej",
+    "desenli"
+   ],
+   "compatibilityScore": 0.30000000000000004,
+   "id": "[[\"catalog\",\"defacto-3375944\",\"top\"],[\"catalog\",\"boyner-15512075\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"boyner-15775199\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3375944",
+   "defacto-3353900",
+   "boyner-15775199"
+  ]
+ },
+ {
+  "anchorId": "boyner-15668208",
+  "poolInput": 80,
+  "rankedCount": 0,
+  "finalIds": [],
+  "displayIds": [],
+  "firstRankValue": null,
+  "exposedFinalIds": []
+ },
+ {
+  "anchorId": "boyner-15690117",
+  "poolInput": 80,
+  "rankedCount": 382,
+  "finalIds": [
+   "catalog:defacto-3159839:top",
+   "catalog:boyner-15690117:bottom",
+   "catalog:defacto-3287863:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3159839",
+   "boyner-1716227",
+   "defacto-3287863"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.3666666666666667,
+   "id": "[[\"catalog\",\"defacto-3159839\",\"top\"],[\"catalog\",\"boyner-15690117\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15714044",
+   "boyner-15969332",
+   "boyner-1656182"
+  ]
+ },
+ {
+  "anchorId": "boyner-15691146",
+  "poolInput": 80,
+  "rankedCount": 1920,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:boyner-15512075:bottom",
+   "catalog:defacto-3430047:outerwear",
+   "catalog:boyner-15775199:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "boyner-15512075",
+   "boyner-15775199"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi",
+    "siyah"
+   ],
+   "compatibilityScore": 0.225,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3407970",
+   "defacto-3353900",
+   "defacto-3339043"
+  ]
+ },
+ {
+  "anchorId": "boyner-15709212",
+  "poolInput": 80,
+  "rankedCount": 72,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:boyner-15709212:outerwear",
+   "wardrobe:owned-shoes:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3353900",
+   "boyner-15691146",
+   "defacto-2339010"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.2125,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"boyner-15709212\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3353900",
+   "boyner-15691146",
+   "defacto-3277298"
+  ]
+ },
+ {
+  "anchorId": "boyner-15714044",
+  "poolInput": 80,
+  "rankedCount": 190,
+  "finalIds": [
+   "catalog:boyner-15714044:top",
+   "catalog:boyner-15690117:bottom",
+   "catalog:defacto-3287863:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15690117",
+   "boyner-1716227",
+   "defacto-3287863"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.35000000000000003,
+   "id": "[[\"catalog\",\"boyner-15714044\",\"top\"],[\"catalog\",\"boyner-15690117\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3403514",
+   "boyner-15969332",
+   "boyner-15837511"
+  ]
+ },
+ {
+  "anchorId": "boyner-15742782",
+  "poolInput": 80,
+  "rankedCount": 196,
+  "finalIds": [
+   "catalog:defacto-3427631:top",
+   "catalog:boyner-15795287:bottom",
+   "catalog:boyner-15742782:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3427631",
+   "boyner-15795287",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "beyaz"
+   ],
+   "compatibilityScore": 0.10000000000000002,
+   "id": "[[\"catalog\",\"defacto-3427631\",\"top\"],[\"catalog\",\"boyner-15795287\",\"bottom\"],[\"catalog\",\"boyner-15742782\",\"outerwear\"],[\"catalog\",\"boyner-15969332\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3427630",
+   "boyner-15690117",
+   "boyner-15969332"
+  ]
+ },
+ {
+  "anchorId": "boyner-15772029",
+  "poolInput": 80,
+  "rankedCount": 0,
+  "finalIds": [],
+  "displayIds": [],
+  "firstRankValue": null,
+  "exposedFinalIds": []
+ },
+ {
+  "anchorId": "boyner-15775199",
+  "poolInput": 80,
+  "rankedCount": 1536,
+  "finalIds": [
+   "catalog:defacto-3407970:top",
+   "catalog:defacto-3355637:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:boyner-15775199:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3407970",
+   "defacto-3355637",
+   "boyner-15647412"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "bej",
+    "desenli"
+   ],
+   "compatibilityScore": 0.225,
+   "id": "[[\"catalog\",\"defacto-3375944\",\"top\"],[\"catalog\",\"defacto-3355637\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"boyner-15775199\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3375944",
+   "defacto-3321495",
+   "boyner-15691146"
+  ]
+ },
+ {
+  "anchorId": "boyner-15795287",
+  "poolInput": 80,
+  "rankedCount": 1,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:boyner-15795287:bottom",
+   "catalog:boyner-1656182:outerwear",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [
+   "boyner-1656182"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.4,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"boyner-15795287\",\"bottom\"],[\"catalog\",\"boyner-1656182\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-1656182"
+  ]
+ },
+ {
+  "anchorId": "boyner-15805824",
+  "poolInput": 80,
+  "rankedCount": 210,
+  "finalIds": [
+   "catalog:boyner-15805824:top",
+   "catalog:boyner-15795287:bottom",
+   "catalog:boyner-1771558:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15795287",
+   "boyner-1716227",
+   "boyner-1771558"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.10000000000000002,
+   "id": "[[\"catalog\",\"boyner-15805824\",\"top\"],[\"catalog\",\"boyner-15795287\",\"bottom\"],[\"catalog\",\"boyner-1771558\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15690117",
+   "boyner-15969332",
+   "boyner-15742782"
+  ]
+ },
+ {
+  "anchorId": "boyner-15815058",
+  "poolInput": 80,
+  "rankedCount": 123,
+  "finalIds": [
+   "catalog:boyner-15815058:top",
+   "catalog:defacto-3288642:bottom",
+   "catalog:boyner-1771558:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3288642",
+   "boyner-1716227",
+   "boyner-1771558"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.45,
+   "id": "[[\"catalog\",\"boyner-15815058\",\"top\"],[\"catalog\",\"defacto-3288642\",\"bottom\"],[\"catalog\",\"boyner-1771558\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3288642",
+   "boyner-1716227",
+   "defacto-3280820"
+  ]
+ },
+ {
+  "anchorId": "boyner-15837511",
+  "poolInput": 80,
+  "rankedCount": 186,
+  "finalIds": [
+   "catalog:boyner-15714044:top",
+   "catalog:boyner-15690117:bottom",
+   "catalog:boyner-15837511:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15714044",
+   "boyner-15690117",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.25,
+   "id": "[[\"catalog\",\"boyner-15714044\",\"top\"],[\"catalog\",\"boyner-15690117\",\"bottom\"],[\"catalog\",\"boyner-15837511\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15927675",
+   "defacto-3403514",
+   "boyner-15969332"
+  ]
+ },
+ {
+  "anchorId": "boyner-15891188",
+  "poolInput": 80,
+  "rankedCount": 288,
+  "finalIds": [
+   "catalog:boyner-15891188:one_piece",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3339043",
+   "boyner-15691146",
+   "boyner-15647412"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.15999999999999998,
+   "id": "[[\"catalog\",\"boyner-15891188\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-2723671",
+   "defacto-3430047",
+   "boyner-15691146"
+  ]
+ },
+ {
+  "anchorId": "boyner-15896249",
+  "poolInput": 80,
+  "rankedCount": 384,
+  "finalIds": [
+   "catalog:boyner-15896249:one_piece",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3339043",
+   "boyner-15691146",
+   "boyner-15647412"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.175,
+   "id": "[[\"catalog\",\"boyner-15896249\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-2723671",
+   "defacto-3430047",
+   "boyner-15691146"
+  ]
+ },
+ {
+  "anchorId": "boyner-15927675",
+  "poolInput": 80,
+  "rankedCount": 200,
+  "finalIds": [
+   "catalog:boyner-15927675:top",
+   "catalog:boyner-15690117:bottom",
+   "catalog:defacto-3287863:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15690117",
+   "boyner-1716227",
+   "defacto-3287863"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.25,
+   "id": "[[\"catalog\",\"boyner-15927675\",\"top\"],[\"catalog\",\"boyner-15690117\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3403514",
+   "boyner-15969332",
+   "boyner-15837511"
+  ]
+ },
+ {
+  "anchorId": "boyner-15969332",
+  "poolInput": 80,
+  "rankedCount": 1435,
+  "finalIds": [
+   "catalog:defacto-3427631:top",
+   "catalog:boyner-15795287:bottom",
+   "catalog:boyner-1771558:outerwear",
+   "catalog:boyner-15969332:shoes"
+  ],
+  "displayIds": [
+   "defacto-3427631",
+   "boyner-15795287",
+   "boyner-1771558"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "beyaz",
+    "navy"
+   ],
+   "compatibilityScore": 0.3,
+   "id": "[[\"catalog\",\"defacto-3427631\",\"top\"],[\"catalog\",\"boyner-15690117\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-15969332\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3320536",
+   "boyner-15690117",
+   "boyner-1294233"
+  ]
+ },
+ {
+  "anchorId": "boyner-1656182",
+  "poolInput": 80,
+  "rankedCount": 124,
+  "finalIds": [
+   "catalog:defacto-3292577:top",
+   "catalog:boyner-15795287:bottom",
+   "catalog:boyner-1656182:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3292577",
+   "boyner-15795287",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "bej",
+    "siyah"
+   ],
+   "compatibilityScore": 0.43333333333333335,
+   "id": "[[\"catalog\",\"defacto-3292577\",\"top\"],[\"catalog\",\"defacto-3288642\",\"bottom\"],[\"catalog\",\"boyner-1656182\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3195702",
+   "boyner-15690117",
+   "boyner-1716227"
+  ]
+ },
+ {
+  "anchorId": "boyner-1716227",
+  "poolInput": 80,
+  "rankedCount": 421,
+  "finalIds": [
+   "catalog:boyner-15815058:top",
+   "catalog:boyner-15605761:bottom",
+   "catalog:boyner-1771558:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15815058",
+   "boyner-15605761",
+   "boyner-1771558"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.43333333333333335,
+   "id": "[[\"catalog\",\"boyner-15815058\",\"top\"],[\"catalog\",\"boyner-15605761\",\"bottom\"],[\"catalog\",\"boyner-1771558\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3376033",
+   "boyner-15605761",
+   "defacto-3280820"
+  ]
+ },
+ {
+  "anchorId": "boyner-1771558",
+  "poolInput": 80,
+  "rankedCount": 3,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-3419058:bottom",
+   "catalog:boyner-1771558:outerwear",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [
+   "defacto-3419058"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.4,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"boyner-1771558\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15605761"
+  ]
+ },
+ {
+  "anchorId": "boyner-1775564",
+  "poolInput": 80,
+  "rankedCount": 7,
+  "finalIds": [
+   "catalog:defacto-3287771:top",
+   "catalog:defacto-3416588:bottom",
+   "catalog:boyner-1775564:hat"
+  ],
+  "displayIds": [
+   "defacto-3287771",
+   "defacto-3416588"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 1,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.1,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"boyner-1775564\",\"hat\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3148996"
+  ]
+ },
+ {
+  "anchorId": "defacto-2338282",
+  "poolInput": 80,
+  "rankedCount": 2160,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2338282:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2338282\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3355637",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-2339010",
+  "poolInput": 80,
+  "rankedCount": 2160,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3355637",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-2723671",
+  "poolInput": 80,
+  "rankedCount": 1536,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-2723671:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-2339010"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.19999999999999998,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3321495",
+   "defacto-3319753"
+  ]
+ },
+ {
+  "anchorId": "defacto-2805797",
+  "poolInput": 80,
+  "rankedCount": 96,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-2805797:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "wardrobe:owned-shoes:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-2339010",
+   "defacto-3425820",
+   "defacto-3374143"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.1,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-2805797\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3319753",
+   "defacto-3300417",
+   "defacto-3375205"
+  ]
+ },
+ {
+  "anchorId": "defacto-2827545",
+  "poolInput": 80,
+  "rankedCount": 288,
+  "finalIds": [
+   "catalog:defacto-2827545:one_piece",
+   "catalog:defacto-3430047:outerwear",
+   "catalog:boyner-15775199:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "boyner-15775199",
+   "defacto-3430047",
+   "boyner-15691146"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah",
+    "yesil"
+   ],
+   "compatibilityScore": 0.27999999999999997,
+   "id": "[[\"catalog\",\"defacto-2827545\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"boyner-15775199\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15775199",
+   "defacto-3430047",
+   "boyner-15691146"
+  ]
+ },
+ {
+  "anchorId": "defacto-2843240",
+  "poolInput": 80,
+  "rankedCount": 288,
+  "finalIds": [
+   "catalog:defacto-2843240:one_piece",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3339043",
+   "defacto-2339010",
+   "defacto-3425820"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-2843240\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-2723671",
+   "defacto-3319753",
+   "defacto-3300417"
+  ]
+ },
+ {
+  "anchorId": "defacto-2857264",
+  "poolInput": 80,
+  "rankedCount": 88,
+  "finalIds": [
+   "catalog:defacto-2857264:top",
+   "catalog:defacto-3288642:bottom",
+   "catalog:defacto-3430099:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3288642",
+   "boyner-1716227",
+   "defacto-3430099"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi",
+    "siyah"
+   ],
+   "compatibilityScore": 0.4166666666666667,
+   "id": "[[\"catalog\",\"defacto-2857264\",\"top\"],[\"catalog\",\"defacto-3288642\",\"bottom\"],[\"catalog\",\"defacto-3430099\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3288642",
+   "boyner-15969332",
+   "boyner-1656182"
+  ]
+ },
+ {
+  "anchorId": "defacto-3141043",
+  "poolInput": 80,
+  "rankedCount": 186,
+  "finalIds": [
+   "catalog:defacto-3141043:top",
+   "catalog:defacto-3288642:bottom",
+   "catalog:boyner-1656182:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3288642",
+   "boyner-1716227",
+   "boyner-1656182"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.3833333333333333,
+   "id": "[[\"catalog\",\"defacto-3141043\",\"top\"],[\"catalog\",\"defacto-3288642\",\"bottom\"],[\"catalog\",\"boyner-1656182\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3288642",
+   "boyner-15969332",
+   "boyner-1656182"
+  ]
+ },
+ {
+  "anchorId": "defacto-3148996",
+  "poolInput": 80,
+  "rankedCount": 96,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-3148996:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "wardrobe:owned-shoes:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-2339010",
+   "defacto-3425820",
+   "defacto-3374143"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3148996\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3319753",
+   "defacto-3300417",
+   "defacto-3375205"
+  ]
+ },
+ {
+  "anchorId": "defacto-3157599",
+  "poolInput": 80,
+  "rankedCount": 1728,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3157599:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3339043",
+   "defacto-2339010"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.19999999999999998,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3157599\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-2723671",
+   "defacto-3319753"
+  ]
+ },
+ {
+  "anchorId": "defacto-3159839",
+  "poolInput": 80,
+  "rankedCount": 160,
+  "finalIds": [
+   "catalog:defacto-3159839:top",
+   "catalog:boyner-15690117:bottom",
+   "catalog:defacto-3287863:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15690117",
+   "boyner-1716227",
+   "defacto-3287863"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.3333333333333333,
+   "id": "[[\"catalog\",\"defacto-3159839\",\"top\"],[\"catalog\",\"boyner-15690117\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3403514",
+   "boyner-15969332",
+   "defacto-3430227"
+  ]
+ },
+ {
+  "anchorId": "defacto-3195702",
+  "poolInput": 80,
+  "rankedCount": 140,
+  "finalIds": [
+   "catalog:defacto-3195702:top",
+   "catalog:defacto-3288642:bottom",
+   "catalog:boyner-1656182:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3288642",
+   "boyner-1716227",
+   "boyner-1656182"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "bej",
+    "siyah"
+   ],
+   "compatibilityScore": 0.43333333333333335,
+   "id": "[[\"catalog\",\"defacto-3195702\",\"top\"],[\"catalog\",\"defacto-3288642\",\"bottom\"],[\"catalog\",\"boyner-1656182\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3288642",
+   "boyner-15969332",
+   "boyner-1656182"
+  ]
+ },
+ {
+  "anchorId": "defacto-3255037",
+  "poolInput": 80,
+  "rankedCount": 2152,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3353900",
+   "defacto-3339043",
+   "defacto-3430184"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.3333333333333333,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3353900",
+   "defacto-2723671",
+   "boyner-15709212"
+  ]
+ },
+ {
+  "anchorId": "defacto-3277298",
+  "poolInput": 80,
+  "rankedCount": 72,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-3321495:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "wardrobe:owned-shoes:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-3277298:accessory"
+  ],
+  "displayIds": [
+   "defacto-3321495",
+   "defacto-3425820",
+   "defacto-3374143"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.20000000000000004,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"wardrobe\",\"owned-bottom\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-3277298\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3148996",
+   "defacto-3300417",
+   "defacto-3375205"
+  ]
+ },
+ {
+  "anchorId": "defacto-3280820",
+  "poolInput": 80,
+  "rankedCount": 77,
+  "finalIds": [
+   "catalog:defacto-3376033:top",
+   "catalog:defacto-3419058:bottom",
+   "catalog:defacto-3280820:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3376033",
+   "defacto-3419058",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.4666666666666666,
+   "id": "[[\"catalog\",\"defacto-3376033\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3280820\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3376033",
+   "defacto-3288642",
+   "boyner-1716227"
+  ]
+ },
+ {
+  "anchorId": "defacto-3287771",
+  "poolInput": 80,
+  "rankedCount": 2304,
+  "finalIds": [
+   "catalog:defacto-3287771:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3353900",
+   "defacto-3339043",
+   "boyner-15647412"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2333333333333333,
+   "id": "[[\"catalog\",\"defacto-3287771\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3355637",
+   "defacto-2723671",
+   "boyner-15647412"
+  ]
+ },
+ {
+  "anchorId": "defacto-3287863",
+  "poolInput": 80,
+  "rankedCount": 178,
+  "finalIds": [
+   "catalog:boyner-15714044:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3287863:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15714044",
+   "defacto-3403514",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.3833333333333333,
+   "id": "[[\"catalog\",\"boyner-15714044\",\"top\"],[\"catalog\",\"defacto-3403514\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3159839",
+   "boyner-15690117",
+   "boyner-15969332"
+  ]
+ },
+ {
+  "anchorId": "defacto-3288642",
+  "poolInput": 80,
+  "rankedCount": 147,
+  "finalIds": [
+   "catalog:defacto-3376033:top",
+   "catalog:defacto-3288642:bottom",
+   "catalog:defacto-3280820:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3376033",
+   "boyner-1716227",
+   "defacto-3280820"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.5166666666666666,
+   "id": "[[\"catalog\",\"defacto-3376033\",\"top\"],[\"catalog\",\"defacto-3288642\",\"bottom\"],[\"catalog\",\"defacto-3280820\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3376033",
+   "boyner-1716227",
+   "defacto-3375353"
+  ]
+ },
+ {
+  "anchorId": "defacto-3292577",
+  "poolInput": 80,
+  "rankedCount": 2,
+  "finalIds": [
+   "catalog:defacto-3292577:top",
+   "wardrobe:owned-bottom:bottom",
+   "catalog:boyner-1656182:outerwear",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [
+   "boyner-1656182"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [
+    "casual"
+   ],
+   "sharedColors": [
+    "bej"
+   ],
+   "compatibilityScore": 0.55,
+   "id": "[[\"catalog\",\"defacto-3292577\",\"top\"],[\"wardrobe\",\"owned-bottom\",\"bottom\"],[\"catalog\",\"boyner-1656182\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3430230"
+  ]
+ },
+ {
+  "anchorId": "defacto-3300417",
+  "poolInput": 80,
+  "rankedCount": 1920,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3300417:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3300417\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3321495",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-3301212",
+  "poolInput": 80,
+  "rankedCount": 110,
+  "finalIds": [
+   "catalog:defacto-3301212:top",
+   "catalog:boyner-15176448:bottom",
+   "catalog:defacto-3315755:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15176448",
+   "boyner-1716227",
+   "defacto-3315755"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "desenli",
+    "yesil"
+   ],
+   "compatibilityScore": 0.43333333333333335,
+   "id": "[[\"catalog\",\"defacto-3301212\",\"top\"],[\"catalog\",\"boyner-15176448\",\"bottom\"],[\"catalog\",\"defacto-3315755\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3288642",
+   "boyner-15969332",
+   "defacto-3375352"
+  ]
+ },
+ {
+  "anchorId": "defacto-3315755",
+  "poolInput": 80,
+  "rankedCount": 122,
+  "finalIds": [
+   "catalog:defacto-3301212:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3315755:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3301212",
+   "defacto-3403514",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah",
+    "yesil"
+   ],
+   "compatibilityScore": 0.3666666666666667,
+   "id": "[[\"catalog\",\"defacto-3301212\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3315755\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3301212",
+   "defacto-3419058",
+   "boyner-15969332"
+  ]
+ },
+ {
+  "anchorId": "defacto-3319753",
+  "poolInput": 80,
+  "rankedCount": 2160,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-3319753:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-3319753\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3355637",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-3320536",
+  "poolInput": 80,
+  "rankedCount": 10,
+  "finalIds": [
+   "catalog:defacto-3320536:top",
+   "wardrobe:owned-bottom:bottom",
+   "catalog:boyner-1656182:outerwear",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [
+   "boyner-1656182"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [
+    "casual"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.4,
+   "id": "[[\"catalog\",\"defacto-3320536\",\"top\"],[\"wardrobe\",\"owned-bottom\",\"bottom\"],[\"catalog\",\"boyner-1656182\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3430230"
+  ]
+ },
+ {
+  "anchorId": "defacto-3321495",
+  "poolInput": 80,
+  "rankedCount": 1728,
+  "finalIds": [
+   "catalog:defacto-3415590:top",
+   "catalog:defacto-3321495:bottom",
+   "catalog:defacto-3430047:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3415590",
+   "defacto-3339043",
+   "boyner-15691146"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy",
+    "siyah"
+   ],
+   "compatibilityScore": 0.3083333333333333,
+   "id": "[[\"catalog\",\"defacto-3415590\",\"top\"],[\"catalog\",\"defacto-3321495\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3415590",
+   "boyner-15775199",
+   "defacto-3430184"
+  ]
+ },
+ {
+  "anchorId": "defacto-3330365",
+  "poolInput": 80,
+  "rankedCount": 288,
+  "finalIds": [
+   "catalog:defacto-3330365:one_piece",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:boyner-15775199:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "boyner-15775199",
+   "boyner-15647412",
+   "boyner-15691146"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "desenli"
+   ],
+   "compatibilityScore": 0.29,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"boyner-15775199\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15775199",
+   "defacto-3430047",
+   "boyner-15691146"
+  ]
+ },
+ {
+  "anchorId": "defacto-3339043",
+  "poolInput": 80,
+  "rankedCount": 1536,
+  "finalIds": [
+   "catalog:defacto-3407970:top",
+   "catalog:defacto-3355637:bottom",
+   "catalog:defacto-3430047:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3407970",
+   "defacto-3355637",
+   "boyner-15691146"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy",
+    "siyah"
+   ],
+   "compatibilityScore": 0.28333333333333327,
+   "id": "[[\"catalog\",\"defacto-3415590\",\"top\"],[\"catalog\",\"defacto-3355637\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3375944",
+   "defacto-3321495",
+   "defacto-3430047"
+  ]
+ },
+ {
+  "anchorId": "defacto-3353900",
+  "poolInput": 80,
+  "rankedCount": 1728,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3339043",
+   "defacto-3430184"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.3333333333333333,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3255037",
+   "defacto-2723671",
+   "boyner-15709212"
+  ]
+ },
+ {
+  "anchorId": "defacto-3355637",
+  "poolInput": 80,
+  "rankedCount": 96,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-3355637:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "wardrobe:owned-shoes:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "boyner-15647412",
+   "boyner-15691146",
+   "defacto-2339010"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.2625,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3355637\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3430184",
+   "boyner-15691146",
+   "defacto-3319753"
+  ]
+ },
+ {
+  "anchorId": "defacto-3374143",
+  "poolInput": 80,
+  "rankedCount": 2880,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3321495",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-3375205",
+  "poolInput": 80,
+  "rankedCount": 2880,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3375205:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3321495",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-3375352",
+  "poolInput": 80,
+  "rankedCount": 122,
+  "finalIds": [
+   "catalog:defacto-3301212:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3375352:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3301212",
+   "defacto-3403514",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah",
+    "yesil"
+   ],
+   "compatibilityScore": 0.3666666666666667,
+   "id": "[[\"catalog\",\"defacto-3301212\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3375352\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3301212",
+   "defacto-3419058",
+   "boyner-15969332"
+  ]
+ },
+ {
+  "anchorId": "defacto-3375353",
+  "poolInput": 80,
+  "rankedCount": 77,
+  "finalIds": [
+   "catalog:defacto-3376033:top",
+   "catalog:defacto-3419058:bottom",
+   "catalog:defacto-3375353:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3376033",
+   "defacto-3419058",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.4666666666666666,
+   "id": "[[\"catalog\",\"defacto-3376033\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3375353\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3376033",
+   "defacto-3288642",
+   "boyner-1716227"
+  ]
+ },
+ {
+  "anchorId": "defacto-3375944",
+  "poolInput": 80,
+  "rankedCount": 96,
+  "finalIds": [
+   "catalog:defacto-3375944:top",
+   "wardrobe:owned-bottom:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "wardrobe:owned-shoes:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "boyner-15647412",
+   "boyner-15691146",
+   "defacto-2339010"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [
+    "casual"
+   ],
+   "sharedColors": [
+    "bej"
+   ],
+   "compatibilityScore": 0.3,
+   "id": "[[\"catalog\",\"defacto-3375944\",\"top\"],[\"wardrobe\",\"owned-bottom\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "boyner-15647412",
+   "defacto-3319753",
+   "boyner-15691146"
+  ]
+ },
+ {
+  "anchorId": "defacto-3376033",
+  "poolInput": 80,
+  "rankedCount": 68,
+  "finalIds": [
+   "catalog:defacto-3376033:top",
+   "catalog:defacto-3288642:bottom",
+   "catalog:defacto-3280820:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3288642",
+   "boyner-1716227",
+   "defacto-3280820"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.5166666666666666,
+   "id": "[[\"catalog\",\"defacto-3376033\",\"top\"],[\"catalog\",\"defacto-3288642\",\"bottom\"],[\"catalog\",\"defacto-3280820\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3288642",
+   "boyner-1716227",
+   "defacto-3375353"
+  ]
+ },
+ {
+  "anchorId": "defacto-3377134",
+  "poolInput": 80,
+  "rankedCount": 77,
+  "finalIds": [
+   "catalog:defacto-3376033:top",
+   "catalog:defacto-3419058:bottom",
+   "catalog:defacto-3377134:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3376033",
+   "defacto-3419058",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.4666666666666666,
+   "id": "[[\"catalog\",\"defacto-3376033\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3377134\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3376033",
+   "defacto-3288642",
+   "boyner-1716227"
+  ]
+ },
+ {
+  "anchorId": "defacto-3403514",
+  "poolInput": 80,
+  "rankedCount": 358,
+  "finalIds": [
+   "catalog:boyner-15714044:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3287863:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "boyner-15714044",
+   "boyner-1716227",
+   "defacto-3287863"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.3833333333333333,
+   "id": "[[\"catalog\",\"boyner-15714044\",\"top\"],[\"catalog\",\"defacto-3403514\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3159839",
+   "boyner-15969332",
+   "defacto-3287863"
+  ]
+ },
+ {
+  "anchorId": "defacto-3407970",
+  "poolInput": 80,
+  "rankedCount": 2288,
+  "finalIds": [
+   "catalog:defacto-3407970:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3353900",
+   "defacto-3339043",
+   "boyner-15647412"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.31666666666666665,
+   "id": "[[\"catalog\",\"defacto-3407970\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3355637",
+   "boyner-15775199",
+   "boyner-15647412"
+  ]
+ },
+ {
+  "anchorId": "defacto-3407972",
+  "poolInput": 80,
+  "rankedCount": 96,
+  "finalIds": [
+   "catalog:defacto-3407972:top",
+   "wardrobe:owned-bottom:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "wardrobe:owned-shoes:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "boyner-15647412",
+   "boyner-15691146",
+   "defacto-2339010"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [
+    "casual"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.2625,
+   "id": "[[\"catalog\",\"defacto-3407972\",\"top\"],[\"wardrobe\",\"owned-bottom\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3430184",
+   "boyner-15691146",
+   "defacto-3319753"
+  ]
+ },
+ {
+  "anchorId": "defacto-3408872",
+  "poolInput": 80,
+  "rankedCount": 0,
+  "finalIds": [],
+  "displayIds": [],
+  "firstRankValue": null,
+  "exposedFinalIds": []
+ },
+ {
+  "anchorId": "defacto-3415590",
+  "poolInput": 80,
+  "rankedCount": 2024,
+  "finalIds": [
+   "catalog:defacto-3415590:top",
+   "catalog:defacto-3355637:bottom",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3355637",
+   "defacto-3339043",
+   "boyner-15647412"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.3416666666666666,
+   "id": "[[\"catalog\",\"defacto-3415590\",\"top\"],[\"catalog\",\"defacto-3355637\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3355637",
+   "boyner-15775199",
+   "boyner-15647412"
+  ]
+ },
+ {
+  "anchorId": "defacto-3416588",
+  "poolInput": 80,
+  "rankedCount": 1728,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3416588:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3339043",
+   "defacto-2339010"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.19999999999999998,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3416588\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-2723671",
+   "defacto-3319753"
+  ]
+ },
+ {
+  "anchorId": "defacto-3419058",
+  "poolInput": 80,
+  "rankedCount": 168,
+  "finalIds": [
+   "catalog:defacto-3376033:top",
+   "catalog:defacto-3419058:bottom",
+   "catalog:defacto-3280820:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3376033",
+   "boyner-1716227",
+   "defacto-3280820"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.4666666666666666,
+   "id": "[[\"catalog\",\"defacto-3376033\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3280820\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3376033",
+   "boyner-1716227",
+   "defacto-3375353"
+  ]
+ },
+ {
+  "anchorId": "defacto-3421507",
+  "poolInput": 80,
+  "rankedCount": 1,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-3421507:bottom",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 1,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3421507\",\"bottom\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": []
+ },
+ {
+  "anchorId": "defacto-3425820",
+  "poolInput": 80,
+  "rankedCount": 1920,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-3425820:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [],
+   "compatibilityScore": 0.2,
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3287771",
+   "defacto-3321495",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-3427630",
+  "poolInput": 80,
+  "rankedCount": 186,
+  "finalIds": [
+   "catalog:defacto-3427630:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3430230:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3403514",
+   "boyner-1716227",
+   "defacto-3430230"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "navy"
+   ],
+   "compatibilityScore": 0.31666666666666665,
+   "id": "[[\"catalog\",\"defacto-3427630\",\"top\"],[\"catalog\",\"defacto-3403514\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3419058",
+   "boyner-15969332",
+   "defacto-3287863"
+  ]
+ },
+ {
+  "anchorId": "defacto-3427631",
+  "poolInput": 80,
+  "rankedCount": 199,
+  "finalIds": [
+   "catalog:defacto-3427631:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3430230:outerwear",
+   "catalog:boyner-15969332:shoes"
+  ],
+  "displayIds": [
+   "defacto-3403514",
+   "boyner-15969332",
+   "defacto-3430230"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "beyaz",
+    "navy"
+   ],
+   "compatibilityScore": 0.3666666666666667,
+   "id": "[[\"catalog\",\"defacto-3427631\",\"top\"],[\"catalog\",\"defacto-3403514\",\"bottom\"],[\"catalog\",\"defacto-3287863\",\"outerwear\"],[\"catalog\",\"boyner-15969332\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3419058",
+   "boyner-15969332",
+   "defacto-3315755"
+  ]
+ },
+ {
+  "anchorId": "defacto-3430047",
+  "poolInput": 80,
+  "rankedCount": 2160,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430047:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi",
+    "siyah"
+   ],
+   "compatibilityScore": 0.3083333333333333,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3407970",
+   "defacto-3355637",
+   "boyner-15775199"
+  ]
+ },
+ {
+  "anchorId": "defacto-3430099",
+  "poolInput": 80,
+  "rankedCount": 5,
+  "finalIds": [
+   "wardrobe:owned-top:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3430099:outerwear",
+   "wardrobe:owned-shoes:shoes"
+  ],
+  "displayIds": [
+   "defacto-3403514"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [
+    "casual",
+    "minimal"
+   ],
+   "sharedColors": [],
+   "compatibilityScore": 0.35,
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3403514\",\"bottom\"],[\"catalog\",\"defacto-3430099\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3419058"
+  ]
+ },
+ {
+  "anchorId": "defacto-3430184",
+  "poolInput": 80,
+  "rankedCount": 2000,
+  "finalIds": [
+   "catalog:defacto-3255037:top",
+   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15691146:bag",
+   "catalog:defacto-3374143:hat",
+   "catalog:defacto-2339010:accessory"
+  ],
+  "displayIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-3339043"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 5,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.3083333333333333,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3255037",
+   "defacto-3353900",
+   "defacto-2723671"
+  ]
+ },
+ {
+  "anchorId": "defacto-3430227",
+  "poolInput": 80,
+  "rankedCount": 86,
+  "finalIds": [
+   "catalog:defacto-3376033:top",
+   "catalog:defacto-3419058:bottom",
+   "catalog:defacto-3430227:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3376033",
+   "defacto-3419058",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "siyah"
+   ],
+   "compatibilityScore": 0.3666666666666667,
+   "id": "[[\"catalog\",\"defacto-3376033\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3430227\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3159839",
+   "defacto-3288642",
+   "boyner-1716227"
+  ]
+ },
+ {
+  "anchorId": "defacto-3430230",
+  "poolInput": 80,
+  "rankedCount": 174,
+  "finalIds": [
+   "catalog:defacto-3292577:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3430230:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3292577",
+   "defacto-3403514",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "bej",
+    "siyah"
+   ],
+   "compatibilityScore": 0.3666666666666667,
+   "id": "[[\"catalog\",\"defacto-3292577\",\"top\"],[\"catalog\",\"defacto-3419058\",\"bottom\"],[\"catalog\",\"defacto-3430230\",\"outerwear\"],[\"catalog\",\"boyner-1716227\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3195702",
+   "defacto-3419058",
+   "boyner-15969332"
+  ]
+ },
+ {
+  "anchorId": "defacto-3430252",
+  "poolInput": 80,
+  "rankedCount": 176,
+  "finalIds": [
+   "catalog:defacto-3427631:top",
+   "catalog:defacto-3403514:bottom",
+   "catalog:defacto-3430252:outerwear",
+   "catalog:boyner-1716227:shoes"
+  ],
+  "displayIds": [
+   "defacto-3427631",
+   "defacto-3403514",
+   "boyner-1716227"
+  ],
+  "firstRankValue": {
+   "validRoles": true,
+   "coreComplete": true,
+   "missingCoreRoles": [],
+   "optionalRoleCount": 2,
+   "sharedStyleTags": [],
+   "sharedColors": [
+    "beyaz"
+   ],
+   "compatibilityScore": 0.31666666666666665,
+   "id": "[[\"catalog\",\"defacto-3427631\",\"top\"],[\"catalog\",\"defacto-3403514\",\"bottom\"],[\"catalog\",\"defacto-3430252\",\"outerwear\"],[\"catalog\",\"boyner-15969332\",\"shoes\"]]"
+  },
+  "exposedFinalIds": [
+   "defacto-3292577",
+   "defacto-3419058",
+   "boyner-15969332"
+  ]
+ }
+]

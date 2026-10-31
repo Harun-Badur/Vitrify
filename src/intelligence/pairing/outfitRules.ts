@@ -80,9 +80,25 @@ const readHardEvidence = (product: PairCatalogProduct) => {
 };
 
 /** Structural core is unchanged; footwear completion precedes optional coverage. */
-export const hasCoreFootwear = (items: readonly PairOutfitItem[]): boolean =>
-  items.some(item => item.role === 'shoes') && (items.some(item => item.role === 'one_piece') ||
-    (items.some(item => item.role === 'top') && items.some(item => item.role === 'bottom')));
+export const hasCoreFootwear = (items: readonly PairOutfitItem[]): boolean => {
+  // One pass without per-call closures; this runs for every search node and sort comparison.
+  let shoes = false, onePiece = false, top = false, bottom = false;
+  for (const item of items) {
+    const role = item.role;
+    if (role === 'shoes') shoes = true;
+    else if (role === 'one_piece') onePiece = true;
+    else if (role === 'top') top = true;
+    else if (role === 'bottom') bottom = true;
+  }
+  return shoes && (onePiece || (top && bottom));
+};
+
+/**
+ * Candidate item lists that already passed isValidOutfitItems. Generation proves validity once per
+ * candidate; ranking and selection then skip the repeated conflict scan for the same list.
+ */
+const validatedOutfitItems = new WeakSet<readonly PairOutfitItem[]>();
+export const markValidOutfitItems = (items: readonly PairOutfitItem[]): void => { validatedOutfitItems.add(items); };
 
 export const hasHardConflict = (items: readonly PairOutfitItem[]): boolean => {
   let child = false, adult = false, women = false, men = false;
@@ -140,15 +156,18 @@ export const isCatalogRoleCompatible = (product: PairCatalogProduct, role: PairR
   return compatible;
 };
 
-export const isValidOutfitItems = (items: readonly PairOutfitItem[]): boolean => {
-  if (hasHardConflict(items)) return false;
+/** `conflictChecked`: the caller already proved hasHardConflict(items) is false for this exact list. */
+export const isValidOutfitItems = (items: readonly PairOutfitItem[], conflictChecked = false): boolean => {
+  if (validatedOutfitItems.has(items)) return true;
+  if (!conflictChecked && hasHardConflict(items)) return false;
   const roles = new Set<PairRole>();
   const sourceIds = new Set<string>();
   for (const item of items) {
     if (item.sourceType === 'catalog' && !isCatalogRoleCompatible(item.product, item.role)) {
       return false;
     }
-    const sourceKey = JSON.stringify([item.sourceType, item.sourceId]);
+    // sourceType is a closed label without the separator, so this is as unambiguous as the old JSON key.
+    const sourceKey = `${item.sourceType}\u0000${item.sourceId}`;
     if (roles.has(item.role) || sourceIds.has(sourceKey)) return false;
     roles.add(item.role);
     sourceIds.add(sourceKey);
