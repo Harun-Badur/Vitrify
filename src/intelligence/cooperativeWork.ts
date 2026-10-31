@@ -28,9 +28,7 @@ interface NativeHostScheduler {
 let reportedHost: string | undefined;
 const yieldToHost = (signal?: AbortSignal): Promise<void> => new Promise((resolve, reject) => {
   checkAbort(signal);
-  // Measurement experiment only: force the timer path to compare against the native scheduler.
-  const candidate = process.env.EXPO_PUBLIC_PERF_TIMER_YIELD === '1' ? undefined
-    : (globalThis as typeof globalThis & { nativeRuntimeScheduler?: NativeHostScheduler }).nativeRuntimeScheduler;
+  const candidate = (globalThis as typeof globalThis & { nativeRuntimeScheduler?: NativeHostScheduler }).nativeRuntimeScheduler;
   const scheduler = candidate && typeof candidate.unstable_scheduleCallback === 'function'
     && typeof candidate.unstable_cancelCallback === 'function' && typeof candidate.unstable_LowPriority === 'number'
     ? candidate : undefined;
