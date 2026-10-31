@@ -53,7 +53,11 @@ describeLocal('B0′ characterization (30 anchors, 80-product pool, empty wardro
     expect(replay.anchors).toHaveLength(30);
     replay.anchors.forEach((anchor, index) => {
       const frozen = golden.anchors[index];
-      expect({ ...anchor, finalCompatibility: undefined }).toEqual({ ...frozen, finalCompatibility: undefined });
+      // The band cap (bandCap.ts) may shrink the ranked band of an anchor whose band bound is huge;
+      // the final set and its order stay frozen.
+      expect({ ...anchor, finalCompatibility: undefined, rankedCount: undefined })
+        .toEqual({ ...frozen, finalCompatibility: undefined, rankedCount: undefined });
+      expect(anchor.rankedCount).toBeLessThanOrEqual(frozen.rankedCount);
       anchor.finalCompatibility.forEach((score, slot) => {
         expectScoresEqual({ ...score }, { ...frozen.finalCompatibility[slot] }, `${anchor.anchorId}[${slot}]`);
       });
