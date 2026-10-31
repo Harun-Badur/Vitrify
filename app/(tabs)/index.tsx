@@ -1,7 +1,9 @@
 import { useOwnedState } from '../../hooks/useOwnedState';
-import { perfArmRefresh, perfCountRender, perfLog, perfNow, perfStartLagWatch } from '../../lib/perfLog';
+import { perfArmRefresh, perfCountRender, perfEnabled, perfLog, perfNow, perfStartLagWatch } from '../../lib/perfLog';
 import { useDiscoverPerfTrace } from '../../hooks/useDiscoverPerfTrace';
 import {
+  Profiler,
+  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -177,6 +179,20 @@ function DeckFinishedCard({
         </PressableScale>
       ) : null}
     </View>
+  );
+}
+
+/** Measurement only: React Profiler around the card deck; a pass-through unless the PERF flag is on. */
+function PerfProfiler({ children }: { children: ReactNode }) {
+  if (!perfEnabled()) return <>{children}</>;
+  return (
+    <Profiler
+      id="deck"
+      onRender={(_id, phase, actualDuration, baseDuration) =>
+        perfLog('deck_render', { ms: actualDuration, base: baseDuration, phase })}
+    >
+      {children}
+    </Profiler>
   );
 }
 
@@ -981,6 +997,7 @@ export default function FeedScreen() {
             collapsable={false}
             onLayout={handleDeckLayout}
           >
+            <PerfProfiler>
             <View style={styles.deck}>
               {deckPages.map(({ product, pageIndex }) => {
                 // The held session belongs to the previous preference: nothing it holds may reach the deck meanwhile.
@@ -1021,6 +1038,7 @@ export default function FeedScreen() {
                 />
               })}
             </View>
+            </PerfProfiler>
           </View>
         )}
       </View>

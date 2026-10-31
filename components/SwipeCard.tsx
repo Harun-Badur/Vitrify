@@ -1033,7 +1033,19 @@ function SwipeCard({
   );
 }
 
-export default React.memo(SwipeCard);
+/** Same shallow comparison as the default memo; under the PERF flag it logs which props changed. */
+const arePropsEqual = (prev: SwipeCardProps, next: SwipeCardProps): boolean => {
+  const prevRecord = prev as unknown as Record<string, unknown>;
+  const nextRecord = next as unknown as Record<string, unknown>;
+  const keys = Object.keys(nextRecord);
+  const changed = keys.filter(key => !Object.is(prevRecord[key], nextRecord[key]));
+  if (changed.length > 0 && perfEnabled()) {
+    perfLog('card_props_changed', { idx: next.pageIndex, props: changed.join(',') });
+  }
+  return changed.length === 0 && Object.keys(prevRecord).length === keys.length;
+};
+
+export default React.memo(SwipeCard, arePropsEqual);
 
 export const SWIPE_CARD_WIDTH = CARD_WIDTH;
 export const SWIPE_CARD_HEIGHT = CARD_HEIGHT;
