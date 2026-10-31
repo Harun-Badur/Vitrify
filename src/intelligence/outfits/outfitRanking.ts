@@ -86,14 +86,20 @@ const itemColors = (item: OutfitCandidateItem): string[] => {
 
 };
 
+// The memo key still reflects the actual token sets (an in-place edit gets a fresh result), but is built
+// by joining ids and tokens instead of JSON.stringify-ing nested arrays for every candidate.
+// sourceType, role and the token text are closed/normalized labels without the control separators.
 const sharedTokens = (
+  kind: 'style' | 'color',
   items: readonly OutfitCandidateItem[],
   readTokens: (item: OutfitCandidateItem) => string[],
 ): string[] => {
   const tokens = items.map(item => readTokens(item));
-  const key = JSON.stringify(['tr-TR', items.map((item, index) => [
-    item.sourceType, item.sourceId, item.role, tokens[index],
-  ])]);
+  let key = kind;
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
+    key += `\u0001${item.sourceType}\u0000${item.role}\u0000${item.sourceId}\u0000${tokens[index].join('\u0002')}`;
+  }
   return [...recommendationMemoValue('sharedTokensMemo', key, () => {
 
   const occurrences = new Map<string, number>();
@@ -139,7 +145,7 @@ export const readOutfitStyleTags = (item: OutfitCandidateItem, cache: OutfitRank
 export const evaluateOutfitMinimum = (
   items: readonly OutfitCandidateItem[], cache: OutfitRankingTokenCache,
 ): { sharedStyleTags: string[] } => ({
-  sharedStyleTags: sharedTokens(items, item => readOutfitStyleTags(item, cache)),
+  sharedStyleTags: sharedTokens('style', items, item => readOutfitStyleTags(item, cache)),
 });
 
 /** Reads only metadata already attached to candidate items; never infers from text. */
@@ -158,10 +164,10 @@ export const evaluateOutfitCandidate = <T extends WardrobeItemForCandidate>(
     : (['top', 'bottom'] as const).filter((role) => !roles.has(role));
   const validRoles = isValidOutfitItems(candidate.items);
   const optionalRoles = OPTIONAL_ROLES.filter((role) => roles.has(role));
-  const sharedStyleTags = sharedTokens(candidate.items, tokenCache
+  const sharedStyleTags = sharedTokens('style', candidate.items, tokenCache
     ? (item) => cachedTokens(item, tokenCache.styleTags, itemStyleTags)
     : itemStyleTags);
-  const sharedColors = sharedTokens(candidate.items, tokenCache
+  const sharedColors = sharedTokens('color', candidate.items, tokenCache
     ? (item) => cachedTokens(item, tokenCache.colors, itemColors)
     : itemColors);
   const reasons: OutfitRankingReason[] = [];
