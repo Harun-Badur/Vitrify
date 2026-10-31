@@ -3,6 +3,7 @@ import { track } from '../lib/analytics';
 import { LEGACY_RECOMMENDATION_ID } from '../types/analytics';
 import { buildAffiliateUrl } from '../lib/deeplink';
 import { logger } from '../lib/logger';
+import { isAllowedStoreUrl } from '../lib/storeUrlAllowlist';
 import { getLastRecommendationId } from '../lib/recsFeedState';
 import { recordSessionProductAction } from '../lib/sessionIntent';
 import type { FeedProvider, Product } from '../types/product';
@@ -127,6 +128,14 @@ export const openProductPage = async (product: Product): Promise<void> => {
       : applyAffiliateTag(product, resolvedUrl);
     const affiliateUsed =
       hasStoredAffiliate || targetUrl !== resolvedUrl;
+
+    if (!isAllowedStoreUrl(targetUrl)) {
+      Alert.alert(
+        'Bağlantı açılamadı',
+        'Mağaza bağlantısı güvenli olarak doğrulanamadı.',
+      );
+      return;
+    }
 
     const canOpen = await Linking.canOpenURL(targetUrl);
     if (!canOpen) {
