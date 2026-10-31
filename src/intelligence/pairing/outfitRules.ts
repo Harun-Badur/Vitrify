@@ -1,3 +1,4 @@
+import { comboGroupOf, comboRelation, type ComboGroup } from './comboGroups.ts';
 import type { PairRole } from './pairingTypes.ts';
 
 /**
@@ -116,7 +117,18 @@ export const hasHardConflict = (items: readonly PairOutfitItem[]): boolean => {
     women ||= item.product.gender === 'women';
     men ||= item.product.gender === 'men';
   }
-  return outerLayers > 1 || (child && adult) || (women && men);
+  if (outerLayers > 1 || (child && adult) || (women && men)) return true;
+  // Explicit group contradictions (dressy shoes with shorts, a sneaker with wedding jewelry, ...) between any
+  // two catalog items; an unknown group never conflicts. Wardrobe items carry no title evidence.
+  let groups: ComboGroup[] | undefined;
+  for (const item of items) {
+    if (item.sourceType !== 'catalog') continue;
+    const group = comboGroupOf(item.product);
+    if (group === null) continue;
+    if (groups) for (const other of groups) if (comboRelation(group, other) === 'hard') return true;
+    (groups ??= []).push(group);
+  }
+  return false;
 };
 
 const ROLES_BY_CATEGORY: Readonly<Record<PairCategory, readonly PairRole[]>> = {

@@ -1,5 +1,6 @@
 import { matchSubcategoryFromTitle } from '../../../lib/productAttributes';
 import type { Product } from '../../../types/product';
+import { productComboRelation } from '../pairing/comboGroups.ts';
 import { evaluatePair } from '../pairing/pairing.ts';
 import { PAIRING_POLICY_V2 } from '../pairing/pairingPolicy.ts';
 import type { CompatibilityPolicy, PairEvaluation, PairItem } from '../pairing/pairingTypes.ts';
@@ -68,4 +69,4 @@ export const catalogPairDecision = (
 
 /** Only eligible pairs are shown; rejected and uncertain (insufficient evidence) pairs are not. */
 export const isCatalogPairEligible = (anchor: Product, candidate: Product): boolean =>
-  catalogPairDecision(anchor, candidate).outcome === 'eligible';
+  productComboRelation(anchor, candidate) !== 'hard' && catalogPairDecision(anchor, candidate).outcome === 'eligible';

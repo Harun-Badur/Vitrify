@@ -1,4 +1,5 @@
 import type { Product } from '../../../types/product.ts';
+import { productComboRelation } from '../pairing/comboGroups.ts';
 import { recommendationMemoValue, normalizedRecommendationToken } from '../../../lib/recommendationMemo.ts';
 
 export interface CatalogCompatibility {
@@ -27,7 +28,17 @@ export const catalogStyleSignal = (subcategory: string | null | undefined): stri
   STYLE_BY_SUBCATEGORY[token(subcategory ?? undefined)] ?? null;
 
 /** Soft evidence only. Remaining weights are not rescaled after price proximity was removed. */
+/** Combo groups that are weak together (sporty with dressy, ...) lose this much score; never a block. */
+export const WEAK_GROUP_PENALTY = 0.2;
+
 export const catalogCompatibility = (anchor: Product, product: Product): CatalogCompatibility => {
+  const base = catalogCompatibilityBase(anchor, product);
+  return productComboRelation(anchor, product) === 'weak'
+    ? { ...base, score: Math.max(0, base.score - WEAK_GROUP_PENALTY) }
+    : base;
+};
+
+const catalogCompatibilityBase = (anchor: Product, product: Product): CatalogCompatibility => {
   const evidence = (entry: Product) => [entry.id, entry.outfitRole, entry.colorSlugs,
     entry.brand, entry.fit, entry.subcategory];
   return recommendationMemoValue('catalogCompatibilityMemo', JSON.stringify([
