@@ -60,6 +60,7 @@ import {
 } from '../lib/motion';
 import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfCountRender, perfNow, perfPeekSwipe, perfRenderFields, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
+import { FOREGROUND_RENDER_SETTLE_MS, FOREGROUND_SWIPE_SETTLE_MS, foregroundBegin, foregroundEnd, foregroundSettle } from '../lib/foregroundGate';
 import {
   colors,
   estimateDiscoverCardHeight,
@@ -356,6 +357,8 @@ function SwipeCard({
   }, [onAddToCloset, product]);
 
   const handlePass = useCallback((): void => {
+    // The store update and the next card's render follow; the recommendation engine yields to them.
+    foregroundSettle(FOREGROUND_RENDER_SETTLE_MS);
     try {
       onPass(product);
     } catch (error) {
@@ -424,6 +427,7 @@ function SwipeCard({
   }, [onBuy, product, selectedVariantIndex]);
 
   const handleUndoPass = useCallback(async (animationId: number): Promise<void> => {
+    foregroundSettle(FOREGROUND_RENDER_SETTLE_MS);
     let restored = false;
     try {
       restored = onUndoPass !== undefined && (await onUndoPass()) !== false;
@@ -471,6 +475,13 @@ function SwipeCard({
     .activeOffsetY([-PAN_ACTIVE_OFFSET_Y_PX, PAN_ACTIVE_OFFSET_Y_PX])
     .failOffsetX([-PAN_FAIL_OFFSET_X_PX, PAN_FAIL_OFFSET_X_PX])
     .maxPointers(1)
+    // Engine slices pause while the card is dragged and thrown (moves work in time, never changes it).
+    .onBegin(() => {
+      runOnJS(foregroundBegin)();
+    })
+    .onFinalize(() => {
+      runOnJS(foregroundEnd)(FOREGROUND_SWIPE_SETTLE_MS);
+    })
     .onUpdate((event) => {
       if (hasExited.value || pinchActive.value) {
         return;

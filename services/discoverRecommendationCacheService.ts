@@ -2,6 +2,7 @@ import { measureDiscoverStage, measureDiscoverStageSync } from '../lib/discoverS
 import { begin, mark, recordCount, span } from '../lib/perfTrace';
 import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '../lib/accountDeviceWork';
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
+import { FOREGROUND_MAX_WAIT_MS, FOREGROUND_PRIORITY_MAX_WAIT_MS, waitForForeground } from '../lib/foregroundGate';
 import { getSupabaseClient } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import { perfLog, perfNow } from '../lib/perfLog';
@@ -194,6 +195,11 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
     reason: 'subscription_and_abort_handler_attached', signalAborted: controller.signal.aborted });
 
   const track = <T>(work: Promise<T>): Promise<T> => ownerId ? trackOwnerWork(ownerId, work) : work;
+  // The card on screen and the next one are needed before the next swipe: they yield to the foreground for less.
+  const foregroundCap = (product: Product): number => {
+    const index = session.preparationWindow.indexOf(product);
+    return index >= 0 && index < 2 ? FOREGROUND_PRIORITY_MAX_WAIT_MS : FOREGROUND_MAX_WAIT_MS;
+  };
   const removeDisposal = session.onDispose(stop);
   controller.signal.addEventListener('abort', removeDisposal, { once: true });
   async function pump(): Promise<void> {
@@ -247,7 +253,10 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 try {
                   const perfPrep = perfNow();
                   value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
-                    waitForTurn: () => rankings.waitForTurn(product, rankingSignal) })));
+                    waitForTurn: async () => {
+                      await rankings.waitForTurn(product, rankingSignal);
+                      await waitForForeground(rankingSignal, foregroundCap(product));
+                    } })));
                   perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep });
                 } catch (error) {
                   if (__DEV__ && !rankingSignal.aborted) trace?.cancel(product, attempt!, 'preparation_failed');
@@ -267,7 +276,8 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               if (prepared === undefined) break;
               if (!current(version)) break;
               const perfSel = perfNow();
-              result = await measureDiscoverStage('ranking.select', () => span('ranking_select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal })));
+              result = await measureDiscoverStage('ranking.select', () => span('ranking_select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal,
+                waitForTurn: () => waitForForeground(controller.signal, foregroundCap(product)) })));
               perfLog('rec_ranking_select', { ms: perfNow() - perfSel });
               // Empty-slot signal: how many complements this anchor got (0 = an empty combo).
               const complements = complementaryProductsForDisplay(result, product.id).length;
