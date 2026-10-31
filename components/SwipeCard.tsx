@@ -53,8 +53,7 @@ import { stripBrandPrefix } from '../lib/productTitle';
 import {
   CARD_SPRING_BACK,
   CARD_THROW_SPRING,
-  PAN_ACTIVE_OFFSET_Y_PX,
-  PAN_FAIL_OFFSET_X_PX,
+  resolvePanAxis,
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
@@ -237,6 +236,9 @@ function SwipeCard({
   });
 
   const [pagerWidth, setPagerWidth] = useState(CARD_WIDTH);
+  const panStartX = useSharedValue(0);
+  const panStartY = useSharedValue(0);
+  const panAxisDecided = useSharedValue(false);
   const pageWidthSV = useSharedValue(CARD_WIDTH);
   const galleryX = useSharedValue(0);
   const imageIndexSV = useSharedValue(imageIndex);
@@ -471,9 +473,23 @@ function SwipeCard({
    */
   const panGesture = Gesture.Pan()
     .enabled(isCurrent)
-    .activeOffsetY([-PAN_ACTIVE_OFFSET_Y_PX, PAN_ACTIVE_OFFSET_Y_PX])
-    .failOffsetX([-PAN_FAIL_OFFSET_X_PX, PAN_FAIL_OFFSET_X_PX])
+    .manualActivation(true)
     .maxPointers(1)
+    .onTouchesDown((event) => {
+      const touch = event.allTouches[0];
+      panStartX.value = touch.x;
+      panStartY.value = touch.y;
+      panAxisDecided.value = false;
+    })
+    .onTouchesMove((event, stateManager) => {
+      if (panAxisDecided.value) return;
+      const touch = event.allTouches[0];
+      const axis = resolvePanAxis(touch.x - panStartX.value, touch.y - panStartY.value);
+      if (axis === 'undecided') return;
+      panAxisDecided.value = true;
+      if (axis === 'vertical') stateManager.activate();
+      else stateManager.fail();
+    })
     .onUpdate((event) => {
       if (hasExited.value || pinchActive.value) {
         return;
@@ -609,7 +625,7 @@ function SwipeCard({
 
   const cardGesture = Gesture.Simultaneous(
     pinchGesture,
-    Gesture.Exclusive(doubleTapGesture, panGesture),
+    Gesture.Race(doubleTapGesture, panGesture),
   );
 
   const zoomStyle = useAnimatedStyle(() => {

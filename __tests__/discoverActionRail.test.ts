@@ -241,7 +241,7 @@ describe('SwipeCard presentation wiring (source contract)', () => {
 
   it('has no single-tap expand; pinch zoom runs alongside double tap and pan, image area only', () => {
     expect(card).not.toMatch(/singleTapGesture|setIsExpanded|<Modal/);
-    expect(card).toMatch(/Gesture\.Simultaneous\(\s*pinchGesture,\s*Gesture\.Exclusive\(doubleTapGesture, panGesture\)/);
+    expect(card).toMatch(/Gesture\.Simultaneous\(\s*pinchGesture,\s*Gesture\.Race\(doubleTapGesture, panGesture\)/);
     expect(card).toMatch(/Gesture\.Pinch\(\)/);
     expect(card).toMatch(/event\.focalY <= imageBottomSV\.value/);
     expect(card).toMatch(/event\.y > imageBottomSV\.value/);
