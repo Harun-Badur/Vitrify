@@ -91,8 +91,6 @@ const RAIL_BOTTOM_PADDING = 26;
 /** Single tap (expand) fires only after the double tap window has closed. */
 const SINGLE_TAP_DELAY_MS = 250;
 /** Horizontal gallery: activate after 6px X; fail if 12px Y first (card vertical wins). */
-const IMAGE_SWIPE_ACTIVE_OFFSET_X_PX = 6;
-const IMAGE_SWIPE_FAIL_OFFSET_Y_PX = 12;
 /** End rubber-band: excess translation ×0.3 at first/last index. */
 const IMAGE_RUBBER_BAND = 0.3;
 /** Release commit: |vX| > 500 or |tX| > width×0.25 → change index. */
@@ -239,6 +237,9 @@ function SwipeCard({
   const panStartX = useSharedValue(0);
   const panStartY = useSharedValue(0);
   const panAxisDecided = useSharedValue(false);
+  const imageStartX = useSharedValue(0);
+  const imageStartY = useSharedValue(0);
+  const imageAxisDecided = useSharedValue(false);
   const pageWidthSV = useSharedValue(CARD_WIDTH);
   const galleryX = useSharedValue(0);
   const imageIndexSV = useSharedValue(imageIndex);
@@ -640,18 +641,29 @@ function SwipeCard({
   });
 
   /**
-   * Image-only horizontal pager. Separation from card vertical via offsets only:
-   * X±6 activates gallery; Y±12 first fails so card pass/undo wins.
+   * Image-only horizontal pager. Separation from card vertical by one angle decision
+   * (resolvePanAxis) on the first move: horizontal activates gallery, vertical fails it.
    * No simultaneousHandlers / exclusive / requireExternal / blocksExternal vs vertical.
    */
   const imagePanGesture = Gesture.Pan()
     .enabled(isCurrent && imageCount > 1)
     .minPointers(1)
-    .activeOffsetX([
-      -IMAGE_SWIPE_ACTIVE_OFFSET_X_PX,
-      IMAGE_SWIPE_ACTIVE_OFFSET_X_PX,
-    ])
-    .failOffsetY([-IMAGE_SWIPE_FAIL_OFFSET_Y_PX, IMAGE_SWIPE_FAIL_OFFSET_Y_PX])
+    .manualActivation(true)
+    .onTouchesDown((event) => {
+      const touch = event.allTouches[0];
+      imageStartX.value = touch.x;
+      imageStartY.value = touch.y;
+      imageAxisDecided.value = false;
+    })
+    .onTouchesMove((event, stateManager) => {
+      if (imageAxisDecided.value) return;
+      const touch = event.allTouches[0];
+      const axis = resolvePanAxis(touch.x - imageStartX.value, touch.y - imageStartY.value);
+      if (axis === 'undecided') return;
+      imageAxisDecided.value = true;
+      if (axis === 'horizontal') stateManager.activate();
+      else stateManager.fail();
+    })
     .onUpdate((event) => {
       const width = pageWidthSV.value;
       if (!(width > 0)) {
