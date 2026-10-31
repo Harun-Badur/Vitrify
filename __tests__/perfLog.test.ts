@@ -1,4 +1,4 @@
-import { formatPerfLine, perfLog, perfMarkSwipe, perfPeekSwipe, perfTakeSwipe, perfNow } from '../lib/perfLog';
+import { formatPerfLine, perfLog, perfMarkSwipe, perfPeekSwipe, perfRouteLabel, perfTakeSwipe, perfNow } from '../lib/perfLog';
 
 describe('perfLog', () => {
   const original = (global as { __DEV__?: boolean }).__DEV__;
@@ -52,5 +52,14 @@ describe('perfLog', () => {
     perfMarkSwipe();
     expect(perfTakeSwipe()).toEqual(expect.any(Number));
     expect(perfTakeSwipe()).toBeNull();
+  });
+
+  it('maps pathnames to closed route labels without ids', () => {
+    expect(perfRouteLabel('/')).toBe('discover');
+    expect(perfRouteLabel('/liked')).toBe('favoriler');
+    expect(perfRouteLabel('/profile')).toBe('profil');
+    expect(perfRouteLabel('/wardrobe/create')).toBe('outfit_olustur');
+    expect(perfRouteLabel('/wardrobe/clothes')).toBe('dolap');
+    expect(perfRouteLabel('/something/abc-123')).toBe('diger');
   });
 });

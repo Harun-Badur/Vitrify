@@ -40,6 +40,40 @@ export const perfRenderFields = (): Record<string, number> => {
   return fields;
 };
 
+let activeRoute = 'none';
+let touchAt: number | null = null;
+
+/** Closed route labels only (never ids or query strings). */
+export const perfRouteLabel = (pathname: string): string => {
+  if (pathname === '/' || pathname === '/index') return 'discover';
+  if (pathname.startsWith('/liked')) return 'favoriler';
+  if (pathname.startsWith('/style')) return 'stil';
+  if (pathname.startsWith('/profile')) return 'profil';
+  if (pathname.startsWith('/wardrobe/create')) return 'outfit_olustur';
+  if (pathname.startsWith('/wardrobe/add')) return 'dolap_ekle';
+  if (pathname.startsWith('/wardrobe')) return 'dolap';
+  if (pathname.startsWith('/auth')) return 'auth';
+  return 'diger';
+};
+
+/** The screen the user is on, attached to every js_lag line. */
+export const perfSetRoute = (pathname: string): string => {
+  const previous = activeRoute;
+  activeRoute = perfRouteLabel(pathname);
+  return previous;
+};
+
+/** A touch began anywhere; tab/screen switch time is measured from the latest one. */
+export const perfMarkTouch = (): void => {
+  if (perfEnabled()) touchAt = performance.now();
+};
+
+/** Elapsed ms since the latest touch, or null when none was seen. */
+export const perfSinceTouch = (): number | null =>
+  perfEnabled() && touchAt !== null ? performance.now() - touchAt : null;
+
+export const perfActiveRoute = (): string => activeRoute;
+
 const LAG_INTERVAL_MS = 16;
 const LAG_THRESHOLD_MS = 50;
 let lagTimer: ReturnType<typeof setInterval> | null = null;
@@ -51,7 +85,7 @@ export const perfStartLagWatch = (): (() => void) => {
   lagTimer = setInterval(() => {
     const now = performance.now();
     const lag = now - expected;
-    if (lag > LAG_THRESHOLD_MS) perfLog('js_lag', { ms: lag, ...perfRenderFields() });
+    if (lag > LAG_THRESHOLD_MS) perfLog('js_lag', { ms: lag, route: activeRoute, ...perfRenderFields() });
     expected = now + LAG_INTERVAL_MS;
   }, LAG_INTERVAL_MS);
   return () => { if (lagTimer !== null) clearInterval(lagTimer); lagTimer = null; };
