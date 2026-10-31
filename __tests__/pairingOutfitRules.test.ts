@@ -18,6 +18,7 @@ import {
   legacy_isValidOutfitItems,
 } from './fixtures/legacyOutfitRules';
 import { b0PrimeSourcesPresent, loadB0PrimeDataset } from './fixtures/b0PrimeReplay';
+import { productComboRelation } from '../src/intelligence/pairing/comboGroups';
 
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 const assertTrue = <T extends true>(): T => true as T;
@@ -37,6 +38,22 @@ const expectSameRules = (items: readonly OutfitCandidateItem[]): void => {
     if (actual !== legacy(items)) {
       throw new Error(`${name} differs for ${JSON.stringify(items.map(item => [item.sourceType, item.sourceId, item.role]))}`);
     }
+  }
+};
+
+/**
+ * The S2 rules are frozen except for one deliberate difference: an explicit combo-group contradiction between
+ * two catalog items now makes hasHardConflict true (and so isValidOutfitItems false). Everything else must match.
+ */
+const expectSameRulesExceptComboGroups = (items: readonly OutfitCandidateItem[]): void => {
+  const products = items.flatMap(item => (item.sourceType === 'catalog' ? [item.product] : []));
+  const comboHard = products.some((a, i) => products.slice(i + 1).some(b => productComboRelation(a, b) === 'hard'));
+  for (const [name, current, legacy] of RULES) {
+    const actual = current(items), frozen = legacy(items);
+    if (actual === frozen) continue;
+    const deliberate = comboHard && ((name === 'hasHardConflict' && actual && !frozen)
+      || (name === 'isValidOutfitItems' && !actual && frozen));
+    if (!deliberate) throw new Error(`${name} differs for ${JSON.stringify(items.map(item => [item.sourceType, item.sourceId, item.role]))}`);
   }
 };
 
@@ -139,9 +156,9 @@ describeB0('outfit rules equality with the S2 engine (B0′ catalog)', () => {
       const anchor = roled(dataset.products.get(anchorId)!);
       if (!anchor) continue;
       for (const b of pool) {
-        expectSameRules([anchor, b]);
+        expectSameRulesExceptComboGroups([anchor, b]);
         compared++;
-        for (const c of pool) expectSameRules([anchor, b, c]);
+        for (const c of pool) expectSameRulesExceptComboGroups([anchor, b, c]);
       }
     }
     expect(compared).toBeGreaterThan(2000);

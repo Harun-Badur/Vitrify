@@ -2,7 +2,7 @@
  {
   "anchorId": "boyner-1294233",
   "poolInput": 80,
-  "rankedCount": 7,
+  "rankedCount": 6,
   "finalIds": [
    "wardrobe:owned-top:top",
    "catalog:boyner-15605761:bottom",
@@ -32,7 +32,7 @@
  {
   "anchorId": "boyner-15176448",
   "poolInput": 80,
-  "rankedCount": 134,
+  "rankedCount": 56,
   "finalIds": [
    "catalog:defacto-3301212:top",
    "catalog:boyner-15176448:bottom",
@@ -83,7 +83,7 @@
  {
   "anchorId": "boyner-15512075",
   "poolInput": 80,
-  "rankedCount": 1728,
+  "rankedCount": 864,
   "finalIds": [
    "catalog:defacto-3407970:top",
    "catalog:boyner-15512075:bottom",
@@ -152,7 +152,7 @@
  {
   "anchorId": "boyner-15647412",
   "poolInput": 80,
-  "rankedCount": 1720,
+  "rankedCount": 1428,
   "finalIds": [
    "catalog:defacto-3375944:top",
    "catalog:boyner-15512075:bottom",
@@ -231,11 +231,11 @@
  {
   "anchorId": "boyner-15691146",
   "poolInput": 80,
-  "rankedCount": 1920,
+  "rankedCount": 960,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:boyner-15512075:bottom",
-   "catalog:defacto-3430047:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:boyner-15775199:shoes",
    "catalog:boyner-15691146:bag",
    "catalog:defacto-3374143:hat",
@@ -256,8 +256,8 @@
     "kahverengi",
     "siyah"
    ],
-   "compatibilityScore": 0.225,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "compatibilityScore": 0.20000000000000004,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3407970",
@@ -382,7 +382,7 @@
  {
   "anchorId": "boyner-15775199",
   "poolInput": 80,
-  "rankedCount": 1536,
+  "rankedCount": 2112,
   "finalIds": [
    "catalog:defacto-3407970:top",
    "catalog:defacto-3355637:bottom",
@@ -548,7 +548,7 @@
  {
   "anchorId": "boyner-15891188",
   "poolInput": 80,
-  "rankedCount": 288,
+  "rankedCount": 144,
   "finalIds": [
    "catalog:boyner-15891188:one_piece",
    "catalog:boyner-15647412:outerwear",
@@ -572,7 +572,7 @@
     "siyah"
    ],
    "compatibilityScore": 0.15999999999999998,
-   "id": "[[\"catalog\",\"boyner-15891188\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"boyner-15891188\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-2723671",
@@ -583,7 +583,7 @@
  {
   "anchorId": "boyner-15896249",
   "poolInput": 80,
-  "rankedCount": 384,
+  "rankedCount": 216,
   "finalIds": [
    "catalog:boyner-15896249:one_piece",
    "catalog:boyner-15647412:outerwear",
@@ -607,7 +607,7 @@
     "siyah"
    ],
    "compatibilityScore": 0.175,
-   "id": "[[\"catalog\",\"boyner-15896249\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"boyner-15896249\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-2723671",
@@ -812,11 +812,11 @@
  {
   "anchorId": "defacto-2338282",
   "poolInput": 80,
-  "rankedCount": 2160,
+  "rankedCount": 1080,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -835,7 +835,7 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2338282\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2338282\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -846,11 +846,11 @@
  {
   "anchorId": "defacto-2339010",
   "poolInput": 80,
-  "rankedCount": 2160,
+  "rankedCount": 1080,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -869,7 +869,7 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -880,14 +880,14 @@
  {
   "anchorId": "defacto-2723671",
   "poolInput": 80,
-  "rankedCount": 1536,
+  "rankedCount": 1152,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
    "catalog:defacto-3430184:outerwear",
    "catalog:defacto-2723671:shoes",
    "catalog:defacto-3425820:bag",
-   "catalog:defacto-3374143:hat",
+   "catalog:defacto-3375205:hat",
    "catalog:defacto-2339010:accessory"
   ],
   "displayIds": [
@@ -905,7 +905,7 @@
     "kahverengi"
    ],
    "compatibilityScore": 0.19999999999999998,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -916,11 +916,11 @@
  {
   "anchorId": "defacto-2805797",
   "poolInput": 80,
-  "rankedCount": 96,
+  "rankedCount": 72,
   "finalIds": [
    "wardrobe:owned-top:top",
    "catalog:defacto-2805797:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "wardrobe:owned-shoes:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -942,7 +942,7 @@
    ],
    "sharedColors": [],
    "compatibilityScore": 0.1,
-   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-2805797\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-2805797\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3319753",
@@ -953,10 +953,10 @@
  {
   "anchorId": "defacto-2827545",
   "poolInput": 80,
-  "rankedCount": 288,
+  "rankedCount": 144,
   "finalIds": [
    "catalog:defacto-2827545:one_piece",
-   "catalog:defacto-3430047:outerwear",
+   "catalog:boyner-15647412:outerwear",
    "catalog:boyner-15775199:shoes",
    "catalog:boyner-15691146:bag",
    "catalog:defacto-3374143:hat",
@@ -964,8 +964,8 @@
   ],
   "displayIds": [
    "boyner-15775199",
-   "defacto-3430047",
-   "boyner-15691146"
+   "boyner-15691146",
+   "boyner-15647412"
   ],
   "firstRankValue": {
    "validRoles": true,
@@ -974,25 +974,25 @@
    "optionalRoleCount": 5,
    "sharedStyleTags": [],
    "sharedColors": [
-    "siyah",
+    "desenli",
     "yesil"
    ],
-   "compatibilityScore": 0.27999999999999997,
-   "id": "[[\"catalog\",\"defacto-2827545\",\"one_piece\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"boyner-15775199\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "compatibilityScore": 0.26,
+   "id": "[[\"catalog\",\"defacto-2827545\",\"one_piece\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"boyner-15775199\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "boyner-15775199",
-   "defacto-3430047",
+   "defacto-2339010",
    "boyner-15691146"
   ]
  },
  {
   "anchorId": "defacto-2843240",
   "poolInput": 80,
-  "rankedCount": 288,
+  "rankedCount": 144,
   "finalIds": [
    "catalog:defacto-2843240:one_piece",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -1011,7 +1011,7 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-2843240\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-2843240\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-2723671",
@@ -1089,11 +1089,11 @@
  {
   "anchorId": "defacto-3148996",
   "poolInput": 80,
-  "rankedCount": 96,
+  "rankedCount": 72,
   "finalIds": [
    "wardrobe:owned-top:top",
    "catalog:defacto-3148996:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "wardrobe:owned-shoes:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -1115,7 +1115,7 @@
    ],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3148996\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"catalog\",\"defacto-3148996\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3319753",
@@ -1126,11 +1126,11 @@
  {
   "anchorId": "defacto-3157599",
   "poolInput": 80,
-  "rankedCount": 1728,
+  "rankedCount": 864,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3157599:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -1151,7 +1151,7 @@
     "kahverengi"
    ],
    "compatibilityScore": 0.19999999999999998,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3157599\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3157599\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -1229,11 +1229,11 @@
  {
   "anchorId": "defacto-3255037",
   "poolInput": 80,
-  "rankedCount": 2152,
+  "rankedCount": 1096,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:boyner-15691146:bag",
    "catalog:defacto-3374143:hat",
@@ -1242,7 +1242,7 @@
   "displayIds": [
    "defacto-3353900",
    "defacto-3339043",
-   "defacto-3430184"
+   "boyner-15709212"
   ],
   "firstRankValue": {
    "validRoles": true,
@@ -1254,22 +1254,22 @@
     "kahverengi"
    ],
    "compatibilityScore": 0.3333333333333333,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3353900",
    "defacto-2723671",
-   "boyner-15709212"
+   "defacto-3430184"
   ]
  },
  {
   "anchorId": "defacto-3277298",
   "poolInput": 80,
-  "rankedCount": 72,
+  "rankedCount": 48,
   "finalIds": [
    "wardrobe:owned-top:top",
    "catalog:defacto-3321495:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15647412:outerwear",
    "wardrobe:owned-shoes:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -1291,7 +1291,7 @@
    ],
    "sharedColors": [],
    "compatibilityScore": 0.20000000000000004,
-   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"wardrobe\",\"owned-bottom\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-3277298\",\"accessory\"]]"
+   "id": "[[\"wardrobe\",\"owned-top\",\"top\"],[\"wardrobe\",\"owned-bottom\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"wardrobe\",\"owned-shoes\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-3277298\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3148996",
@@ -1335,19 +1335,19 @@
  {
   "anchorId": "defacto-3287771",
   "poolInput": 80,
-  "rankedCount": 2304,
+  "rankedCount": 1152,
   "finalIds": [
    "catalog:defacto-3287771:top",
    "catalog:defacto-3353900:bottom",
    "catalog:boyner-15647412:outerwear",
-   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-2723671:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
    "catalog:defacto-2339010:accessory"
   ],
   "displayIds": [
    "defacto-3353900",
-   "defacto-3339043",
+   "defacto-2723671",
    "boyner-15647412"
   ],
   "firstRankValue": {
@@ -1358,18 +1358,18 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2333333333333333,
-   "id": "[[\"catalog\",\"defacto-3287771\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3287771\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3355637",
-   "defacto-2723671",
+   "boyner-15775199",
    "boyner-15647412"
   ]
  },
  {
   "anchorId": "defacto-3287863",
   "poolInput": 80,
-  "rankedCount": 178,
+  "rankedCount": 154,
   "finalIds": [
    "catalog:boyner-15714044:top",
    "catalog:defacto-3403514:bottom",
@@ -1466,11 +1466,11 @@
  {
   "anchorId": "defacto-3300417",
   "poolInput": 80,
-  "rankedCount": 1920,
+  "rankedCount": 960,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3300417:bag",
    "catalog:defacto-3374143:hat",
@@ -1489,7 +1489,7 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3300417\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3300417\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -1568,11 +1568,11 @@
  {
   "anchorId": "defacto-3319753",
   "poolInput": 80,
-  "rankedCount": 2160,
+  "rankedCount": 1080,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -1591,7 +1591,7 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-3319753\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-3319753\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -1631,19 +1631,19 @@
  {
   "anchorId": "defacto-3321495",
   "poolInput": 80,
-  "rankedCount": 1728,
+  "rankedCount": 864,
   "finalIds": [
    "catalog:defacto-3415590:top",
    "catalog:defacto-3321495:bottom",
-   "catalog:defacto-3430047:outerwear",
-   "catalog:defacto-3339043:shoes",
+   "catalog:boyner-15647412:outerwear",
+   "catalog:boyner-15775199:shoes",
    "catalog:boyner-15691146:bag",
    "catalog:defacto-3374143:hat",
    "catalog:defacto-2339010:accessory"
   ],
   "displayIds": [
    "defacto-3415590",
-   "defacto-3339043",
+   "boyner-15775199",
    "boyner-15691146"
   ],
   "firstRankValue": {
@@ -1656,19 +1656,19 @@
     "navy",
     "siyah"
    ],
-   "compatibilityScore": 0.3083333333333333,
-   "id": "[[\"catalog\",\"defacto-3415590\",\"top\"],[\"catalog\",\"defacto-3321495\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "compatibilityScore": 0.2833333333333333,
+   "id": "[[\"catalog\",\"defacto-3415590\",\"top\"],[\"catalog\",\"defacto-3321495\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3415590",
    "boyner-15775199",
-   "defacto-3430184"
+   "boyner-15691146"
   ]
  },
  {
   "anchorId": "defacto-3330365",
   "poolInput": 80,
-  "rankedCount": 288,
+  "rankedCount": 144,
   "finalIds": [
    "catalog:defacto-3330365:one_piece",
    "catalog:boyner-15647412:outerwear",
@@ -1696,18 +1696,18 @@
   },
   "exposedFinalIds": [
    "boyner-15775199",
-   "defacto-3430047",
-   "boyner-15691146"
+   "boyner-15647412",
+   "defacto-2339010"
   ]
  },
  {
   "anchorId": "defacto-3339043",
   "poolInput": 80,
-  "rankedCount": 1536,
+  "rankedCount": 1120,
   "finalIds": [
    "catalog:defacto-3407970:top",
    "catalog:defacto-3355637:bottom",
-   "catalog:defacto-3430047:outerwear",
+   "catalog:boyner-15647412:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:boyner-15691146:bag",
    "catalog:defacto-3374143:hat",
@@ -1725,26 +1725,25 @@
    "optionalRoleCount": 5,
    "sharedStyleTags": [],
    "sharedColors": [
-    "navy",
-    "siyah"
+    "bej"
    ],
-   "compatibilityScore": 0.28333333333333327,
-   "id": "[[\"catalog\",\"defacto-3415590\",\"top\"],[\"catalog\",\"defacto-3355637\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "compatibilityScore": 0.26666666666666666,
+   "id": "[[\"catalog\",\"defacto-3375944\",\"top\"],[\"catalog\",\"defacto-3355637\",\"bottom\"],[\"catalog\",\"boyner-15647412\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3375944",
-   "defacto-3321495",
-   "defacto-3430047"
+   "defacto-3355637",
+   "boyner-15691146"
   ]
  },
  {
   "anchorId": "defacto-3353900",
   "poolInput": 80,
-  "rankedCount": 1728,
+  "rankedCount": 864,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:boyner-15691146:bag",
    "catalog:defacto-3374143:hat",
@@ -1753,7 +1752,7 @@
   "displayIds": [
    "defacto-3255037",
    "defacto-3339043",
-   "defacto-3430184"
+   "boyner-15709212"
   ],
   "firstRankValue": {
    "validRoles": true,
@@ -1765,18 +1764,18 @@
     "kahverengi"
    ],
    "compatibilityScore": 0.3333333333333333,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3255037",
    "defacto-2723671",
-   "boyner-15709212"
+   "defacto-3430184"
   ]
  },
  {
   "anchorId": "defacto-3355637",
   "poolInput": 80,
-  "rankedCount": 96,
+  "rankedCount": 72,
   "finalIds": [
    "wardrobe:owned-top:top",
    "catalog:defacto-3355637:bottom",
@@ -1813,11 +1812,11 @@
  {
   "anchorId": "defacto-3374143",
   "poolInput": 80,
-  "rankedCount": 2880,
+  "rankedCount": 3816,
   "finalIds": [
    "catalog:defacto-3255037:top",
-   "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:defacto-3416588:bottom",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -1825,7 +1824,7 @@
   ],
   "displayIds": [
    "defacto-3255037",
-   "defacto-3353900",
+   "defacto-3416588",
    "defacto-3339043"
   ],
   "firstRankValue": {
@@ -1834,33 +1833,35 @@
    "missingCoreRoles": [],
    "optionalRoleCount": 5,
    "sharedStyleTags": [],
-   "sharedColors": [],
-   "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "sharedColors": [
+    "kahverengi"
+   ],
+   "compatibilityScore": 0.18333333333333332,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3416588\",\"bottom\"],[\"catalog\",\"boyner-15709212\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
-   "defacto-3321495",
+   "defacto-3353900",
    "defacto-2723671"
   ]
  },
  {
   "anchorId": "defacto-3375205",
   "poolInput": 80,
-  "rankedCount": 2880,
+  "rankedCount": 2952,
   "finalIds": [
    "catalog:defacto-3255037:top",
-   "catalog:defacto-3353900:bottom",
+   "catalog:defacto-3416588:bottom",
    "catalog:defacto-3430184:outerwear",
-   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-2723671:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3375205:hat",
    "catalog:defacto-2339010:accessory"
   ],
   "displayIds": [
    "defacto-3255037",
-   "defacto-3353900",
-   "defacto-3339043"
+   "defacto-3416588",
+   "defacto-2723671"
   ],
   "firstRankValue": {
    "validRoles": true,
@@ -1870,12 +1871,12 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
-   "defacto-3321495",
-   "defacto-2723671"
+   "defacto-3353900",
+   "boyner-15775199"
   ]
  },
  {
@@ -1915,7 +1916,7 @@
  {
   "anchorId": "defacto-3375353",
   "poolInput": 80,
-  "rankedCount": 77,
+  "rankedCount": 75,
   "finalIds": [
    "catalog:defacto-3376033:top",
    "catalog:defacto-3419058:bottom",
@@ -1948,7 +1949,7 @@
  {
   "anchorId": "defacto-3375944",
   "poolInput": 80,
-  "rankedCount": 96,
+  "rankedCount": 72,
   "finalIds": [
    "catalog:defacto-3375944:top",
    "wardrobe:owned-bottom:bottom",
@@ -2019,7 +2020,7 @@
  {
   "anchorId": "defacto-3377134",
   "poolInput": 80,
-  "rankedCount": 77,
+  "rankedCount": 75,
   "finalIds": [
    "catalog:defacto-3376033:top",
    "catalog:defacto-3419058:bottom",
@@ -2085,7 +2086,7 @@
  {
   "anchorId": "defacto-3407970",
   "poolInput": 80,
-  "rankedCount": 2288,
+  "rankedCount": 1136,
   "finalIds": [
    "catalog:defacto-3407970:top",
    "catalog:defacto-3353900:bottom",
@@ -2119,7 +2120,7 @@
  {
   "anchorId": "defacto-3407972",
   "poolInput": 80,
-  "rankedCount": 96,
+  "rankedCount": 72,
   "finalIds": [
    "catalog:defacto-3407972:top",
    "wardrobe:owned-bottom:bottom",
@@ -2164,7 +2165,7 @@
  {
   "anchorId": "defacto-3415590",
   "poolInput": 80,
-  "rankedCount": 2024,
+  "rankedCount": 936,
   "finalIds": [
    "catalog:defacto-3415590:top",
    "catalog:defacto-3355637:bottom",
@@ -2200,11 +2201,11 @@
  {
   "anchorId": "defacto-3416588",
   "poolInput": 80,
-  "rankedCount": 1728,
+  "rankedCount": 864,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3416588:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -2225,7 +2226,7 @@
     "kahverengi"
    ],
    "compatibilityScore": 0.19999999999999998,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3416588\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3416588\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -2294,11 +2295,11 @@
  {
   "anchorId": "defacto-3425820",
   "poolInput": 80,
-  "rankedCount": 1920,
+  "rankedCount": 960,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
-   "catalog:defacto-3430184:outerwear",
+   "catalog:boyner-15709212:outerwear",
    "catalog:defacto-3339043:shoes",
    "catalog:defacto-3425820:bag",
    "catalog:defacto-3374143:hat",
@@ -2317,7 +2318,7 @@
    "sharedStyleTags": [],
    "sharedColors": [],
    "compatibilityScore": 0.2,
-   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3330365\",\"one_piece\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"defacto-3425820\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3287771",
@@ -2395,20 +2396,20 @@
  {
   "anchorId": "defacto-3430047",
   "poolInput": 80,
-  "rankedCount": 2160,
+  "rankedCount": 636,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
    "catalog:defacto-3430047:outerwear",
-   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-2723671:shoes",
    "catalog:boyner-15691146:bag",
-   "catalog:defacto-3374143:hat",
+   "catalog:defacto-3375205:hat",
    "catalog:defacto-2339010:accessory"
   ],
   "displayIds": [
    "defacto-3255037",
    "defacto-3353900",
-   "defacto-3339043"
+   "defacto-2723671"
   ],
   "firstRankValue": {
    "validRoles": true,
@@ -2420,13 +2421,13 @@
     "kahverengi",
     "siyah"
    ],
-   "compatibilityScore": 0.3083333333333333,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "compatibilityScore": 0.28333333333333327,
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430047\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3407970",
    "defacto-3355637",
-   "boyner-15775199"
+   "defacto-2723671"
   ]
  },
  {
@@ -2462,20 +2463,20 @@
  {
   "anchorId": "defacto-3430184",
   "poolInput": 80,
-  "rankedCount": 2000,
+  "rankedCount": 604,
   "finalIds": [
    "catalog:defacto-3255037:top",
    "catalog:defacto-3353900:bottom",
    "catalog:defacto-3430184:outerwear",
-   "catalog:defacto-3339043:shoes",
+   "catalog:defacto-2723671:shoes",
    "catalog:boyner-15691146:bag",
-   "catalog:defacto-3374143:hat",
+   "catalog:defacto-3375205:hat",
    "catalog:defacto-2339010:accessory"
   ],
   "displayIds": [
    "defacto-3255037",
    "defacto-3353900",
-   "defacto-3339043"
+   "defacto-2723671"
   ],
   "firstRankValue": {
    "validRoles": true,
@@ -2487,7 +2488,7 @@
     "kahverengi"
    ],
    "compatibilityScore": 0.3083333333333333,
-   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-3339043\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3374143\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
+   "id": "[[\"catalog\",\"defacto-3255037\",\"top\"],[\"catalog\",\"defacto-3353900\",\"bottom\"],[\"catalog\",\"defacto-3430184\",\"outerwear\"],[\"catalog\",\"defacto-2723671\",\"shoes\"],[\"catalog\",\"boyner-15691146\",\"bag\"],[\"catalog\",\"defacto-3375205\",\"hat\"],[\"catalog\",\"defacto-2339010\",\"accessory\"]]"
   },
   "exposedFinalIds": [
    "defacto-3255037",
@@ -2531,7 +2532,7 @@
  {
   "anchorId": "defacto-3430230",
   "poolInput": 80,
-  "rankedCount": 174,
+  "rankedCount": 154,
   "finalIds": [
    "catalog:defacto-3292577:top",
    "catalog:defacto-3403514:bottom",
