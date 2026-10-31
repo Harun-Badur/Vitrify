@@ -73,7 +73,8 @@ export const runCooperatively = async <T>(
   const diagnostic = __DEV__ ? options.diagnosticStage : undefined;
   const totalStarted = diagnostic ? performance.now() : 0;
   let cpuMs = 0, maxSliceMs = 0, completed = false, slices = 0, perfCpuMs = 0;
-  const perfStarted = perfEnabled() ? performance.now() : 0;
+  // Measurement reuses the clock reads the scheduler already makes; it adds none of its own.
+  let perfStarted = -1, lastRead = 0;
   try {
     await yieldToHost(signal);
     for (;;) {
@@ -81,15 +82,18 @@ export const runCooperatively = async <T>(
       checkAbort(signal);
       const budget = Math.max(1, options.sliceBudgetMs?.() ?? options.budgetMs ?? 4);
       const started = performance.now();
+      lastRead = started;
+      if (perfStarted < 0) perfStarted = started;
       try {
         for (;;) {
           const step = withRecommendationMemo(options.recommendationMemo, () => work.next());
           if (step.done) { completed = true; return step.value; }
-          if (performance.now() - started >= budget) break;
+          lastRead = performance.now();
+          if (lastRead - started >= budget) break;
         }
       } finally {
         if (perfEnabled()) {
-          const sliceMs = performance.now() - started;
+          const sliceMs = lastRead - started;
           slices += 1;
           perfCpuMs += sliceMs;
           if (sliceMs > 30) perfLog('rec_slice', { ms: sliceMs, stage: options.diagnosticStage ?? 'none' });
@@ -104,7 +108,7 @@ export const runCooperatively = async <T>(
   } finally {
     if (perfEnabled() && completed) {
       perfLog('rec_cpu', { stage: options.diagnosticStage ?? 'none', cpu: perfCpuMs,
-        wall: performance.now() - perfStarted, slices });
+        wall: lastRead - perfStarted, slices });
     }
     if (diagnostic) {
       const elapsed = performance.now() - totalStarted;
