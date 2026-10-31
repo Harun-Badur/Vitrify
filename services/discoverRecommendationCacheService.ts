@@ -210,9 +210,13 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
           if (!current(version)) break;
           // Shown/pinned anchors keep their final result, including undo.
           if (session.shown.has(product.id) && session.lookup(product) !== undefined) continue;
+          const perfCtx = perfNow();
           const anchor = repository.register([product])[0];
           let context = anchorContext(catalog, anchor, request.wardrobeItems, exposure);
+          perfLog('rec_context', { ms: perfNow() - perfCtx });
+          const perfKey = perfNow();
           let finalKey = measureDiscoverStageSync('cache.key', () => createFinalCacheKey(context));
+          perfLog('rec_final_key', { ms: perfNow() - perfKey });
           const finalHit = memory.getFinal(finalKey);
           if (__DEV__ && finalHit.status === 'hit') discoverPrefetchTrace(session).stage(product, 'finalReadyAt', 'final_memory_hit');
           let result = finalHit.status === 'hit' ? finalHit.value : undefined;

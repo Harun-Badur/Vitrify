@@ -1,4 +1,5 @@
 import { recordDiscoverStage } from '../../lib/discoverStageTiming';
+import { perfEnabled, perfLog } from '../../lib/perfLog';
 import { withRecommendationMemo, type RecommendationMemo } from '../../lib/recommendationMemo';
 
 export interface CooperativeWorkOptions {
@@ -86,6 +87,10 @@ export const runCooperatively = async <T>(
           if (performance.now() - started >= budget) break;
         }
       } finally {
+        if (perfEnabled()) {
+          const sliceMs = performance.now() - started;
+          if (sliceMs > 30) perfLog('rec_slice', { ms: sliceMs, stage: options.diagnosticStage ?? 'none' });
+        }
         if (diagnostic) {
           const elapsed = performance.now() - started;
           cpuMs += elapsed; maxSliceMs = Math.max(maxSliceMs, elapsed);
