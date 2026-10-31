@@ -507,6 +507,16 @@ export default function FeedScreen() {
     setRefreshEmpty(result === 'empty');
   }, [deckRefresher]);
 
+  useEffect(() => {
+    // The current deck is kept on a timeout; offer to refresh it.
+    if (feedWarning === 'FEED_TIMEOUT' && feedStatus === 'success') {
+      Alert.alert('Ürünler geç yüklendi', 'Mevcut öneriler gösteriliyor.', [
+        { text: 'Tamam', style: 'cancel' },
+        { text: 'Tekrar dene', onPress: () => { void handleDeckRefresh(); } },
+      ]);
+    }
+  }, [feedWarning, feedStatus, handleDeckRefresh]);
+
   const passedCount = useAppStore((state) => state.passedProductIds.length);
   const handleResurfacePassed = useCallback((): void => {
     resurfacePassed(useAppStore.getState().passedProductIds);
@@ -961,7 +971,9 @@ export default function FeedScreen() {
           <LoadingFeed />
         ) : !hasDeck && feedStatus === 'error' ? (
           <DeckFinishedCard
-            subtitle="Ürünler yüklenemedi. Bağlantını kontrol edip tekrar dene."
+            subtitle={feedWarning === 'FEED_TIMEOUT'
+              ? 'Ürünler geç yüklendi. Tekrar dene.'
+              : 'Ürünler yüklenemedi. Bağlantını kontrol edip tekrar dene.'}
             onRefresh={handleDeckRefresh}
             refreshing={refreshing}
             onResurfacePassed={resurfaceHandler}

@@ -57,7 +57,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
-import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfCountRender, perfNow, perfPeekSwipe, perfRenderFields, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
+import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfCountRender, perfMeasuring, perfNow, perfPeekSwipe, perfRenderFields, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
   colors,
@@ -748,7 +748,7 @@ function SwipeCard({
 
   useEffect(() => {
     // The next card's image may have loaded while it was still a neighbour.
-    if (!perfEnabled() || !isCurrent) return;
+    if (!perfMeasuring() || !isCurrent) return;
     const toCurrent = perfPeekSwipe();
     if (toCurrent !== null) perfLog('swipe_to_is_current', { ms: toCurrent, ...perfRenderFields() });
     if (!perfHasPendingSwipe() || !perfLoadedRef.current.has(0)) return;
@@ -764,7 +764,7 @@ function SwipeCard({
   }, [imageIndex]);
 
   const handleImageLoad = useCallback((): void => {
-    if (perfEnabled()) {
+    if (perfMeasuring()) {
       const started = perfLoadStartRef.current;
       perfLoadedRef.current.add(imageIndex);
       if (started && started.index === imageIndex && isCurrent) {

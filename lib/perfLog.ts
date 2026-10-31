@@ -12,16 +12,47 @@ let coldStartLogged = false;
 
 export const perfEnabled = (): boolean => __DEV__ || process.env.EXPO_PUBLIC_PERF_LOG === '1';
 
+type SpanSink = (name: string, ms: number, attributes: Record<string, number | boolean | string>) => void;
+let spanSink: SpanSink | null = null;
+
+/** Installed by lib/sentry.ts for sampled sessions only; null otherwise. Console logging is unaffected. */
+export const perfSetSpanSink = (sink: SpanSink | null): void => { spanSink = sink; };
+
+/** Timing is taken for the [PERF] logs or, in sampled sessions, for Sentry spans. */
+export const perfMeasuring = (): boolean => perfEnabled() || spanSink !== null;
+
+// perfLog tag -> Sentry span name, and the closed attribute set each span may carry.
+const SPAN_TAGS: Readonly<Record<string, { name: string; attributes: readonly string[] }>> = {
+  swipe_to_next_image: { name: 'swipe_to_next', attributes: ['cached'] },
+  rec_ranking_prepare: { name: 'rec_ranking_prepare', attributes: ['gender'] },
+  feed_call: { name: 'feed_call', attributes: ['n'] },
+  deck_refresh: { name: 'deck_refresh', attributes: ['n'] },
+};
+
+const emitSpan = (tag: string, fields: Record<string, PerfValue>): void => {
+  const spec = SPAN_TAGS[tag];
+  const ms = fields.ms;
+  if (spanSink === null || !spec || typeof ms !== 'number' || !Number.isFinite(ms) || ms < 0) return;
+  const attributes: Record<string, PerfValue> = {};
+  for (const key of spec.attributes) if (key in fields) attributes[key] = fields[key];
+  try { spanSink(spec.name, ms, attributes); } catch { /* Measurement cannot fail work. */ }
+};
+
+/** Closed gender label for the product preference (matches the recs_feed log). */
+export const perfGenderLabel = (preference: string | null | undefined): 'kadin' | 'erkek' | 'tumu' =>
+  preference === 'kadin' ? 'kadin' : preference === 'erkek' ? 'erkek' : 'tumu';
+
 // Captured at module load; performance.now() can be epoch-based on some runtimes, so subtract it.
 const moduleLoadedAt: number = perfEnabled() ? performance.now() : 0;
 
-export const perfNow = (): number => (perfEnabled() ? performance.now() : 0);
+export const perfNow = (): number => (perfMeasuring() ? performance.now() : 0);
 
 export const formatPerfLine = (tag: string, fields: Record<string, PerfValue>): string =>
   `[PERF] ${tag}${Object.entries(fields).map(([key, value]) =>
     ` ${key}=${typeof value === 'number' ? Math.round(value) : value}`).join('')}`;
 
 export const perfLog = (tag: string, fields: Record<string, PerfValue>): void => {
+  emitSpan(tag, fields);
   if (!perfEnabled()) return;
   try { console.log(formatPerfLine(tag, fields)); } catch { /* Measurement cannot fail work. */ }
 };
@@ -93,40 +124,40 @@ export const perfStartLagWatch = (): (() => void) => {
 
 /** A swipe committed; the next card's first image time is measured from here. */
 export const perfMarkSwipe = (): void => {
-  if (!perfEnabled()) return;
+  if (!perfMeasuring()) return;
   swipeAt = performance.now();
   for (const name of Object.keys(renderCounts)) renderCounts[name] = 0;
 };
 
 /** Elapsed ms since the pending swipe without clearing it; null when none is pending. */
 export const perfPeekSwipe = (): number | null =>
-  perfEnabled() && swipeAt !== null ? performance.now() - swipeAt : null;
+  perfMeasuring() && swipeAt !== null ? performance.now() - swipeAt : null;
 
 /** Elapsed ms since the pending swipe, clearing it; null when none is pending. */
 export const perfTakeSwipe = (): number | null => {
-  if (!perfEnabled() || swipeAt === null) return null;
+  if (!perfMeasuring() || swipeAt === null) return null;
   const elapsed = performance.now() - swipeAt;
   swipeAt = null;
   return elapsed;
 };
 
-export const perfHasPendingSwipe = (): boolean => perfEnabled() && swipeAt !== null;
+export const perfHasPendingSwipe = (): boolean => perfMeasuring() && swipeAt !== null;
 
 /** A deck refresh started; the store publication and first card image are timed after it. */
 export const perfArmRefresh = (): void => {
-  if (!perfEnabled()) return;
+  if (!perfMeasuring()) return;
   refreshArmed = true;
   refreshStoreSetAt = null;
 };
 
 /** The feed result was published to the store (only counts while a refresh is armed). */
 export const perfRefreshStoreSet = (): void => {
-  if (perfEnabled() && refreshArmed && refreshStoreSetAt === null) refreshStoreSetAt = performance.now();
+  if (perfMeasuring() && refreshArmed && refreshStoreSetAt === null) refreshStoreSetAt = performance.now();
 };
 
 /** Elapsed ms from the refresh store publication to the first card image, clearing it; null otherwise. */
 export const perfTakeRefreshImage = (): number | null => {
-  if (!perfEnabled() || !refreshArmed || refreshStoreSetAt === null) return null;
+  if (!perfMeasuring() || !refreshArmed || refreshStoreSetAt === null) return null;
   const elapsed = performance.now() - refreshStoreSetAt;
   refreshArmed = false;
   refreshStoreSetAt = null;

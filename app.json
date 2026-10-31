@@ -63,6 +63,12 @@
           "color": "#FE382B"
         }
       ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/"
+        }
+      ],
       "expo-router",
       "expo-image",
       "expo-status-bar",

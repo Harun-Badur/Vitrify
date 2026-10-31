@@ -1,8 +1,9 @@
 const path = require('path');
-const { getDefaultConfig } = require('expo/metro-config');
+const { getSentryExpoConfig } = require('@sentry/react-native/metro');
 
+// Same as expo's default config, plus debug ids so uploaded source maps match release bundles.
 /** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(__dirname);
+const config = getSentryExpoConfig(__dirname);
 
 const sourceExts = config.resolver.sourceExts ?? [];
 if (!sourceExts.includes('mjs')) {
