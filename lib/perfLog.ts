@@ -6,6 +6,8 @@ type PerfValue = number | string | boolean;
 
 let swipeAt: number | null = null;
 let coldStartLogged = false;
+// Captured at module load; performance.now() can be epoch-based on some runtimes, so subtract it.
+const moduleLoadedAt: number = __DEV__ ? performance.now() : 0;
 
 export const perfNow = (): number => (__DEV__ ? performance.now() : 0);
 
@@ -37,5 +39,5 @@ export const perfHasPendingSwipe = (): boolean => __DEV__ && swipeAt !== null;
 export const perfColdStartFirstCard = (): void => {
   if (!__DEV__ || coldStartLogged) return;
   coldStartLogged = true;
-  perfLog('cold_start_to_first_card', { ms: performance.now() });
+  perfLog('cold_start_to_first_card', { ms: performance.now() - moduleLoadedAt });
 };
