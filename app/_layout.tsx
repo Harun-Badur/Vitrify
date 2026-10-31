@@ -4,6 +4,7 @@ import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppErrorBoundary from '../components/AppErrorBoundary';
+import SentryNavigationProbe from '../components/SentryNavigationProbe';
 import OnboardingScreen from '../components/OnboardingScreen';
 import ProductPrefChoiceScreen from '../components/ProductPrefChoiceScreen';
 import { AuthProvider, useAuthContext } from '../hooks/useAuthContext';
@@ -202,6 +203,7 @@ export default function RootLayout() {
           <PremiumProvider>
             <AnalyticsRuntime />
             <PerfRouteProbe />
+            <SentryNavigationProbe />
             <RootNavigator />
           </PremiumProvider>
         </AuthProvider>
