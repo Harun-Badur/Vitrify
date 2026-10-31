@@ -49,14 +49,14 @@ jest.mock('../components/DiscoverProductImage', () => ({
 jest.mock('react-native-gesture-handler', () => {
   const builder = (): Record<string, jest.Mock> => {
     const chain: Record<string, jest.Mock> = {};
-    for (const method of ['enabled', 'activeOffsetY', 'failOffsetX', 'onUpdate', 'onEnd',
+    for (const method of ['enabled', 'activeOffsetY', 'failOffsetX', 'manualActivation', 'onTouchesDown', 'onTouchesMove', 'onUpdate', 'onEnd',
       'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'requireExternalGestureToFail', 'maxDelay', 'minPointers', 'maxPointers', 'onStart', 'onFinalize', 'activeOffsetX', 'failOffsetY']) {
       chain[method] = jest.fn(() => chain);
     }
     return chain;
   };
   return { GestureDetector: 'GestureDetector', Gesture: {
-    Pan: builder, Tap: jest.fn(builder), Native: builder, Pinch: jest.fn(builder), Exclusive: jest.fn(), Simultaneous: jest.fn(),
+    Pan: builder, Tap: jest.fn(builder), Native: builder, Pinch: jest.fn(builder), Race: jest.fn(), Simultaneous: jest.fn(),
   } };
 });
 jest.mock('react-native-reanimated', () => ({
@@ -90,7 +90,7 @@ describe('SwipeCard exit animation ownership', () => {
   let tree: ReturnType<typeof renderer.create>;
   let props: SwipeCardProps;
   const pan = () => {
-    const calls = jest.mocked(Gesture.Exclusive).mock.calls;
+    const calls = jest.mocked(Gesture.Race).mock.calls;
     return calls[calls.length - 1][1] as unknown as { onEnd: jest.Mock; onUpdate: jest.Mock };
   };
   const end = (direction: 'pass' | 'undo') => pan().onEnd.mock.calls[0][0]({
@@ -225,8 +225,8 @@ describe('SwipeCard exit animation ownership', () => {
     expect(Gesture.Pinch).toHaveBeenCalled();
     const [pinch, group] = jest.mocked(Gesture.Simultaneous).mock.calls.pop() as unknown[];
     expect(pinch).toBeDefined();
-    expect(group).toBeUndefined(); // Exclusive(double, pan) is a nested child; the mock returns nothing.
-    expect(jest.mocked(Gesture.Exclusive)).toHaveBeenCalled();
+    expect(group).toBeUndefined(); // Race(double, pan) is a nested child; the mock returns nothing.
+    expect(jest.mocked(Gesture.Race)).toHaveBeenCalled();
     const double = taps.filter(chain => chain.numberOfTaps.mock.calls[0]?.[0] === 2).pop()!;
     await renderer.act(() => { double.onEnd.mock.calls[0][0]({ y: 620 }); });
     expect(props.onAddToCloset).not.toHaveBeenCalled();

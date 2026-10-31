@@ -39,6 +39,27 @@ export const PAN_ACTIVE_OFFSET_Y_PX = 8;
  * Yatay galeri activeOffsetX (±6) ile simetrik ayrım — yalnız fail/activeOffset.
  */
 export const PAN_FAIL_OFFSET_X_PX = 12;
+/** Yön kararı için gereken ilk hareket mesafesi (px); altında karar verilmez. */
+export const PAN_AXIS_SLOP_PX = 6;
+/** Dikeyden bu açıya kadar sapma kart pan'idir; fazlası yatay galeriye kalır. */
+export const PAN_MAX_ANGLE_FROM_VERTICAL_DEG = 50;
+const PAN_MAX_HORIZONTAL_RATIO = Math.tan(
+  (PAN_MAX_ANGLE_FROM_VERTICAL_DEG * Math.PI) / 180,
+);
+
+export type PanAxis = 'vertical' | 'horizontal' | 'undecided';
+
+/**
+ * Seyrek dokunuş örneklemesinde (hızlı flick) offset eşikleri yanlış sıralanır; yön, ilk
+ * anlamlı harekette açıya göre bir kez seçilir.
+ */
+export const resolvePanAxis = (dx: number, dy: number): PanAxis => {
+  'worklet';
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  if (Math.max(ax, ay) < PAN_AXIS_SLOP_PX) return 'undecided';
+  return ax <= ay * PAN_MAX_HORIZONTAL_RATIO ? 'vertical' : 'horizontal';
+};
 export const CARD_SPRING_BACK = {
   damping: 24,
   stiffness: 280,
