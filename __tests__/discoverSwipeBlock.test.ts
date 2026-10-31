@@ -50,7 +50,7 @@ jest.mock('react-native-gesture-handler', () => {
   const builder = (): Record<string, jest.Mock> => {
     const chain: Record<string, jest.Mock> = {};
     for (const method of ['enabled', 'activeOffsetY', 'failOffsetX', 'onUpdate', 'onEnd',
-      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'requireExternalGestureToFail', 'maxDelay', 'minPointers', 'maxPointers', 'onBegin', 'onStart', 'onFinalize', 'activeOffsetX', 'failOffsetY']) {
+      'numberOfTaps', 'maxDuration', 'maxDistance', 'blocksExternalGesture', 'requireExternalGestureToFail', 'maxDelay', 'minPointers', 'maxPointers', 'onStart', 'onFinalize', 'activeOffsetX', 'failOffsetY']) {
       chain[method] = jest.fn(() => chain);
     }
     return chain;
