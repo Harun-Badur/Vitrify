@@ -74,6 +74,7 @@ jest.mock('lucide-react-native', () => ({
   Layers: () => null,
   MoreVertical: () => null,
   Trash2: () => null,
+  Pencil: () => null,
   Plus: () => null,
   ChevronRight: () => null,
   Search: () => null,
@@ -459,10 +460,12 @@ describe('Wardrobe screen', () => {
         .findByProps({ accessibilityLabel: `${item.title} seçenekleri` })
         .props.onPress(),
     );
+    expect(alert).not.toHaveBeenCalled();
     await renderer.act(async () =>
-      alert.mock.lastCall?.[2]
-        ?.find((option) => option.text === 'Sil')
-        ?.onPress?.(),
+      view.root.findByProps({ accessibilityLabel: 'Sil' }).props.onPress(),
+    );
+    await renderer.act(async () =>
+      view.root.findByProps({ accessibilityLabel: 'Kıyafeti sil' }).props.onPress(),
     );
     expect(mockRemoveClothes).toHaveBeenCalledWith(item.id);
     expect(mockRemove).not.toHaveBeenCalled();

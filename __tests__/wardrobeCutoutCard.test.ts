@@ -12,6 +12,9 @@ jest.mock('react-native', () => ({
   FlatList: 'FlatList',
   ScrollView: 'ScrollView',
   TextInput: 'TextInput',
+  Modal: 'Modal',
+  Pressable: 'Pressable',
+  PanResponder: { create: (config: unknown) => ({ panHandlers: config }) },
   StyleSheet: { create: (styles: unknown) => styles },
   useWindowDimensions: () => ({ width: 400, height: 800 }),
 }));
@@ -35,6 +38,7 @@ jest.mock('../lib/dolapNavigation', () => ({
 }));
 jest.mock('lucide-react-native', () => ({
   ChevronRight: () => null,
+  Pencil: () => null,
   Heart: () => null,
   Shirt: () => null,
   Layers: () => null,
@@ -77,7 +81,7 @@ jest.mock('react-native-reanimated', () => ({
 }));
 
 interface ImageNode {
-  props: { source: { uri: string }; onError: () => void; onPress?: () => void; accessibilityLabel?: string; children?: unknown };
+  props: { visible?: boolean; source: { uri: string }; onError: () => void; onPress?: () => void; accessibilityLabel?: string; children?: unknown };
 }
 interface Tree {
   root: {
@@ -200,9 +204,12 @@ describe('owned clothes use the existing cutout source in Dolap cards', () => {
       onTryOn: jest.fn(), onOpenStore: jest.fn(), onSwipeDelete: jest.fn(), onCombine: jest.fn() })); });
     const buttons = tree.root.findAllByType('PressableScale');
     await renderer.act(() => { buttons.find(node => node.props.accessibilityLabel?.includes('seçenek'))?.props.onPress?.(); });
-    expect(Alert.alert).toHaveBeenLastCalledWith(owned.title, undefined, [
-      expect.objectContaining({ text: 'Düzenle' }), expect.objectContaining({ text: 'Sil' }), expect.objectContaining({ text: 'İptal' }),
-    ]);
+    expect(Alert.alert).not.toHaveBeenCalled();
+    const sheet = tree.root.findByType('Modal');
+    expect(sheet.props.visible).toBe(true);
+    const labels = tree.root.findAllByType('PressableScale').map(node => node.props.accessibilityLabel);
+    expect(labels).toEqual(expect.arrayContaining(['Düzenle', 'Sil']));
+    expect(labels).not.toContain('Arka planı elle kaldır');
   });
 
 });

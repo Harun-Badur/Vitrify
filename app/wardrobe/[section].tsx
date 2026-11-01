@@ -71,6 +71,11 @@ export default function WardrobeListScreen() {
       ? 'Keşfet’ten Favorile'
       : 'Yeni Kombin Oluştur';
   const confirmRemove = (product: Product): void => {
+    if (isClothes) {
+      // Kıyafet silme onayı WardrobeItemSheet içinde alınır (kaydırma bu ekranda kapalı).
+      void remove(product.id).catch(() => Alert.alert('Silinemedi', 'Lütfen tekrar dene.'));
+      return;
+    }
     Alert.alert(product.title, 'Bu kaydı kaldırmak istiyor musun?', [
       { text: 'İptal', style: 'cancel' },
       {

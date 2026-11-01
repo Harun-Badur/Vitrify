@@ -39,6 +39,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PressableScale from '../../components/PressableScale';
 import OutfitCover from '../../components/OutfitCover';
+import WardrobeItemSheet from '../../components/WardrobeItemSheet';
 import { colors, radius, shadows, spacing } from '../../lib/theme';
 import { openProductPage } from '../../services/deeplinkService';
 import { useAppStore } from '../../store/useAppStore';
@@ -131,6 +132,12 @@ function LikedItem({
     (imageUri === item.wardrobeItem.imageUrl || imageUri === item.wardrobeItem.imageLocalUri))
     cutoutStatus = { ...cutoutStatus, text: 'Düzenlenen fotoğraf yüklenemedi. Orijinal gösteriliyor.' };
   const translateX = useSharedValue(0);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  // Modal yalnızca ilk açılıştan sonra bağlanır; kapanış animasyonu için sonra da kalır.
+  const [sheetMounted, setSheetMounted] = useState(false);
+  const closeSheet = useCallback(() => setSheetOpen(false), []);
+  const editFromSheet = useCallback(() => onTryOn(product), [onTryOn, product]);
+  const deleteFromSheet = useCallback(() => onSwipeDelete(product), [onSwipeDelete, product]);
 
   useEffect(
     () => () => {
@@ -177,15 +184,8 @@ function LikedItem({
 
   const showActions = (): void => {
     if (wardrobe) {
-      Alert.alert(product.title, undefined, [
-        { text: 'Düzenle', onPress: () => onTryOn(product) },
-        {
-          text: 'Sil',
-          style: 'destructive',
-          onPress: () => onSwipeDelete(product),
-        },
-        { text: 'İptal', style: 'cancel' },
-      ]);
+      setSheetMounted(true);
+      setSheetOpen(true);
       return;
     }
     Alert.alert(product.title, undefined, [
@@ -201,6 +201,17 @@ function LikedItem({
   };
   return (
     <View style={[styles.swipeWrap, { width }]}>
+      {wardrobe && sheetMounted ? (
+        <WardrobeItemSheet
+          visible={sheetOpen}
+          title={product.title}
+          subtitle={wardrobeDetail ?? categoryLabel(product.category)}
+          imageUri={hasImageError ? undefined : imageUri}
+          onClose={closeSheet}
+          onEdit={editFromSheet}
+          onDelete={deleteFromSheet}
+        />
+      ) : null}
       <Animated.View
         pointerEvents="none"
         style={[styles.deleteReveal, revealStyle]}
