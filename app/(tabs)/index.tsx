@@ -1,5 +1,5 @@
 import { useOwnedState } from '../../hooks/useOwnedState';
-import { perfArmRefresh, perfCountRender, perfEnabled, perfLog, perfNow, perfStartLagWatch } from '../../lib/perfLog';
+import { perfArmRefresh, perfComplLog, perfCountRender, perfEnabled, perfLog, perfNow, perfShortId, perfStartLagWatch } from '../../lib/perfLog';
 import { useDiscoverPerfTrace } from '../../hooks/useDiscoverPerfTrace';
 import {
   Profiler,
@@ -346,13 +346,42 @@ export default function FeedScreen() {
   // After a preference change the session is rebuilt once, when the new pool lands. Until then the
   // previous session stays (it is never asked for cards, see poolReady below), so no empty-pool session exists.
   const heldSession = useRef<{ session: DiscoverRecommendationCache; userId: string | null } | null>(null);
+  const sessionTraceInputs = useRef<{ userId: string | null; productPref: ProductPref; fingerprint: string; poolReady: boolean } | null>(null);
   const recommendationSession = useMemo(() => {
     const held = heldSession.current;
     if (!poolReady && held && held.userId === userId) return held.session;
-    return new DiscoverRecommendationCache(recommendationCatalog, [], userId, productPref);
+    const created = new DiscoverRecommendationCache(recommendationCatalog, [], userId, productPref);
+    perfComplLog('session_new', () => {
+      const before = sessionTraceInputs.current;
+      const reason = before === null ? 'first'
+        : before.userId !== userId ? 'userId'
+          : before.productPref !== productPref ? 'productPref'
+            : before.fingerprint !== recommendationCatalogState.fingerprint ? 'fingerprint'
+              : before.poolReady !== poolReady ? 'poolReady' : 'other';
+      return {
+        session: created.sessionId, reason, poolReady,
+        old_fp: String(before?.fingerprint ?? 'none').slice(0, 8), new_fp: String(recommendationCatalogState.fingerprint).slice(0, 8),
+        catalog: recommendationCatalog.length,
+        ...Object.fromEntries(Object.entries(held?.session.traceSizes() ?? { entries: -1, pinned: -1, shown: -1, exposure: -1 })
+          .map(([key, value]) => [`old_${key}`, value])),
+      };
+    });
+    return created;
   }, [recommendationCatalog, poolReady, userId, productPref]);
   heldSession.current = { session: recommendationSession, userId };
+  if (perfEnabled()) sessionTraceInputs.current = { userId, productPref, fingerprint: recommendationCatalogState.fingerprint, poolReady };
   const [recommendationRevision, publishRecommendations] = useState(0);
+  const traceFeedStatus = useRef<string | null>(null);
+  const lookupFilled = useRef(new Set<string>());
+  useEffect(() => {
+    const from = traceFeedStatus.current ?? 'none';
+    traceFeedStatus.current = feedStatus;
+    perfComplLog('feed_status', () => ({ ev: 'status', from, to: feedStatus }));
+  }, [feedStatus]);
+  useFocusEffect(useCallback(() => {
+    perfComplLog('feed_status', () => ({ ev: 'focus', from: feedStatus, to: feedStatus }));
+    return () => perfComplLog('feed_status', () => ({ ev: 'blur', from: feedStatus, to: useAppStore.getState().feedStatus }));
+  }, [feedStatus]));
   const recommendationFocused = useRef(false);
   const preparationInputs = useRef({ session: recommendationSession, products: currentProducts, feedStatus, feedPreparationRevision });
   useLayoutEffect(() => {
@@ -443,6 +472,11 @@ export default function FeedScreen() {
           : preparationInputs.current.feedStatus !== 'success' ? 'feed_invalidated' : 'focus_lost';
       if (__DEV__) discoverPrefetchTrace(recommendationSession).diagnostic('effectCleanup', {
         reason: discoverPrefetchTrace(recommendationSession).closeReason, signalAborted: controller.signal.aborted });
+      perfComplLog('worker', () => ({
+        ev: 'abort', session: recommendationSession.sessionId, feedStatus: preparationInputs.current.feedStatus,
+        reason: preparationInputs.current.session !== recommendationSession ? 'context_changed'
+          : preparationInputs.current.feedStatus !== 'success' ? 'feed_invalidated' : 'focus_lost',
+      }));
       controller.abort();
     };
     // Context/focus own the request. Appending feed anchors does not invalidate it.
@@ -1014,6 +1048,16 @@ export default function FeedScreen() {
               {deckPages.map(({ product, pageIndex }) => {
                 // The held session belongs to the previous preference: nothing it holds may reach the deck meanwhile.
                 const recommendations = poolReady ? recommendationSession.lookup(product) : undefined;
+                if (perfEnabled()) {
+                  const filled = lookupFilled.current;
+                  if (recommendations !== undefined) filled.add(product.id);
+                  else if (filled.delete(product.id)) {
+                    perfComplLog('lookup_miss', () => ({
+                      card: perfShortId(product.id), session: recommendationSession.sessionId, poolReady,
+                      ...recommendationSession.traceSizes(),
+                    }));
+                  }
+                }
                 const recommendationStatus = recommendations !== undefined
                   ? 'ready'
                   : recommendationCatalogState.status === 'error' || failedRecommendationSession === recommendationSession.sessionId

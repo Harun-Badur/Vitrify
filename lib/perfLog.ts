@@ -10,7 +10,8 @@ let refreshArmed = false;
 let refreshStoreSetAt: number | null = null;
 let coldStartLogged = false;
 
-export const perfEnabled = (): boolean => __DEV__ || process.env.EXPO_PUBLIC_PERF_LOG === '1';
+// typeof guard: the shared complement display code also runs in Node scripts, where __DEV__ is undefined.
+export const perfEnabled = (): boolean => (typeof __DEV__ !== 'undefined' && __DEV__) || process.env.EXPO_PUBLIC_PERF_LOG === '1';
 
 type SpanSink = (name: string, ms: number, attributes: Record<string, number | boolean | string>) => void;
 let spanSink: SpanSink | null = null;
@@ -55,6 +56,18 @@ export const perfLog = (tag: string, fields: Record<string, PerfValue>): void =>
   emitSpan(tag, fields);
   if (!perfEnabled()) return;
   try { console.log(formatPerfLine(tag, fields)); } catch { /* Measurement cannot fail work. */ }
+};
+
+/** Short id for complement traces (first 8 chars); never a full product/user id. */
+export const perfShortId = (id: string | null | undefined): string => (id ?? 'none').slice(0, 8);
+
+/**
+ * Complement-flicker trace: `[PERF] compl_<event> t=<epoch ms> ...`. The fields callback only runs
+ * when logging is enabled, so disabled builds do no work and have no side effects.
+ */
+export const perfComplLog = (event: string, fields: () => Record<string, PerfValue>): void => {
+  if (!perfEnabled()) return;
+  try { console.log(formatPerfLine(`compl_${event}`, { t: Date.now(), ...fields() })); } catch { /* Measurement cannot fail work. */ }
 };
 
 const renderCounts: Record<string, number> = {};

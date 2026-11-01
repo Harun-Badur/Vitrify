@@ -1,4 +1,5 @@
 import type { Product } from '../../../types/product';
+import { perfComplLog, perfShortId } from '../../../lib/perfLog';
 import type { DiscoverRecommendation } from './discoverRecommendation';
 
 export const complementaryProductsForDisplay = (
@@ -14,9 +15,22 @@ export const complementaryProductsForDisplay = (
   // The pool is already gated on feed_eligible=true at the query. Database rows always
   // carry the flag (NOT NULL), so an explicit false is the only value that can reach here.
   // Fixtures/mock products without the flag are left to the engine unchanged.
-  return candidates.flatMap((p) => {
-    if (seen.has(p.id) || !members.some((member) => member === p) || p.feedEligible === false) return [];
+  let identityDropped = 0;
+  const result = candidates.flatMap((p) => {
+    if (seen.has(p.id)) return [];
+    if (!members.some((member) => member === p)) {
+      if (p.feedEligible !== false) identityDropped += 1;
+      return [];
+    }
+    if (p.feedEligible === false) return [];
     seen.add(p.id);
     return [p];
   }).slice(0, 3);
+  if (identityDropped > 0) {
+    const before = Math.min(result.length + identityDropped, 3);
+    if (result.length < before) {
+      perfComplLog('display_shrink', () => ({ card: perfShortId(currentProductId), before, after: result.length }));
+    }
+  }
+  return result;
 };

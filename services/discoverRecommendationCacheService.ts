@@ -4,7 +4,7 @@ import { captureOwnerPublication, registerOwnerResource, trackOwnerWork } from '
 import { isAccountWriteFenced } from '../lib/accountWriteFence';
 import { getSupabaseClient } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import { perfGenderLabel, perfLog, perfNow } from '../lib/perfLog';
+import { perfComplLog, perfGenderLabel, perfLog, perfNow, perfShortId } from '../lib/perfLog';
 import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
@@ -84,6 +84,7 @@ async function resolveProducts(result: readonly OutfitDiscoverRecommendation[], 
   const products = await repository.productsById(ids);
   const resolve = (id: string) => {
     const product = products.get(id);
+    if (!product) perfComplLog('resolve_error', () => ({ card: perfShortId(id), requested: ids.length, found: products.size }));
     if (!product) throw new Error(`Recommendation product not found: ${id}`);
     return product;
   };
@@ -162,8 +163,10 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
   const resolutions = new Map<string, Promise<readonly OutfitDiscoverRecommendation[]>>();
   const current = (version: number) => !controller.signal.aborted && !session.disposed && revision === version;
   let handingOff = false;
+  let stopWhy = 'signal_abort';
   const stop = () => {
     if (controller.signal.aborted) return;
+    perfComplLog('worker', () => ({ ev: 'stop', reason: stopWhy, session: session.sessionId, disposed: session.disposed }));
     controller.abort(); rankings.dispose(); if (!handingOff) memory.dispose(); records = []; publications.clear(); resolutions.clear(); preparationCaches.delete(session); changed.forEach(wake => wake()); unsubscribe(); signal.removeEventListener('abort', stop);
     if (__DEV__) discoverPrefetchTrace(session).diagnostic('workerStopped', {
       reason: discoverPrefetchTrace(session).closeReason, signalAborted: controller.signal.aborted });
@@ -188,13 +191,14 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
   const unsubscribe = session.subscribePreparation(schedule);
   if (__DEV__) discoverPrefetchTrace(session).diagnostic('listenerAttached', { listenerAttached: true });
   caches.stop = stop;
-  caches.handoff = () => { handingOff = true; stop(); return memory; };
+  caches.handoff = () => { handingOff = true; stopWhy = 'handoff'; stop(); return memory; };
   signal.addEventListener('abort', stop, { once: true });
+  perfComplLog('worker', () => ({ ev: 'start', session: session.sessionId, anchors: request.anchors.length, handoff: memoryForReplacement !== undefined }));
   if (__DEV__) discoverPrefetchTrace(session).diagnostic('workerInstalled', {
     reason: 'subscription_and_abort_handler_attached', signalAborted: controller.signal.aborted });
 
   const track = <T>(work: Promise<T>): Promise<T> => ownerId ? trackOwnerWork(ownerId, work) : work;
-  const removeDisposal = session.onDispose(stop);
+  const removeDisposal = session.onDispose(() => { stopWhy = 'session_disposed'; stop(); });
   controller.signal.addEventListener('abort', removeDisposal, { once: true });
   async function pump(): Promise<void> {
     if (running || controller.signal.aborted) return;
@@ -303,7 +307,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                   exposure: packetExposure, catalogVersion: context.catalogVersion, serialized: measureDiscoverStageSync('cache.serialize', () => serializeFinal(value, context)) }] });
               perfLog('rec_packet', { ms: perfNow() - perfPacket });
             }).catch(error => {
-              if (!controller.signal.aborted) { publications.delete(publicationKey); rejectCompletion(error); stop(); }
+              if (!controller.signal.aborted) { publications.delete(publicationKey); rejectCompletion(error); stopWhy = 'publish_error'; stop(); }
             });
           }
           if (!session.shown.has(product.id)) {
@@ -314,7 +318,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
         }
       }
     } catch (error) {
-      if (!controller.signal.aborted) { rejectCompletion(error); stop(); }
+      if (!controller.signal.aborted) { rejectCompletion(error); stopWhy = 'pump_error'; stop(); }
     } finally { running = false; }
   }
 

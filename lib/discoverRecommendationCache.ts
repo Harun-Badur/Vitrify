@@ -107,6 +107,10 @@ export class DiscoverRecommendationCache {
     return this.entries.get(product.id)?.find(entry => entry.product === product && (this.shown.has(product.id) ||
       (entry.exposure.size === this.exposure.size && [...entry.exposure].every(([id, count]) => this.exposure.get(id) === count))));
   }
+  /** Sizes only, for [PERF] compl_* traces. */
+  traceSizes(): { entries: number; pinned: number; shown: number; exposure: number } {
+    return { entries: this.entries.size, pinned: this.pinned.size, shown: this.shown.size, exposure: this.exposure.size };
+  }
   lookup(product: Product): readonly OutfitDiscoverRecommendation[] | undefined { return this.find(product)?.result; }
   activate(product: Product): void {
     const entry = this.find(product);

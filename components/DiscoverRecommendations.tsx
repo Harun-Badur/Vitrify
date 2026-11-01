@@ -1,4 +1,5 @@
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { perfComplLog, perfShortId } from '../lib/perfLog';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import DiscoverProductImage from './DiscoverProductImage';
 import { Check, Heart } from 'lucide-react-native';
@@ -50,6 +51,17 @@ function DiscoverRecommendations({
   const products = useMemo(() => complementaryProductsForDisplay(
     recommendations, currentProductId,
   ), [recommendations, currentProductId]);
+
+  const lastRender = useRef<{ status: RecommendationStatus; count: number } | null>(null);
+  useEffect(() => {
+    const previous = lastRender.current;
+    if (previous?.status === status && previous.count === products.length) return;
+    lastRender.current = { status, count: products.length };
+    perfComplLog('render', () => ({
+      card: perfShortId(currentProductId), status, count: products.length,
+      prev_status: previous?.status ?? 'none', prev_count: previous?.count ?? -1,
+    }));
+  }, [status, products.length, currentProductId]);
 
   // Faz 4 S3b: no complements means no section (no empty heading or placeholder).
   if (status === 'ready' && products.length === 0) return null;

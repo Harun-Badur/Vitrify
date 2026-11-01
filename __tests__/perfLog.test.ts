@@ -1,4 +1,4 @@
-import { formatPerfLine, perfLog, perfMarkSwipe, perfPeekSwipe, perfRouteLabel, perfTakeSwipe, perfNow } from '../lib/perfLog';
+import { formatPerfLine, perfComplLog, perfShortId, perfLog, perfMarkSwipe, perfPeekSwipe, perfRouteLabel, perfTakeSwipe, perfNow } from '../lib/perfLog';
 
 describe('perfLog', () => {
   const original = (global as { __DEV__?: boolean }).__DEV__;
@@ -31,6 +31,24 @@ describe('perfLog', () => {
     expect(spy).not.toHaveBeenCalled();
     expect(perfNow()).toBe(0);
     expect(perfTakeSwipe()).toBeNull();
+  });
+
+  it('compl_* traces are no-ops when disabled and never evaluate their fields', () => {
+    (global as { __DEV__?: boolean }).__DEV__ = false;
+    delete process.env.EXPO_PUBLIC_PERF_LOG;
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const fields = jest.fn(() => ({ n: 1 }));
+    perfComplLog('render', fields);
+    expect(fields).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('compl_* traces write a prefixed, timestamped line with short ids when enabled', () => {
+    (global as { __DEV__?: boolean }).__DEV__ = false;
+    process.env.EXPO_PUBLIC_PERF_LOG = '1';
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    perfComplLog('render', () => ({ card: perfShortId('abcdef0123456789'), n: 2 }));
+    expect(spy).toHaveBeenCalledWith(expect.stringMatching(/^\[PERF\] compl_render t=\d+ card=abcdef01 n=2$/));
   });
 
   it('logs outside dev only when EXPO_PUBLIC_PERF_LOG is 1', () => {
