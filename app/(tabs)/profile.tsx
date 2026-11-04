@@ -31,16 +31,11 @@ import {
   Camera,
   ChevronRight,
   CircleHelp,
-  Database,
-  Heart,
   LogOut,
-  Palette,
   Pencil,
-  Ruler,
   ShieldCheck,
   Shirt,
   Sparkles,
-  Tag,
   Trash2,
   User,
 } from 'lucide-react-native';
@@ -53,6 +48,8 @@ import PremiumMembership from '../../components/PremiumMembership';
 import {premiumClient} from '../../services/revenueCatMobile';
 import {buildPremiumDeletionNotice,subscriptionManagementUrl} from '../../lib/premiumDeletionNotice';
 import ProfileStyleJourney from '../../components/ProfileStyleJourney';
+import ProfileStyleGrid from '../../components/ProfileStyleGrid';
+import ProfileOnlyYou from '../../components/ProfileOnlyYou';
 import SizeStudioSheet, {
   type StyleSheetSection,
 } from '../../components/SizeStudioSheet';
@@ -65,6 +62,7 @@ import { PRIVACY_URL, SUPPORT_EMAIL } from '../../lib/privacy';
 import { colors, radius, shadows, spacing } from '../../lib/theme';
 import { buildStyleJourney, type JourneyTarget } from '../../lib/profileStyleJourney';
 import { fetchCalculatedStyleProfile, subscribeStyleProfileChanges } from '../../lib/recsConfig';
+import { refreshStartState, type CalculatedRefreshReason } from '../../lib/calculatedProfileRefresh';
 import type { CalculatedStyleProfileState } from '../../types/calculatedStyleProfile';
 import { LOW_RES_MODEL_PHOTO_HINT } from '../../lib/vtonPersonImage';
 import { completeAccountDeletion, AccountDeletionPendingError } from '../../services/accountService';
@@ -85,7 +83,6 @@ import {
   upsertStudioProfile,
 } from '../../services/profileService';
 import {
-  STYLE_TAGS,
   type StudioProfilePatch,
   type UserStudioProfile,
 } from '../../types/profile';
@@ -93,6 +90,8 @@ import {
 const AVATAR_SIZE = 82;
 const AVATAR_RADIUS = AVATAR_SIZE / 2;
 const ICON_SM = 18;
+const CAMERA_BADGE_SIZE = 32;
+const CAMERA_HIT_SLOP = 8; // 32 + 2*8 = 48dp touch target
 const ICON_AVATAR = 26;
 const TOAST_DURATION_MS = 1600;
 const INVITE_SAVED_TOAST = 'Kod alındı — yakında aktifleşecek';
@@ -200,48 +199,48 @@ export default function ProfileScreen() {
   const preferencesDisabled = isBusy || studio?.userId !== userId;
   const hasPhoto = photoUri !== null;
   const currentStudio = studio ?? (userId ? emptyStudio(userId) : null);
-  const styleSummary =
-    STYLE_TAGS.filter((tag) => currentStudio?.styleTags.includes(tag.value))
-      .map((tag) => tag.label)
-      .join(', ') || 'Belirlenmedi';
-  const bodySummary =
-    [
-      currentStudio?.topSize,
-      currentStudio?.bottomSize && `Alt: ${currentStudio.bottomSize}`,
-      currentStudio?.heightCm != null && `${currentStudio.heightCm} cm`,
-      currentStudio?.weightKg != null && `${currentStudio.weightKg} kg`,
-    ]
-      .filter(Boolean)
-      .join(' · ') || 'Belirlenmedi';
-  const favoriteBrands =
-    currentStudio?.favoriteBrands?.join(', ') || 'Seçilmedi';
   const [calculatedProfile, setCalculatedProfile] = useOwnedState<CalculatedStyleProfileState>(userId, {state:'loading'});
   const calculatedRef = useRef(calculatedProfile);
   calculatedRef.current = calculatedProfile;
+  const refreshRef = useRef<((reason: CalculatedRefreshReason) => void) | null>(null);
   useFocusEffect(useCallback(() => {
     let active = true, revision = 0;
     if (!userId || userId !== sessionUserId || sessionSyncStatus !== 'success') return;
     const current = captureOwnerPublication(userId);
-    const refresh = (changed: boolean) => {
+    const refresh = (reason: CalculatedRefreshReason) => {
       const version=++revision;
-      if (changed) setCalculatedProfile({state:'loading'});
+      const start = refreshStartState(calculatedRef.current, reason);
+      if (start) setCalculatedProfile(start);
       void trackOwnerWork(userId, fetchCalculatedStyleProfile(userId)).then(profile => {
         if (active && current() && version===revision) {
           const previous=calculatedRef.current;
           if (previous.state!=='ready'||previous.profile!==profile) setCalculatedProfile({state:'ready',profile});
         }
-      }).catch(() => { if (active && current() && version===revision) setCalculatedProfile({state:'error'}); });
+      }).catch(() => {
+        // A silent focus refresh that fails keeps the value verified moments ago; changes and retries show the error.
+        if (active && current() && version===revision && !(reason==='focus' && calculatedRef.current.state==='ready')) setCalculatedProfile({state:'error'});
+      });
     };
-    const unsubscribe=subscribeStyleProfileChanges(userId,()=>refresh(true));
-    refresh(true);
-    return () => { active=false; unsubscribe(); };
+    refreshRef.current = refresh;
+    const unsubscribe=subscribeStyleProfileChanges(userId,()=>refresh('changed'));
+    refresh('focus');
+    return () => { active=false; refreshRef.current = null; unsubscribe(); };
   }, [userId, sessionUserId, sessionSyncStatus, studio]));
+  const handleRetryCalculated = useCallback(() => { refreshRef.current?.('retry'); }, []);
   useEffect(() => cancelScheduledFeedRefreshOnOwnerChange(sessionUserId), [sessionUserId]);
   const journey = useMemo(() => buildStyleJourney({ userId, sessionUserId, sessionSyncStatus,
     wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, profile: studio, calculatedProfile }),
   [userId, sessionUserId, sessionSyncStatus, wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, studio, calculatedProfile]);
+  const openPreferenceSection = (section: StyleSheetSection): void => {
+    setStyleSheetSection(section);
+    setSizeOpen(true);
+  };
   const handleJourneyTask = (target: JourneyTarget): void => {
-    if (target === 'preferences') { setStyleSheetSection('style'); setSizeOpen(true); }
+    if (target === 'preferences') {
+      const { declaredItems } = journey;
+      openPreferenceSection(!declaredItems.style ? 'style' : !declaredItems.body ? 'body' : !declaredItems.colors ? 'colors'
+        : !declaredItems.brands ? 'brands' : !declaredItems.price ? 'budget' : 'all');
+    }
     else if (target === 'outfit') router.push('/wardrobe/create');
     else if (target === 'wardrobe') router.push('/(tabs)/liked');
     else router.push('/(tabs)');
@@ -646,11 +645,12 @@ export default function ProfileScreen() {
                   void handlePickModelPhoto();
                 }}
                 disabled={isBusy}
+                hitSlop={CAMERA_HIT_SLOP}
                 style={styles.cameraButton}
                 accessibilityRole="button"
                 accessibilityLabel="Profil fotoğrafını değiştir"
               >
-                <Camera size={18} color={colors.accent} />
+                <Camera size={16} color={colors.accent} />
               </PressableScale>
             </View>
             <View style={[styles.heroCopy, compactProfile && styles.compactHeroCopy]}>
@@ -702,99 +702,10 @@ export default function ProfileScreen() {
 
         <ProfileStyleJourney key={`style-journey:${userId ?? 'signed-out'}`} journey={journey} onTask={handleJourneyTask} />
 
-        <View>
-          <View style={styles.styleHeading}>
-            <Text style={styles.sectionTitle}>Tercihlerin</Text>
-            <PressableScale
-              onPress={() => {
-                setStyleSheetSection('all');
-                setSizeOpen(true);
-              }}
-              disabled={preferencesDisabled}
-              style={styles.sectionEdit}
-              accessibilityRole="button"
-              accessibilityLabel="Stil bilgilerini düzenle"
-            >
-              <Pencil color={colors.text} size={18} />
-              <Text style={styles.sectionEditText}>Düzenle</Text>
-            </PressableScale>
-          </View>
-          <Text style={styles.progressDescription}>Senin belirttiğin tercihler · her zaman düzenlenebilir</Text>
-          <View style={styles.styleGrid}>
-            {[
-              {
-                title: 'Stil Tarzım',
-                value: styleSummary,
-                Icon: Shirt,
-                onPress: () => {
-                  setStyleSheetSection('style');
-                  setSizeOpen(true);
-                },
-              },
-              {
-                title: 'Beden Bilgilerim',
-                value: bodySummary,
-                Icon: Ruler,
-                onPress: () => {
-                  setStyleSheetSection('body');
-                  setSizeOpen(true);
-                },
-              },
-              {
-                title: 'Renk Tercihlerim',
-                value:
-                  currentStudio?.preferredColors?.join(', ') || 'Seçilmedi',
-                Icon: Palette,
-                onPress: () => {
-                  setStyleSheetSection('colors');
-                  setSizeOpen(true);
-                },
-              },
-              {
-                title: 'Favori Markalarım',
-                value: favoriteBrands,
-                Icon: Tag,
-                onPress: () => {
-                  setStyleSheetSection('brands');
-                  setSizeOpen(true);
-                },
-              },
-              {
-                title: 'Fiyat Aralığım',
-                value: currentStudio?.priceRange
-                  ? `₺${currentStudio.priceRange.min.toLocaleString('tr-TR')} – ₺${currentStudio.priceRange.max.toLocaleString('tr-TR')}`
-                  : 'Belirlenmedi',
-                Icon: Database,
-                onPress: () => {
-                  setStyleSheetSection('budget');
-                  setSizeOpen(true);
-                },
-              },
-            ].map(({ title, value, Icon, onPress }) => (
-              <PressableScale
-                key={title}
-                style={[styles.styleTile, (title === 'Fiyat Aralığım' || width < 350 || fontScale > 1.3) && { width: '100%' }]}
-                onPress={onPress}
-                disabled={preferencesDisabled}
-                accessibilityRole="button"
-                accessibilityLabel={title}
-              >
-                <View style={styles.styleIcon}>
-                  <Icon size={22} color={colors.text} />
-                </View>
-                <View style={styles.tileCopy}>
-                  <Text style={styles.tileTitle} numberOfLines={2}>
-                    {title}
-                  </Text>
-                  <Text style={styles.tileValue} numberOfLines={2}>
-                    {value}
-                  </Text>
-                </View>
-                <ChevronRight size={15} color={colors.tabInactive} />
-              </PressableScale>
-            ))}
-          </View>
-        </View>
+        <ProfileStyleGrid key={`style-grid:${userId ?? 'signed-out'}`} journey={journey}
+          onRetry={handleRetryCalculated} onSelectSection={openPreferenceSection} />
+        <ProfileOnlyYou key={`only-you:${userId ?? 'signed-out'}`} journey={journey}
+          onOpen={openPreferenceSection} disabled={preferencesDisabled} />
 
         <PremiumMembership key={`membership:${userId ?? 'signed-out'}`} />
         <View style={styles.menuCard}>
@@ -1086,7 +997,7 @@ const styles = StyleSheet.create({
   compactHero: { flexDirection: 'column' },
   compactHeroCopy: { flex: 0, alignSelf: 'stretch' },
   compactIdentity: { flexWrap: 'wrap' },
-  avatarWrap: { width: AVATAR_SIZE, height: AVATAR_SIZE, marginTop: 4 },
+  avatarWrap: { width: AVATAR_SIZE, height: AVATAR_SIZE, marginTop: 4, marginRight: spacing.sm, marginBottom: spacing.sm },
   avatar: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
@@ -1111,11 +1022,11 @@ const styles = StyleSheet.create({
   },
   cameraButton: {
     position: 'absolute',
-    right: -3,
-    bottom: -3,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    right: -spacing.sm,
+    bottom: -spacing.sm,
+    width: CAMERA_BADGE_SIZE,
+    height: CAMERA_BADGE_SIZE,
+    borderRadius: CAMERA_BADGE_SIZE / 2,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.input,
@@ -1140,9 +1051,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   email: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 17,
+    color: colors.tabInactive,
+    fontSize: 11,
+    lineHeight: 15,
   },
   statsRow: { flexDirection: 'row' },
   stat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 3 },
@@ -1172,83 +1083,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  styleProgressCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.card,
-    backgroundColor: colors.accentSoft,
-  },
-  progressCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
-  progressTitle: { color: colors.text, fontSize: 17, fontWeight: '800' },
-  progressDescription: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  progressCircle: {
-    width: 64,
-    height: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressPercent: {
-    position: 'absolute',
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  styleHeading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  sectionTitle: { color: colors.text, fontSize: 20, fontWeight: '800' },
-  sectionEdit: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-  },
-  sectionEditText: { color: colors.text, fontSize: 13, fontWeight: '500' },
-  styleGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  styleTile: {
-    width: '48%',
-    flexGrow: 1,
-    minHeight: 80,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.md,
-    borderRadius: radius.card,
-    backgroundColor: colors.input,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    ...shadows.segment,
-  },
-  styleIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.input,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    ...shadows.segment,
-  },
-  tileCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
-  tileTitle: {
-    color: colors.text,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '700',
-  },
-  tileValue: { color: colors.textSecondary, fontSize: 11, lineHeight: 15 },
   menuCard: {
     backgroundColor: colors.input,
     borderRadius: radius.card,

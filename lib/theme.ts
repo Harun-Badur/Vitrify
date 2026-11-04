@@ -29,6 +29,8 @@ export const colors = {
   journeyPink: '#FFE1E1',
   journeyBadge: '#FFDAB5',
   accentSoft: 'rgba(254, 56, 43, 0.1)',
+  /** Profil sekmesi: eksik kutu çerçevesi, "+" rozeti ve birincil buton/metin kırmızısı. */
+  profileRed: '#D42A1D',
   /** Yalnızca minimal kullanım: silme metin butonları. */
   destructive: '#DC2626',
   /** Kaydırma damgaları: traffic-light. */
@@ -57,6 +59,8 @@ export const radius = {
   card: 24,
   button: 16,
   chip: 999,
+  /** Profil sekmesi kutuları ve kartları. */
+  box: 20,
 } as const;
 
 export const spacing = {

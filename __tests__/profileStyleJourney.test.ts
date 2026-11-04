@@ -1,4 +1,5 @@
 import { buildStyleJourney, type StyleJourneyInput } from '../lib/profileStyleJourney';
+import { emptyStyleProfile } from '../lib/scoring';
 import type { Product, LikedProduct } from '../types/product';
 import type { UserStudioProfile } from '../types/profile';
 
@@ -68,4 +69,29 @@ test('reopening/reordering saved records recomputes the same result; no new pers
   const reopened: StyleJourneyInput = JSON.parse(JSON.stringify(original));
   reopened.likedProducts = [...reopened.likedProducts].reverse();
   expect(buildStyleJourney(reopened)).toEqual(buildStyleJourney(original));
+});
+
+test('counts expose distinct liked/passed totals and the five declared items without changing the percent formula', () => {
+  const p = product('one');
+  const result = buildStyleJourney(input({ likedProducts: [like(p), like(p), like(product('two'))], passedProductIds: ['x', 'x', 'y'],
+    profile: { ...profile, styleTags: ['minimal'], topSize: 'M', preferredColors: ['Siyah'], favoriteBrands: ['ZARA'] } }));
+  expect(result.counts).toMatchObject({ liked: 2, passed: 2, evaluations: 4, preferences: 5 });
+  expect(result.declaredItems).toEqual({ style: true, body: true, colors: true, brands: true, price: true });
+  expect(result.ready).toEqual({ ratings: true, wardrobe: true });
+  expect(result.percent).toBe(Math.round(4 / 10 * 50 + 10));
+});
+test('insightState tells loading, error and ready apart; a foreign owner is an error', () => {
+  const ready = { state: 'ready' as const, profile: { snapshot: { ...emptyStyleProfile('A') }, algorithm: 'v2' as const, eventCount: 1, computedAt: null } };
+  expect(buildStyleJourney(input({ calculatedProfile: { state: 'loading' } })).insightState).toBe('loading');
+  expect(buildStyleJourney(input({ calculatedProfile: { state: 'error' } })).insightState).toBe('error');
+  expect(buildStyleJourney(input({ calculatedProfile: ready })).insightState).toBe('ready');
+  expect(buildStyleJourney(input()).insightState).toBe('ready');
+  expect(buildStyleJourney(input({ userId: 'B', calculatedProfile: ready })).insightState).toBe('error');
+});
+test('backend insights carry the raw top values next to the display labels', () => {
+  const calculatedProfile = { state: 'ready' as const, profile: { snapshot: { ...emptyStyleProfile('A'), colorW: { navy: 1, siyah: 0.5 } },
+    algorithm: 'v2' as const, eventCount: 3, computedAt: null } };
+  const color = buildStyleJourney(input({ calculatedProfile })).insights.find(item => item.id === 'color');
+  expect(color?.values).toEqual(['navy', 'siyah']);
+  expect(color?.summary).toBe('Lacivert · Siyah');
 });

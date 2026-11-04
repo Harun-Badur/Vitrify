@@ -23,13 +23,29 @@ export interface StyleInsight {
   status: DiscoveryStatus;
   summary: string;
   detail: string;
+  /** Raw top values (slug/band/label) behind `summary`, strongest first; empty when locked. */
+  values?: string[];
+}
+export type DeclaredKey = 'style' | 'body' | 'colors' | 'brands' | 'price';
+export interface DeclaredValues {
+  colors: string[];
+  brands: string[];
+  price: { min: number; max: number } | null;
+  styleLabels: string[];
+  body: string | null;
 }
 export interface StyleJourney {
   percent: number;
   status: DiscoveryStatus;
   notice: string | null;
   insightNotice?: string;
-  counts: { evaluations: number; wardrobe: number; outfits: number; declared: number };
+  /** loading: first read of the calculated profile; error: it could not be verified for this owner. */
+  insightState: 'ready' | 'loading' | 'error';
+  ready: { ratings: boolean; wardrobe: boolean };
+  counts: { evaluations: number; wardrobe: number; outfits: number; declared: number;
+    liked: number; passed: number; preferences: number };
+  declaredItems: Record<DeclaredKey, boolean>;
+  declaredValues: DeclaredValues;
   task: { target: JourneyTarget; label: string };
   insights: StyleInsight[];
 }
@@ -40,7 +56,7 @@ export const STYLE_JOURNEY_GOALS = { evaluations: 10, wardrobe: 3, outfits: 2, d
 export const STYLE_JOURNEY_EVIDENCE = { samples: 5, repeats: 3 } as const;
 const normalize = (value: string) => value.trim().toLocaleLowerCase('tr-TR');
 const token = (value: string) => normalize(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[ _]+/g, '-');
-const labels: Record<string, string> = { gomlek: 'Gömlek', tisort: 'Tişört', pantolon: 'Pantolon', elbise: 'Elbise', ceket: 'Ceket', mont: 'Mont', kaban: 'Kaban', trenckot: 'Trençkot', blazer: 'Blazer', hoodie: 'Kapüşonlu', sweatshirt: 'Sweatshirt', polo: 'Polo', jean: 'Jean', kargo: 'Kargo', esofman: 'Eşofman', sort: 'Şort', etek: 'Etek', pareo: 'Pareo', ayakkabi: 'Ayakkabı', canta: 'Çanta', sapka: 'Şapka', aksesuar: 'Aksesuar', upper_body: 'Üst Giyim', lower_body: 'Alt Giyim', oversized: 'Bol kesim', relaxed: 'Rahat kesim', regular: 'Normal kesim', slim: 'Dar kesim', low: 'Uygun fiyat bandı', mid: 'Orta fiyat bandı', high: 'Yüksek fiyat bandı', luxury: 'Lüks fiyat bandı' };
+export const STYLE_VALUE_LABELS: Record<string, string> = { gomlek: 'Gömlek', tisort: 'Tişört', pantolon: 'Pantolon', elbise: 'Elbise', ceket: 'Ceket', mont: 'Mont', kaban: 'Kaban', trenckot: 'Trençkot', blazer: 'Blazer', hoodie: 'Kapüşonlu', sweatshirt: 'Sweatshirt', polo: 'Polo', jean: 'Jean', kargo: 'Kargo', esofman: 'Eşofman', sort: 'Şort', etek: 'Etek', pareo: 'Pareo', ayakkabi: 'Ayakkabı', canta: 'Çanta', sapka: 'Şapka', aksesuar: 'Aksesuar', upper_body: 'Üst Giyim', lower_body: 'Alt Giyim', oversized: 'Bol kesim', relaxed: 'Rahat kesim', regular: 'Normal kesim', slim: 'Dar kesim', low: 'Uygun fiyat bandı', mid: 'Orta fiyat bandı', high: 'Yüksek fiyat bandı', luxury: 'Lüks fiyat bandı' };
 const colorLabels = new Map<string, string>(STUDIO_COLORS.map(color => [token(color.label), color.label]));
 Object.entries({ navy: 'Lacivert', bordo: 'Bordo', camel: 'Camel', altin: 'Altın', gumus: 'Gümüş', turkuaz: 'Turkuaz', krem: 'Krem' }).forEach(([key, value]) => colorLabels.set(key, value));
 const colorsByName = new Map(STUDIO_COLORS.map(color => [normalize(color.label), color.label]));
@@ -52,6 +68,7 @@ function tendency(id: 'color' | 'category', title: string, observations: string[
     .sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0], 'tr')).slice(0,2);
   const unlocked = samples.length >= STYLE_JOURNEY_EVIDENCE.samples && repeated.length > 0;
   return { id, title,
+    values: unlocked ? repeated.map(([label]) => label) : [],
     status: unlocked ? 'Keşfedildi' : samples.length ? 'Gelişiyor' : 'Henüz keşfedilmedi',
     summary: unlocked ? repeated.map(([label, count]) => `${label} (${count}/${samples.length})`).join(' · ')
       : samples.length ? `${samples.length} metadata örneği; eğilim henüz net değil` : 'Yeterli metadata yok',
@@ -60,6 +77,11 @@ function tendency(id: 'color' | 'category', title: string, observations: string[
       + 'Geçilen ürünler olumlu tercih sayılmaz. Bu bir gözlem; kesin kişilik veya tarz sonucu değildir.',
   };
 }
+
+const BODY_PARTS = (profile: UserStudioProfile): string | null =>
+  [profile.topSize, profile.bottomSize && `Alt: ${profile.bottomSize}`,
+    profile.heightCm != null && `${profile.heightCm} cm`, profile.weightKg != null && `${profile.weightKg} kg`]
+    .filter(Boolean).join(' · ') || null;
 
 export function buildStyleJourney(input: StyleJourneyInput): StyleJourney {
   const owned = Boolean(input.userId && input.userId === input.sessionUserId);
@@ -77,8 +99,20 @@ export function buildStyleJourney(input: StyleJourneyInput): StyleJourney {
   const declared = profile && (profile.styleTags.some(value => STYLE_TAGS.some(tag => tag.value === value))
     || profile.preferredColors?.some(value => colorsByName.has(normalize(value)))
     || profile.favoriteBrands?.some(value => value.trim())) ? 1 : 0;
+  const declaredValues: DeclaredValues = {
+    colors: profile?.preferredColors?.flatMap(value => colorsByName.get(normalize(value)) ?? []) ?? [],
+    brands: profile?.favoriteBrands?.map(value => value.trim()).filter(Boolean) ?? [],
+    price: profile?.priceRange ?? null,
+    styleLabels: profile ? STYLE_TAGS.filter(tag => profile.styleTags.includes(tag.value)).map(tag => tag.label) : [],
+    body: profile ? BODY_PARTS(profile) : null,
+  };
+  const declaredItems: Record<DeclaredKey, boolean> = {
+    style: declaredValues.styleLabels.length > 0, body: declaredValues.body !== null,
+    colors: declaredValues.colors.length > 0, brands: declaredValues.brands.length > 0, price: declaredValues.price !== null,
+  };
   const counts = { evaluations: new Set([...liked.keys(), ...passed]).size,
-    wardrobe: wardrobe.size, outfits: outfits.size, declared };
+    wardrobe: wardrobe.size, outfits: outfits.size, declared,
+    liked: liked.size, passed: passed.size, preferences: Object.values(declaredItems).filter(Boolean).length };
   const goals = STYLE_JOURNEY_GOALS;
   const percent = Math.round(Math.min(counts.evaluations/goals.evaluations,1)*50 + Math.min(counts.wardrobe/goals.wardrobe,1)*25
     + Math.min(counts.outfits/goals.outfits,1)*15 + declared*10);
@@ -94,7 +128,11 @@ export function buildStyleJourney(input: StyleJourneyInput): StyleJourney {
   const supplied = input.calculatedProfile;
   const backendInsights = Boolean(supplied && !(supplied.state==='ready' && owned
     && supplied.profile.snapshot.userId===input.userId && supplied.profile.algorithm==='v1'));
-  const result: StyleJourney = { percent, counts, task, notice,
+  const insightState: StyleJourney['insightState'] = !supplied ? 'ready'
+    : supplied.state === 'ready' && owned && supplied.profile.snapshot.userId === input.userId ? 'ready'
+      : supplied.state === 'loading' ? 'loading' : 'error';
+  const result: StyleJourney = { percent, counts, task, notice, insightState, declaredItems, declaredValues,
+    ready: { ratings: ratingsReady, wardrobe: wardrobeReady },
     status: percent === 100 ? 'Keşfedildi' : percent > 0 ? 'Gelişiyor' : 'Henüz keşfedilmedi',
     insights: [
       ...(backendInsights ? [] : [tendency('color', 'Renk eğilimlerin', positive.map(product => (Array.isArray(product.colors) ? product.colors : [])
@@ -126,8 +164,8 @@ export function buildStyleJourney(input: StyleJourneyInput): StyleJourney {
   const preference = (id: StyleInsight['id'], title: string, weights: Record<string, number>): StyleInsight => {
     const values = model && model.eventCount > 0 ? Object.entries(weights).filter(([,w])=>Number.isFinite(w)&&w>0)
       .sort(([a,x],[b,y])=>y-x||a.localeCompare(b,'tr')).slice(0,2) : [];
-    const displayLabels = values.map(([value]) => id === 'color' ? colorLabels.get(token(value)) ?? value : id === 'brand' ? value.replace(/-/g, ' ') : labels[value] ?? value);
-    return { id, title, status: values.length ? 'Gelişiyor' : 'Henüz keşfedilmedi',
+    const displayLabels = values.map(([value]) => id === 'color' ? colorLabels.get(token(value)) ?? value : id === 'brand' ? value.replace(/-/g, ' ') : STYLE_VALUE_LABELS[value] ?? value);
+    return { id, title, values: values.map(([value]) => value), status: values.length ? 'Gelişiyor' : 'Henüz keşfedilmedi',
       summary: displayLabels.length ? displayLabels.join(' · ') : 'Yeterli tercih verisi yok',
       detail: sourceDetail + (values.length ? '' : 'Yeterli doğrulanmış tercih verisi yok.') };
   };
