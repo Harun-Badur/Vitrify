@@ -16,6 +16,7 @@ jest.mock('react-native-reanimated', () => ({
   useSharedValue: (value: number) => jest.requireActual<typeof import('react')>('react').useRef({ value }).current,
   useAnimatedStyle: (factory: () => Record<string, unknown>) => ({ get current() { return factory(); } }),
   withTiming: jest.fn((value: number) => value),
+  withSequence: jest.fn((...values: number[]) => values[values.length - 1]),
 }));
 
 interface TestNode {
@@ -52,7 +53,7 @@ describe('DiscoverActionRail', () => {
   it('reserves the Uyumlu slot when hidden: transparent, inert and out of accessibility', () => {
     const hidden = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, whyVisible: false }));
     const shown = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, whyVisible: true }));
-    const slot = (tree: { root: TestNode }) => tree.root.findByType('AnimatedView');
+    const slot = (tree: { root: TestNode }) => tree.root.findAllByType('AnimatedView').filter(node => 'pointerEvents' in node.props)[0];
     expect(slot(hidden).props.pointerEvents).toBe('none');
     expect(slot(hidden).props.accessibilityElementsHidden).toBe(true);
     expect(slot(hidden).props.importantForAccessibility).toBe('no-hide-descendants');

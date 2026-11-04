@@ -1,6 +1,6 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import PressableScale from './PressableScale';
 import ShadowedIcon from './ShadowedIcon';
 import { INSIGHT_CHIP_COPY } from '../lib/insightChipTemplates';
@@ -15,6 +15,9 @@ export const DISCOVER_EDGE_MARGIN = 16;
 export const RAIL_COLUMN_WIDTH = 44;
 export const DISCOVER_ICON_CENTER_FROM_RIGHT = DISCOVER_EDGE_MARGIN + RAIL_COLUMN_WIDTH / 2;
 const WHY_FADE_MS = 150;
+const HEART_POP_SCALE = 1.3;
+const HEART_POP_IN_MS = 90;
+const HEART_POP_OUT_MS = 140;
 const RAIL_ITEM_COUNT = 4;
 const RAIL_GAP = 6;
 const RAIL_MIN_GAP = 4;
@@ -55,6 +58,19 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
     whyOpacity.value = withTiming(whyVisible ? 1 : 0, { duration: WHY_FADE_MS });
   }, [whyVisible, whyOpacity]);
   const whyStyle = useAnimatedStyle(() => ({ opacity: whyOpacity.value }));
+  // Short pop only when the card turns liked (not on mount, not when unliking); no loop.
+  const heartScale = useSharedValue(1);
+  const wasLiked = useRef(liked);
+  useEffect(() => {
+    if (liked && !wasLiked.current) {
+      heartScale.value = withSequence(
+        withTiming(HEART_POP_SCALE, { duration: HEART_POP_IN_MS }),
+        withTiming(1, { duration: HEART_POP_OUT_MS }),
+      );
+    }
+    wasLiked.current = liked;
+  }, [liked, heartScale]);
+  const heartStyle = useAnimatedStyle(() => ({ transform: [{ scale: heartScale.value }] }));
   return (
     <View style={[styles.rail, { gap }]} collapsable={false} onStartShouldSetResponder={claimTouch}>
       <PressableScale
@@ -84,7 +100,9 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
         accessibilityLabel="Beğen"
         accessibilityState={{ selected: liked }}
       >
-        <ShadowedIcon name={liked ? 'heart-liked' : 'heart'} size={HEART_SIZE} />
+        <Animated.View style={heartStyle}>
+          <ShadowedIcon name={liked ? 'heart-liked' : 'heart'} size={HEART_SIZE} />
+        </Animated.View>
         <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Beğen</Text>
       </PressableScale>
       <Animated.View

@@ -297,7 +297,11 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       const userId = get().sessionUserId;
       const current = captureOwnerPublication(userId);
       if (!current()) return;
-      if (get().likedProducts.some(item => item.product.id === product.id)) return;
+      if (get().likedProducts.some(item => item.product.id === product.id)) {
+        // A liked card is not a pass: no event, no write, the like stays. It only leaves the deck.
+        set((state) => ({ currentProducts: removeProduct(state.currentProducts, product.id) }));
+        return;
+      }
       const version = (passVersions.get(product.id) ?? 0) + 1;
       passVersions.set(product.id, version);
       const capturedGeneration = mutationGeneration;

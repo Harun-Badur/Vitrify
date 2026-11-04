@@ -252,6 +252,7 @@ export default function FeedScreen() {
   const feedRelaxed = useAppStore((state) => state.feedRelaxed);
   const swipeRight = useAppStore((state) => state.swipeRight);
   const swipeLeft = useAppStore((state) => state.swipeLeft);
+  const unlikeProduct = useAppStore((state) => state.unlikeProduct);
   const undoPass = useAppStore((state) => state.undoPass);
   const lastPassed = useAppStore((state) => {
     const stack = state.passedStack;
@@ -639,14 +640,25 @@ export default function FeedScreen() {
         return;
       }
       try {
-        noteSwipe();
-        swipeRight(product, input);
+        // Favourite from the card: the card stays on screen, so this is not a swipe.
+        swipeRight(product, input, { keepInDeck: true });
       } catch (error) {
         logger.error('Beğeni işlenemedi', { code: 'FAVORITE_START_FAILED' });
         Alert.alert('Beğeni kaydedilemedi', 'Bağlantını kontrol edip tekrar dene.');
       }
     },
-    [canLike, handleRequireAuth, noteSwipe, swipeRight],
+    [canLike, handleRequireAuth, swipeRight],
+  );
+
+  const handleUnlike = useCallback(
+    async (product: Product): Promise<void> => {
+      try {
+        await unlikeProduct(product.id);
+      } catch {
+        Alert.alert('Favori kaldırılamadı', 'Bağlantını kontrol edip tekrar dene.');
+      }
+    },
+    [unlikeProduct],
   );
 
   /** Store commit yalnız gesture settle sonrası (SwipeCard onPass). */
@@ -1033,6 +1045,7 @@ export default function FeedScreen() {
                   canLike={canLike}
                   canUndo={lastPassed !== null}
                   onAddToCloset={handleSwipeRight}
+                  onUnlike={handleUnlike}
                   onPass={handleSwipeLeft}
                   onVirtualTryOn={handleVirtualTryOn}
                   onBuy={handleBuy}

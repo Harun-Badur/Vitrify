@@ -22,7 +22,8 @@ export interface FavoritesSlice {
   favoritesOwner: string | null;
   likedProducts: LikedProduct[];
   addLikedProductLocally: (product: Product) => void;
-  swipeRight: (product: Product, input?: LikeInputSource) => void;
+  /** keepInDeck: favourite from the card without advancing the deck (double tap / heart button). */
+  swipeRight: (product: Product, input?: LikeInputSource, options?: { keepInDeck?: boolean }) => void;
   unlikeProduct: (productId: string) => Promise<void>;
   refreshLikedProducts: () => Promise<void>;
 }
@@ -85,19 +86,22 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
         };
       });
     },
-    swipeRight: (product, input): void => {
+    swipeRight: (product, input, options): void => {
       const userId = get().sessionUserId;
       const current = captureOwnerPublication(userId);
       if (!current()) return;
-      const latest = nextVersion(userId,product.id);
+      const keepInDeck = options?.keepInDeck === true;
       const previous = get().likedProducts.find(item => item.product.id === product.id);
+      // A card that is already liked must not write or emit a second like.
+      if (keepInDeck && previous) return;
+      const latest = nextVersion(userId,product.id);
       const priorPass = get().passedProductIds.includes(product.id);
       const priorStack = get().passedStack.find(item => item.id === product.id);
       const valid = () => current() && get().sessionUserId === userId && latest();
       status(userId,'loading');
 
       set((state) => ({
-        currentProducts: removeProduct(state.currentProducts, product.id),
+        currentProducts: keepInDeck ? state.currentProducts : removeProduct(state.currentProducts, product.id),
         likedProducts: prependLikedUnique(state.likedProducts, product),
         passedProductIds: state.passedProductIds.filter(
           (id) => id !== product.id,
