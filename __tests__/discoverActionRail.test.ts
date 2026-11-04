@@ -92,24 +92,32 @@ describe('DiscoverActionRail', () => {
     expect(iconNames(idle)).toContain('heart');
     expect(iconNames(idle)).not.toContain('heart-liked');
     expect(iconNames(liked)).toContain('heart-liked');
-    const labels = (tree: { root: TestNode }) => tree.root.findAllByType('Text').map(t => t.props.children);
-    expect(labels(idle)).toEqual(expect.arrayContaining(['Dene', 'Mağaza', 'Beğen', 'Uyumlu', 'AI']));
-    expect(labels(idle).filter(c => c === 'AI')).toHaveLength(1);
+    const texts = (tree: { root: TestNode }) => tree.root.findAllByType('Text').map(t => t.props.children);
+    expect(texts(idle)).toEqual(['AI']);
+    expect(texts(idle).filter(c => c === 'AI')).toHaveLength(1);
+    expect(buttons(liked)[2].props.accessibilityLabel).toBe('Beğenildi');
+    expect(buttons(liked)[2].props.accessibilityState).toEqual({ selected: true });
+    expect(buttons(idle)[2].props.accessibilityLabel).toBe('Beğen');
   });
 });
 
 describe('touch absorption and shadowed icons', () => {
-  it('rail root claims every touch inside its rectangle, gaps and labels included', () => {
+  it('rail root claims every touch inside its rectangle, gaps included', () => {
     const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     const host = tree.root.findAllByType('View')[0];
     expect(host.props.onStartShouldSetResponder()).toBe(true);
   });
 
-  it('each item is one pressable holding both icon and label', () => {
+  it('each item is one icon-only pressable button with an accessibility label and no visible label text', () => {
     const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     for (const button of buttons(tree)) {
-      expect(button.findAllByType('Text').length).toBeGreaterThanOrEqual(1);
+      expect(button.props.accessibilityRole).toBe('button');
+      expect(typeof button.props.accessibilityLabel).toBe('string');
+      const visible = button.findAllByType('Text').map(text => text.props.children);
+      expect(visible.filter(child => child !== 'AI')).toEqual([]);
     }
+    const everyText = tree.root.findAllByType('Text').map(text => text.props.children);
+    for (const word of ['Dene', 'Mağaza', 'Beğen', 'Uyumlu']) expect(everyText).not.toContain(word);
     expect(tree.root.findAllByType(ShadowedIcon).map(n => n.props.name)).toEqual([
       'sparkles', 'shopping-bag', 'heart', 'badge-check',
     ]);
@@ -152,19 +160,8 @@ describe('touch absorption and shadowed icons', () => {
   it('item hit areas never overlap, even at the tightest gap', () => {
     const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, maxHeight: 100 }));
     const host = tree.root.findAllByType('View')[0];
-    expect(Object.assign({}, ...[host.props.style].flat()).gap).toBeGreaterThanOrEqual(4);
+    expect(Object.assign({}, ...[host.props.style].flat()).gap).toBeGreaterThanOrEqual(0);
     for (const button of buttons(tree)) expect(button.props.hitSlop.top ?? 0).toBe(0);
-  });
-
-  it('labels keep the readable shadow and are 12.5sp on a single line', () => {
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
-    const labels = tree.root.findAllByType('Text').filter(text => ['Dene', 'Mağaza', 'Beğen', 'Uyumlu'].includes(text.props.children as string));
-    expect(labels).toHaveLength(4);
-    for (const label of labels) {
-      const style = Object.assign({}, ...[label.props.style].flat());
-      expect(style).toMatchObject({ fontSize: 12.5, textShadowColor: 'rgba(0, 0, 0, 0.65)', textShadowRadius: 3 });
-      expect(label.props.numberOfLines).toBe(1);
-    }
   });
 
   it('the four handlers still fire from their buttons', () => {
@@ -180,23 +177,23 @@ describe('touch absorption and shadowed icons', () => {
 });
 
 describe('device-robust alignment', () => {
-  it('rail gap shrinks to 4dp minimum instead of hiding items', () => {
-    expect(computeRailGap(4)).toBe(6);
-    expect(computeRailGap(4, 400)).toBe(6);
-    expect(computeRailGap(4, 208)).toBe(4);
-    expect(computeRailGap(4, 100)).toBe(4);
-    expect(computeRailGap(4, 210)).toBeCloseTo(4.67, 1);
-    expect(computeRailGap(4, 212)).toBeCloseTo(5.33, 1);
+  it('rail gap shrinks to 0 (touch targets just touch) instead of hiding items or shrinking circles', () => {
+    expect(computeRailGap(4)).toBe(2);
+    expect(computeRailGap(4, 400)).toBe(2);
+    expect(computeRailGap(4, 192)).toBe(0);
+    expect(computeRailGap(4, 100)).toBe(0);
+    expect(computeRailGap(4, 194)).toBeCloseTo(0.67, 1);
+    expect(computeRailGap(4, 195)).toBe(1);
   });
 
   it('rail keeps all items under a tight maxHeight and applies the computed gap', () => {
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, maxHeight: 208 }));
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, maxHeight: 192 }));
     expect(buttons(tree)).toHaveLength(4);
     const host = tree.root.findAllByType('View')[0];
-    expect(Object.assign({}, ...[host.props.style].flat())).toMatchObject({ width: RAIL_COLUMN_WIDTH, gap: 4 });
+    expect(Object.assign({}, ...[host.props.style].flat())).toMatchObject({ width: RAIL_COLUMN_WIDTH, gap: 0 });
   });
 
-  it('labels cap font scaling at 1.15', () => {
+  it('the AI badge caps font scaling at 1.15', () => {
     const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
     for (const text of tree.root.findAllByType('Text')) expect(text.props.maxFontSizeMultiplier).toBe(1.15);
   });

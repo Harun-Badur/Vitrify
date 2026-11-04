@@ -19,20 +19,15 @@ const HEART_POP_SCALE = 1.3;
 const HEART_POP_IN_MS = 90;
 const HEART_POP_OUT_MS = 140;
 const RAIL_ITEM_COUNT = 4;
-const RAIL_GAP = 6;
-const RAIL_MIN_GAP = 4;
+// Touch targets are 48dp tall and tile the rail; the icons inside them are 14-25dp apart visually.
+const RAIL_GAP = 2;
+const RAIL_MIN_GAP = 0;
 const LABEL_MAX_FONT_SCALE = 1.15;
-/** Label is wider than the 44dp column so "Mağaza" stays on one line; it is centred and may overflow evenly. */
-const LABEL_BOX_WIDTH = 60;
-const LABEL_LINE_HEIGHT = 16;
-const ITEM_ICON_LABEL_GAP = 2;
 
 /** Sığmazsa öğeler gizlenmez, aralıklar RAIL_MIN_GAP'e kadar sıkışır (daireler küçülmez). */
 export function computeRailGap(count: number, maxHeight?: number): number {
   if (maxHeight === undefined || count < 2) return RAIL_GAP;
-  // One item (Dene) is taller than the touch minimum because of its larger circle.
-  const occupied = (count - 1) * HIT_SIZE + TRY_ITEM_HEIGHT;
-  const fitting = (maxHeight - occupied) / (count - 1);
+  const fitting = (maxHeight - count * HIT_SIZE) / (count - 1);
   return Math.min(RAIL_GAP, Math.max(RAIL_MIN_GAP, fitting));
 }
 
@@ -44,7 +39,6 @@ const HEART_SIZE = 23;
 const HIT_SIZE = 48;
 /** 44dp column + 2dp hitSlop each side = 48dp wide touch target; the column (and header axis) stays 44. */
 const HIT_SLOP = { left: 2, right: 2 } as const;
-const TRY_ITEM_HEIGHT = TRY_SIZE + ITEM_ICON_LABEL_GAP + LABEL_LINE_HEIGHT;
 
 interface DiscoverActionRailProps {
   onTry: () => void;
@@ -93,7 +87,6 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
         <View style={styles.tryCircle}>
           <ShadowedIcon name="sparkles" size={TRY_ICON_SIZE} />
         </View>
-        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Dene</Text>
       </PressableScale>
       <PressableScale
         onPress={onStore}
@@ -103,20 +96,18 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
         accessibilityLabel="Mağazaya git"
       >
         <ShadowedIcon name="shopping-bag" size={ICON_SIZE} />
-        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Mağaza</Text>
       </PressableScale>
       <PressableScale
         onPress={onLike}
         style={styles.item}
         hitSlop={HIT_SLOP}
         accessibilityRole="button"
-        accessibilityLabel="Beğen"
+        accessibilityLabel={liked ? 'Beğenildi' : 'Beğen'}
         accessibilityState={{ selected: liked }}
       >
         <Animated.View style={heartStyle}>
           <ShadowedIcon name={liked ? 'heart-liked' : 'heart'} size={HEART_SIZE} />
         </Animated.View>
-        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Beğen</Text>
       </PressableScale>
       <Animated.View
         style={whyStyle}
@@ -138,7 +129,6 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
               <Text style={styles.badgeText} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>{INSIGHT_CHIP_COPY.aiBadge}</Text>
             </View>
           </View>
-          <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Uyumlu</Text>
         </PressableScale>
       </Animated.View>
     </View>
@@ -157,7 +147,6 @@ const styles = StyleSheet.create({
     minHeight: HIT_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: ITEM_ICON_LABEL_GAP,
   },
   tryCircle: {
     width: TRY_SIZE,
@@ -170,7 +159,7 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     top: -5,
-    right: -12,
+    right: -10,
     backgroundColor: colors.inverseText,
     borderRadius: 8,
     paddingHorizontal: 3,
@@ -180,16 +169,5 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontSize: 9,
     fontWeight: '800',
-  },
-  label: {
-    color: colors.inverseText,
-    width: LABEL_BOX_WIDTH,
-    textAlign: 'center',
-    fontSize: 12.5,
-    lineHeight: LABEL_LINE_HEIGHT,
-    fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.65)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
 });
