@@ -295,6 +295,25 @@ describe('Discover pagination using the existing service and store', () => {
       .toMatchObject({ products: [], hasMore: false, source: 'edge' });
   });
 
+  it('reports Edge products rejected by the eligibility gate so the caller can exclude them', async () => {
+    const products = (await fetchFeedProducts(20, null)).products;
+    process.env.EXPO_PUBLIC_RECS_FEED_URL = 'https://example.com/recs-feed';
+    mockBackend.auth.getSession.mockResolvedValue({ data: { session: { access_token: 'test-token' } }, error: null });
+    jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => ({
+      recommendation_id: 'test-rec', score_id: 'test-score', config_version: 'v1', has_more: true,
+      items: products.slice(1, 3).map(product => ({ product, score: 1, reasons: [], position: 1 })),
+    }) } as Response);
+    const hidden = products[1];
+    const original = hidden.feedEligible;
+    hidden.feedEligible = false;
+    try {
+      const result = await fetchFeedProducts(20, 'user-1', 'personal', {}, undefined, [products[0].id]);
+      expect(result.products.map(product => product.id)).toEqual([products[2].id]);
+      expect(result.rejectedIds).toEqual([hidden.id]);
+      expect(result.hasMore).toBe(true);
+    } finally { hidden.feedEligible = original; }
+  });
+
   it('preserves a legacy Edge first batch, then uses paginated fallback instead of repeating it', async () => {
     const products = (await fetchFeedProducts(20, null)).products;
     process.env.EXPO_PUBLIC_RECS_FEED_URL = 'https://example.com/recs-feed';

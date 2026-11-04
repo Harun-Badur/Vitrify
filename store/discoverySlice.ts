@@ -78,6 +78,8 @@ export const PASSED_STACK_LIMIT = 20;
 
 /** Current card plus the next/warm cards the screen has already prepared. */
 const PRESERVED_HEAD = 3;
+/** Consecutive pages that produced no showable product before the feed is treated as finished. */
+const MAX_EMPTY_PAGES = 3;
 
 const appendUniqueId = (ids: string[], productId: string): string[] =>
   ids.includes(productId) ? ids : [...ids, productId];
@@ -108,6 +110,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
     let refreshGeneration = 0;
     let context: { userId: string | null; filters: FeedQueryFilters; searchMode: boolean } | null = null;
     let deliveredIds = new Set<string>();
+    let emptyPages = 0;
     let mutationGeneration = 0;
     const passVersions = new Map<string, number>();
     const passWrites = new Map<string, Promise<void>>();
@@ -140,6 +143,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       if (!current()) return;
       const requestGeneration = ++generation;
       deliveredIds = new Set();
+      emptyPages = 0;
       const filters = options?.filters ?? {};
       const searchMode = options?.searchMode === true || hasAnyFilter(filters);
       context = { userId, filters, searchMode };
@@ -159,7 +163,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         const result = await withFeedDeadline(userId ? trackOwnerWork(userId, request) : request);
         if (!current() || requestGeneration !== generation) return;
         perfLog('feed_call', { ms: perfNow() - perfFeedStart, n: result.products.length });
-        deliveredIds = new Set(result.products.map(product => product.id));
+        deliveredIds = new Set([...result.products.map(product => product.id), ...(result.rejectedIds ?? [])]);
         logger.debug('Feed yüklendi', {
           source: result.source,
           isPersonalized: result.isPersonalized,
@@ -184,6 +188,8 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           hasMore: result.hasMore ?? true,
         }));
         perfLog('feed_store_set', { ms: perfNow() - perfSetStart });
+        // An empty first page that still claims more gets one retry (one tolerated empty page left), then ends.
+        emptyPages = get().currentProducts.length === 0 && get().hasMore ? MAX_EMPTY_PAGES - 1 : 0;
         perfRefreshStoreSet();
       } catch (error) {
         if (!current() || requestGeneration !== generation) return;
@@ -224,16 +230,20 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         const result = await withFeedDeadline(userId ? trackOwnerWork(userId, request) : request);
         if (!current() || requestGeneration !== generation) return;
         const alreadyDelivered = new Set(excluded);
+        (result.rejectedIds ?? []).forEach(id => deliveredIds.add(id));
         const incoming = result.products.filter(product => {
           if (alreadyDelivered.has(product.id)) return false;
           alreadyDelivered.add(product.id);
           deliveredIds.add(product.id);
           return true;
         });
+        const fresh = excludeSeen(incoming, get().likedProducts, effectivePassedIds(get().passedProductIds));
+        // A page without a showable product must not be requested again forever.
+        emptyPages = fresh.length > 0 ? 0 : emptyPages + 1;
         set(state => ({
-          currentProducts: [...state.currentProducts, ...excludeSeen(incoming, state.likedProducts, effectivePassedIds(state.passedProductIds))],
+          currentProducts: [...state.currentProducts, ...fresh],
           feedPreparationRevision: state.feedPreparationRevision + 1,
-          hasMore: result.hasMore ?? incoming.length > 0,
+          hasMore: emptyPages >= MAX_EMPTY_PAGES ? false : (result.hasMore ?? fresh.length > 0),
           isFetchingNext: false,
           feedStatus: 'success',
           feedWarning: result.warning ?? null,
