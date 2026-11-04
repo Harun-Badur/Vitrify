@@ -49,7 +49,7 @@ export function TileVisual({ tile }: { tile: StyleTile }) {
 const styles = StyleSheet.create({
   stack: { flexDirection: 'row', alignItems: 'center' },
   overlap: { marginLeft: -OVERLAP },
-  swatch: { width: SWATCH, height: SWATCH, borderRadius: SWATCH / 2, borderWidth: 2, borderColor: colors.input },
+  swatch: { width: SWATCH, height: SWATCH, borderRadius: SWATCH / 2, borderWidth: 1, borderColor: colors.swatchBorder },
   monogram: {
     width: MONOGRAM, height: MONOGRAM, borderRadius: MONOGRAM / 2, alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.cream, borderWidth: 2, borderColor: colors.input,

@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import ProfileSheet from './ProfileSheet';
 import { TileVisual } from './ProfileStyleVisuals';
-import { colors, radius, spacing } from '../lib/theme';
+import { PROFILE_MENU_LABEL, colors, radius, spacing } from '../lib/theme';
 import type { StyleJourney } from '../lib/profileStyleJourney';
 import {
   buildSourceSheet, buildStyleGrid, type DeclarationSection, type SourceSheetModel, type StyleTile,
@@ -99,9 +99,9 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.card, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
   row: { minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   rowDivider: { borderTopWidth: 1, borderTopColor: colors.line },
-  rowLabel: { width: 76, color: colors.tabInactive, fontSize: 13, lineHeight: 18 },
+  rowLabel: { width: 92, ...PROFILE_MENU_LABEL },
   rowContent: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  value: { flexShrink: 1, color: colors.text, fontSize: 15, lineHeight: 20, fontWeight: '700' },
+  value: { flexShrink: 1, color: colors.valueMuted, fontSize: 15, lineHeight: 20, fontWeight: '500' },
   quiet: { flexShrink: 1, color: colors.tabInactive, fontSize: 14, lineHeight: 20 },
   declared: { color: colors.tabInactive, fontSize: 10, lineHeight: 14, fontWeight: '600' },
   errorBody: { gap: spacing.md, padding: spacing.lg },

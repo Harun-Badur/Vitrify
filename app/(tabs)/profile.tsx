@@ -59,7 +59,7 @@ import { buildInviteShareMessage } from '../../lib/inviteShare';
 import { logger } from '../../lib/logger';
 import { checkLowResolutionPersonPhoto } from '../../lib/personPhotoPrepare';
 import { PRIVACY_URL, SUPPORT_EMAIL } from '../../lib/privacy';
-import { PROFILE_SECTION_GAP, colors, radius, spacing } from '../../lib/theme';
+import { PROFILE_MENU_LABEL, PROFILE_SECTION_GAP, colors, radius, spacing } from '../../lib/theme';
 import { initials } from '../../lib/profileDisplay';
 import { buildStyleJourney, type JourneyTarget } from '../../lib/profileStyleJourney';
 import { fetchCalculatedStyleProfile, subscribeStyleProfileChanges } from '../../lib/recsConfig';
@@ -1130,9 +1130,7 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     flex: 1,
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '500',
+    ...PROFILE_MENU_LABEL,
   },
   menuValue: {
     color: colors.textSecondary,

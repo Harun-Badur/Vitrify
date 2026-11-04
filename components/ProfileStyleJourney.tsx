@@ -1,39 +1,60 @@
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
 import { Check } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import { colors, radius, spacing } from '../lib/theme';
 import type { JourneyTarget, StyleJourney } from '../lib/profileStyleJourney';
 import { buildJourneyCard, type JourneyRow } from '../lib/profileStyleView';
 
-const RING = 92;
-const STROKE = 4;
+const RING = 72;
+const STROKE = 2.5;
 const RADIUS = (RING - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const CENTER = RING / 2;
 const MARK = 28;
 const ADD_HEIGHT = 40;
 const HIT = 44;
-// Inner discs get more saturated as steps complete: 0-1 steps, 2 steps, 3 steps.
-const RING_FILLS: ReadonlyArray<readonly [string, string, string]> = [
-  ['#FBE9E6', '#F7C9C3', 'rgba(254, 56, 43, 0.55)'],
-  ['#F7C9C3', '#F2A59C', 'rgba(254, 56, 43, 0.8)'],
-  [colors.accent, colors.accent, colors.accent],
+// Core saturation grows with completed steps: 0-1 steps, 2 steps, 3 steps. Static drawing, no animation.
+const CORE_TONES: ReadonlyArray<{ center: string; edge: string; glow: number }> = [
+  { center: '#FF6A5E', edge: '#FBE9E6', glow: 0.14 },
+  { center: '#FF4F42', edge: '#F7C9C3', glow: 0.2 },
+  { center: '#FE382B', edge: '#FE6A5E', glow: 0.25 },
 ];
 const SPARKLE = 'M0 -9 C1 -3 3 -1 9 0 C3 1 1 3 0 9 C-1 3 -3 1 -9 0 C-3 -1 -1 -3 0 -9 Z';
 
 function FocusRing({ completed, label }: { completed: number; label: string }) {
-  const [outer, middle, inner] = RING_FILLS[Math.max(0, completed - 1)];
-  const center = RING / 2;
+  const tone = CORE_TONES[Math.max(0, completed - 1)];
+  const fraction = completed / 3;
+  const angle = (fraction * 360 - 90) * (Math.PI / 180);
   return (
     <View accessible accessibilityRole="image" accessibilityLabel={label} style={styles.ring}>
       <Svg width={RING} height={RING} viewBox={`0 0 ${RING} ${RING}`}>
-        <Circle cx={center} cy={center} r={RADIUS} fill="none" stroke={colors.line} strokeWidth={STROKE} />
-        <Circle cx={center} cy={center} r={RADIUS} fill="none" stroke={colors.accent} strokeWidth={STROKE} strokeLinecap="round"
-          strokeDasharray={`${CIRCUMFERENCE}`} strokeDashoffset={CIRCUMFERENCE * (1 - completed / 3)} rotation={-90} origin={`${center}, ${center}`} />
-        <Circle cx={center} cy={center} r={36} fill={outer} />
-        <Circle cx={center} cy={center} r={26} fill={middle} />
-        <Circle cx={center} cy={center} r={16} fill={inner} />
-        <Path d={SPARKLE} fill={colors.inverseText} transform={`translate(${center} ${center})`} />
+        <Defs>
+          <LinearGradient id="journeyArc" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#FE382B" />
+            <Stop offset="1" stopColor="#FF7A6E" />
+          </LinearGradient>
+          <RadialGradient id="journeyCore" cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor={tone.center} />
+            <Stop offset="1" stopColor={tone.edge} />
+          </RadialGradient>
+          <RadialGradient id="journeyGlow" cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor="#FE382B" stopOpacity={tone.glow} />
+            <Stop offset="1" stopColor="#FE382B" stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={CENTER} cy={CENTER} r={RADIUS} fill="none" stroke="#F1EBE2" strokeWidth={STROKE} />
+        {completed > 0 ? (
+          <Circle cx={CENTER} cy={CENTER} r={RADIUS} fill="none" stroke="url(#journeyArc)" strokeWidth={STROKE} strokeLinecap="round"
+            strokeDasharray={`${CIRCUMFERENCE}`} strokeDashoffset={CIRCUMFERENCE * (1 - fraction)} rotation={-90} origin={`${CENTER}, ${CENTER}`} />
+        ) : null}
+        {completed > 0 ? (
+          <Circle cx={CENTER + RADIUS * Math.cos(angle)} cy={CENTER + RADIUS * Math.sin(angle)} r={2} fill={colors.inverseText} opacity={0.9} />
+        ) : null}
+        <Circle cx={CENTER} cy={CENTER} r={30} fill="url(#journeyGlow)" />
+        <Circle cx={CENTER} cy={CENTER} r={24} fill="url(#journeyCore)" />
+        <Path d={SPARKLE} fill={colors.inverseText} transform={`translate(${CENTER} ${CENTER}) scale(0.9)`} />
+        <Path d={SPARKLE} fill={colors.inverseText} opacity={0.8} transform={`translate(${CENTER + 13} ${CENTER - 13}) scale(0.4)`} />
       </Svg>
     </View>
   );
@@ -56,7 +77,7 @@ export default function ProfileStyleJourney({ journey, onTask }: {
         <FocusRing completed={card.completed} label={card.ringLabel} />
         <View style={styles.topCopy}>
           <Text style={styles.overline}>STİL YOLCULUĞUN</Text>
-          <Text style={styles.title}>{card.title}</Text>
+          <Text style={styles.title} numberOfLines={2}>{card.title}</Text>
           <Text style={styles.lead}>Paylaştıkça önerilerin sana yaklaşır.</Text>
         </View>
       </View>

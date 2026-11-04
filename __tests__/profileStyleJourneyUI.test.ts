@@ -11,7 +11,7 @@ import { emptyStyleProfile } from '../lib/scoring';
 import type { CalculatedStyleProfileState } from '../types/calculatedStyleProfile';
 import type { WeightMap } from '../types/recommendation';
 
-jest.mock('react-native-svg', () => ({ __esModule: true, default: 'Svg', Circle: 'Circle', Path: 'Path', Rect: 'Rect' }));
+jest.mock('react-native-svg', () => ({ __esModule: true, default: 'Svg', Circle: 'Circle', Path: 'Path', Rect: 'Rect', Defs: 'Defs', LinearGradient: 'LinearGradient', RadialGradient: 'RadialGradient', Stop: 'Stop' }));
 jest.mock('lucide-react-native', () => new Proxy({}, { get: (_t, name) => (name === '__esModule' ? false : String(name)) }));
 jest.mock('../components/PressableScale', () => 'PressableScale');
 jest.mock('../components/ProfileSheet', () => ({

@@ -35,6 +35,9 @@ export const colors = {
   ink: '#1B1918',
   line: '#EBE3D8',
   cream: '#F3ECE2',
+  /** Profil sekmesi: ikincil değer metni ve açık renk swatch çerçevesi. */
+  valueMuted: '#6E665E',
+  swatchBorder: '#DDD4C8',
   /** Yalnızca minimal kullanım: silme metin butonları. */
   destructive: '#DC2626',
   /** Kaydırma damgaları: traffic-light. */
@@ -208,3 +211,10 @@ export const shadows = {
 /** Discover park/clip: deste gölgesinin yayılımı. */
 export const CARD_SHADOW_SPREAD_PX =
   shadows.stackSoft.shadowOffset.height + shadows.stackSoft.shadowRadius;
+
+/** Profil alt menüsü satır etiketi ("Denemelerim", "Hesap Bilgilerim"); Stilin satır etiketleri de bunu kullanır. */
+export const PROFILE_MENU_LABEL = {
+  color: colors.text,
+  fontSize: 16,
+  fontWeight: '500',
+} as const;
