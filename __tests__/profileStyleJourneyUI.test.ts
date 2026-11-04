@@ -37,7 +37,7 @@ const base = (patch: Partial<StyleJourneyInput> = {}): StyleJourneyInput => ({
   likedProducts: [], passedProductIds: [], wardrobeItems: [], savedOutfits: [], profile: null, ...patch,
 });
 const ids = (count: number) => Array.from({ length: count }, (_, i) => `p${i}`);
-const model = (weights: { colorW?: WeightMap; brandW?: WeightMap }): CalculatedStyleProfileState => ({
+const model = (weights: { colorW?: WeightMap; brandW?: WeightMap; subcategoryW?: WeightMap; fitW?: WeightMap }): CalculatedStyleProfileState => ({
   state: 'ready',
   profile: { snapshot: { ...emptyStyleProfile('A'), ...weights }, algorithm: 'v2', eventCount: 9, computedAt: '2026-10-12T10:00:00Z' },
 });
@@ -48,20 +48,21 @@ async function mount(element: ReactElement): Promise<Tree> {
   return view;
 }
 
-describe('Stil Yolculuğun boxes', () => {
-  test('three boxes replace the percent ring; no percent text, no raw counter', async () => {
+describe('Stil Yolculuğun list', () => {
+  test('three rows replace the percent ring; no percent text, no raw counter', async () => {
     const journey = buildStyleJourney(base({ passedProductIds: ids(174) }));
     const view = await mount(createElement(ProfileStyleJourney, { journey, onTask: jest.fn() }));
     try {
       const text = texts(view);
       for (const label of ['Stil Yolculuğun', 'Beğeni', 'Dolap parçası', 'Tercih']) expect(text).toContain(label);
+      expect(text).toContain('174 geçilen');
       expect(text).toContain('Önerilerin şu an 174 değerlendirmene dayanıyor.');
       expect(text).not.toContain('%');
       expect(text).not.toContain('174/10');
       expect(view.root.findAllByProps({ accessibilityRole: 'progressbar' })).toHaveLength(0);
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('complete boxes get the check badge, missing boxes the add badge and route on press', async () => {
+  test('complete rows get the check badge, missing rows the add badge and route on press', async () => {
     const journey = buildStyleJourney(base({ passedProductIds: ids(10) }));
     const onTask = jest.fn();
     const view = await mount(createElement(ProfileStyleJourney, { journey, onTask }));
@@ -82,10 +83,10 @@ describe('Stil Yolculuğun boxes', () => {
       expect(view.root.findAllByProps({ testID: 'journey-wardrobe-loading' }).length).toBeGreaterThan(0);
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('boxes have at least 44dp touch targets', async () => {
+  test('rows have at least 44dp touch targets', async () => {
     const view = await mount(createElement(ProfileStyleJourney, { journey: buildStyleJourney(base()), onTask: jest.fn() }));
     try {
-      const box = view.root.findByProps({ accessibilityLabel: 'Beğeni: 0, eksik. Ekle' });
+      const box = view.root.findByProps({ accessibilityLabel: 'Beğeni: 0 beğeni · 0 geçilen, eksik. Ekle' });
       const style = ([] as Record<string, number>[]).concat(box.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
       expect(style.minHeight).toBeGreaterThanOrEqual(44);
     } finally { await renderer.act(() => view.unmount()); }
@@ -125,6 +126,29 @@ describe('Stilin grid', () => {
       expect(text).not.toContain('Keşfediliyor');
       await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Yeniden dene' }).props.onPress as () => void)(); });
       expect(onRetry).toHaveBeenCalledTimes(1);
+    } finally { await renderer.act(() => view.unmount()); }
+  });
+  test('rows are full width: no two-column tile layout remains', async () => {
+    const view = await mount(createElement(ProfileStyleGrid, { journey: learned(), onRetry: jest.fn(), onSelectSection: jest.fn() }));
+    try {
+      const row = view.root.findByProps({ accessibilityLabel: 'Renk: Siyah' });
+      const style = ([] as Record<string, unknown>[]).concat(row.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
+      expect(style.width).toBeUndefined();
+      expect(style.flexGrow).toBeUndefined();
+      expect(Number(style.minHeight)).toBeGreaterThanOrEqual(56);
+    } finally { await renderer.act(() => view.unmount()); }
+  });
+  test('Parça and Kesim sheets have the source bar but no "seç" button', async () => {
+    const journey = buildStyleJourney(base({ passedProductIds: ids(8), calculatedProfile: model({ subcategoryW: { pantolon: 1 }, fitW: { slim: 1 } }) }));
+    const onSelectSection = jest.fn();
+    const view = await mount(createElement(ProfileStyleGrid, { journey, onRetry: jest.fn(), onSelectSection }));
+    try {
+      for (const label of ['Parça: Pantolon', 'Kesim: Dar kesim']) {
+        await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: label }).props.onPress as () => void)(); });
+        expect(texts(view)).toContain('Nereden öğrendik?');
+        expect(view.root.findAllByProps({ accessibilityLabel: 'Parça seç' })).toHaveLength(0);
+        expect(view.root.findAllByProps({ accessibilityLabel: 'Kesim seç' })).toHaveLength(0);
+      }
     } finally { await renderer.act(() => view.unmount()); }
   });
   test('a tap opens the source sheet and its button starts the existing declaration flow', async () => {

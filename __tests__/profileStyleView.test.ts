@@ -38,7 +38,7 @@ describe('journey boxes', () => {
       profile: studio({ topSize: 'M', styleTags: ['minimal'], preferredColors: ['Siyah'], favoriteBrands: ['ZARA'], priceRange: { min: 100, max: 500 } }),
     }));
     expect(buildJourneyBoxes(full).map(box => [box.id, box.value, box.state])).toEqual([
-      ['liked', '4', 'complete'], ['wardrobe', '3', 'complete'], ['preferences', '5/5', 'complete'],
+      ['liked', '4 beğeni · 6 geçilen', 'complete'], ['wardrobe', '3', 'complete'], ['preferences', '5/5', 'complete'],
     ]);
   });
   test('below the thresholds boxes are missing, not complete', () => {
@@ -47,14 +47,16 @@ describe('journey boxes', () => {
       profile: studio({ styleTags: ['minimal'], preferredColors: ['Siyah'], favoriteBrands: ['ZARA'], priceRange: { min: 100, max: 500 } }),
     }));
     expect(buildJourneyBoxes(partial).map(box => [box.value, box.state])).toEqual([
-      ['2', 'missing'], ['2', 'missing'], ['4/5', 'missing'],
+      ['2 beğeni · 7 geçilen', 'missing'], ['2', 'missing'], ['4/5', 'missing'],
     ]);
   });
-  test('liked box shows the liked count while completion follows distinct evaluations', () => {
+  test('liked row reads "N beğeni · M geçilen" and completes at liked+passed >= 10', () => {
     const journey = buildStyleJourney(input({ likedProducts: likes(3), passedProductIds: passes(7) }));
     const liked = buildJourneyBoxes(journey)[0];
-    expect(liked.value).toBe('3');
+    expect(liked.value).toBe('3 beğeni · 7 geçilen');
     expect(liked.state).toBe('complete');
+    const short = buildStyleJourney(input({ likedProducts: likes(3), passedProductIds: passes(6) }));
+    expect(buildJourneyBoxes(short)[0]).toMatchObject({ value: '3 beğeni · 6 geçilen', state: 'missing' });
   });
   test('wardrobe that is not ready shows loading instead of 0', () => {
     const journey = buildStyleJourney(input({ wardrobeStatus: 'loading', wardrobeItems: wardrobe(3) }));
@@ -83,11 +85,10 @@ describe('journey boxes', () => {
 });
 
 describe('style grid', () => {
-  test('five boxes in order; price is full width', () => {
+  test('five rows in order', () => {
     const grid = buildStyleGrid(buildStyleJourney(input({ calculatedProfile: model({}) })));
     expect(grid.state).toBe('ready');
     expect(grid.tiles.map(tile => tile.id)).toEqual(['color', 'category', 'fit', 'brand', 'price']);
-    expect(grid.tiles.filter(tile => tile.wide).map(tile => tile.id)).toEqual(['price']);
   });
   test('below the sample threshold a learned value becomes the "Biraz daha beğen" empty state', () => {
     expect(STYLE_TREND_MIN_EVALUATIONS).toBe(5);
@@ -190,12 +191,14 @@ describe('source sheet', () => {
     expect(sheet.sources.reduce((sum, source) => sum + source.fraction, 0)).toBeCloseTo(1, 5);
     expect(sheet.sources[0].fraction).toBeCloseTo(0.25, 5);
   });
-  test('every dimension opens an existing declaration flow', () => {
+  test('only dimensions with their own declaration flow get a CTA; Parça and Kesim show the source bar only', () => {
     expect(grid.tiles.map(tile => buildSourceSheet(tile, journey).button)).toEqual([
-      { label: 'Renk seç', section: 'colors' }, { label: 'Parça seç', section: 'style' },
-      { label: 'Kesim seç', section: 'body' }, { label: 'Marka seç', section: 'brands' },
-      { label: 'Fiyat seç', section: 'budget' },
+      { label: 'Renk seç', section: 'colors' }, null, null,
+      { label: 'Marka seç', section: 'brands' }, { label: 'Fiyat seç', section: 'budget' },
     ]);
+    const [, category, fit] = grid.tiles.map(tile => buildSourceSheet(tile, journey));
+    expect(category.sources.length).toBe(3);
+    expect(fit.sources.length).toBe(3);
   });
   test('a declared box says it is the user\'s choice and carries no prediction text or bar', () => {
     const declaredJourney = buildStyleJourney(input({ profile: studio({ preferredColors: ['Siyah'] }), calculatedProfile: model({}) }));

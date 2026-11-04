@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import ProfileSheet from './ProfileSheet';
 import { TileVisual } from './ProfileStyleVisuals';
@@ -14,8 +15,6 @@ const SOURCE_COLORS = { liked: colors.profileRed, passed: colors.tabInactive, wa
 export default function ProfileStyleGrid({ journey, onRetry, onSelectSection }: {
   journey: StyleJourney; onRetry: () => void; onSelectSection: (section: DeclarationSection) => void;
 }) {
-  const { width, fontScale } = useWindowDimensions();
-  const singleColumn = width < 350 || fontScale > 1.3;
   const [openId, setOpenId] = useState<StyleTile['id'] | null>(null);
   const grid = buildStyleGrid(journey);
   const opened = grid.tiles.find(tile => tile.id === openId);
@@ -34,20 +33,25 @@ export default function ProfileStyleGrid({ journey, onRetry, onSelectSection }: 
           </PressableScale>
         </View>
       ) : (
-        <View style={styles.grid}>
-          {grid.tiles.map(tile => (
-            <PressableScale key={tile.id} testID={`style-tile-${tile.id}-${tile.state}`}
-              onPress={() => setOpenId(tile.id)} accessibilityRole="button"
-              accessibilityLabel={`${tile.title}: ${tile.valueText}`}
-              style={[styles.tile, (tile.wide || singleColumn) && styles.tileFull,
-                (tile.state === 'empty' || tile.state === 'loading') && styles.tileEmpty]}>
-              <Text style={styles.tileTitle}>{tile.title}</Text>
-              {tile.label ? <Text style={styles.declared}>{tile.label}</Text> : null}
-              <TileVisual tile={tile} />
-              <Text style={tile.state === 'empty' || tile.state === 'loading' ? styles.emptyValue : styles.value}
-                numberOfLines={2}>{tile.valueText}</Text>
-            </PressableScale>
-          ))}
+        <View style={styles.list}>
+          {grid.tiles.map(tile => {
+            const quiet = tile.state === 'empty' || tile.state === 'loading';
+            return (
+              <PressableScale key={tile.id} testID={`style-tile-${tile.id}-${tile.state}`}
+                onPress={() => setOpenId(tile.id)} accessibilityRole="button"
+                accessibilityLabel={`${tile.title}: ${tile.valueText}`}
+                style={[styles.row, quiet && styles.rowEmpty]}>
+                <View style={styles.rowHead}>
+                  <Text style={styles.tileTitle}>{tile.title}</Text>
+                  {tile.label ? <Text style={styles.declared}>{tile.label}</Text> : null}
+                </View>
+                <TileVisual tile={tile} />
+                {tile.brands.length && !quiet ? <View style={styles.spacer} /> : (
+                  <Text style={quiet ? styles.emptyValue : styles.value} numberOfLines={2}>{tile.valueText}</Text>)}
+                <ChevronRight size={15} color={colors.tabInactive} />
+              </PressableScale>
+            );
+          })}
         </View>
       )}
       {sheet ? (
@@ -73,10 +77,12 @@ export default function ProfileStyleGrid({ journey, onRetry, onSelectSection }: 
               </View>
             )}
             <Text style={styles.note}>{sheet.note}</Text>
-            <PressableScale accessibilityRole="button" accessibilityLabel={sheet.button.label} style={styles.primary}
-              onPress={() => { setOpenId(null); onSelectSection(sheet.button.section); }}>
-              <Text style={styles.primaryText}>{sheet.button.label}</Text>
-            </PressableScale>
+            {sheet.button ? (
+              <PressableScale accessibilityRole="button" accessibilityLabel={sheet.button.label} style={styles.primary}
+                onPress={() => { setOpenId(null); if (sheet.button) onSelectSection(sheet.button.section); }}>
+                <Text style={styles.primaryText}>{sheet.button.label}</Text>
+              </PressableScale>
+            ) : null}
           </View>
         </ProfileSheet>
       ) : null}
@@ -89,20 +95,22 @@ const styles = StyleSheet.create({
   headingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: spacing.sm },
   heading: { color: colors.text, fontSize: 20, fontWeight: '800' },
   hint: { color: colors.textSecondary, fontSize: 11, lineHeight: 15 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  tile: {
-    width: '48%', flexGrow: 1, minHeight: 104, gap: spacing.sm, padding: spacing.md, borderRadius: radius.box,
-    backgroundColor: colors.input, borderWidth: 1, borderColor: colors.hairline, ...shadows.segment,
+  list: { gap: spacing.sm },
+  spacer: { flex: 1 },
+  row: {
+    minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md, borderRadius: radius.box, backgroundColor: colors.input,
+    borderWidth: 1, borderColor: colors.hairline, ...shadows.segment,
   },
-  tileFull: { width: '100%' },
-  tileEmpty: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.tabInactive, backgroundColor: colors.bgSoft },
+  rowEmpty: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.tabInactive, backgroundColor: colors.bgSoft },
+  rowHead: { width: 72, gap: spacing.xs },
   tileTitle: { color: colors.text, fontSize: 12, lineHeight: 16, fontWeight: '700' },
   declared: {
     alignSelf: 'flex-start', color: colors.profileRed, fontSize: 10, lineHeight: 14, fontWeight: '700',
     paddingHorizontal: spacing.sm, borderRadius: radius.chip, backgroundColor: colors.accentSoft, overflow: 'hidden',
   },
-  value: { color: colors.textSecondary, fontSize: 12, lineHeight: 16 },
-  emptyValue: { color: colors.textSecondary, fontSize: 12, lineHeight: 16, fontWeight: '600' },
+  value: { flex: 1, minWidth: 0, color: colors.textSecondary, fontSize: 12, lineHeight: 16 },
+  emptyValue: { flex: 1, minWidth: 0, color: colors.textSecondary, fontSize: 12, lineHeight: 16, fontWeight: '600' },
   errorCard: {
     gap: spacing.sm, padding: spacing.md, borderRadius: radius.box, backgroundColor: colors.input,
     borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.profileRed,

@@ -35,7 +35,7 @@ export function buildJourneyBoxes(journey: StyleJourney): JourneyBox[] {
     state: loading ? 'loading' : complete ? 'complete' : 'missing',
   });
   return [
-    box('liked', 'Beğeni', counts.liked, counts.evaluations >= goals.evaluations, !ready.ratings, 'discover'),
+    box('liked', 'Beğeni', `${counts.liked} beğeni · ${counts.passed} geçilen`, counts.evaluations >= goals.evaluations, !ready.ratings, 'discover'),
     box('wardrobe', 'Dolap parçası', counts.wardrobe, counts.wardrobe >= goals.wardrobe, !ready.wardrobe, 'wardrobe'),
     box('preferences', 'Tercih', `${counts.preferences}/${PREFERENCE_TOTAL}`, counts.preferences >= PREFERENCE_TOTAL, false, 'preferences'),
   ];
@@ -49,7 +49,8 @@ export interface StyleTile {
   id: TileId;
   title: string;
   section: DeclarationSection;
-  wide: boolean;
+  /** Only dimensions with their own declaration flow offer a "seç" button in the source sheet. */
+  cta: boolean;
   state: 'learned' | 'declared' | 'empty' | 'loading';
   label: 'Senin seçimin' | null;
   emptyText: string | null;
@@ -68,16 +69,16 @@ export interface StyleGridModel {
   errorText: string | null;
 }
 
-const DEFINITIONS: ReadonlyArray<{ id: TileId; title: string; section: DeclarationSection; wide?: boolean }> = [
-  { id: 'color', title: 'Renk', section: 'colors' },
-  { id: 'category', title: 'Parça', section: 'style' },
-  { id: 'fit', title: 'Kesim', section: 'body' },
-  { id: 'brand', title: 'Marka', section: 'brands' },
-  { id: 'price', title: 'Fiyat', section: 'budget', wide: true },
+const DEFINITIONS: ReadonlyArray<{ id: TileId; title: string; section: DeclarationSection; cta: boolean }> = [
+  { id: 'color', title: 'Renk', section: 'colors', cta: true },
+  { id: 'category', title: 'Parça', section: 'style', cta: false },
+  { id: 'fit', title: 'Kesim', section: 'body', cta: false },
+  { id: 'brand', title: 'Marka', section: 'brands', cta: true },
+  { id: 'price', title: 'Fiyat', section: 'budget', cta: true },
 ];
 
 const emptyTile = (definition: (typeof DEFINITIONS)[number]): StyleTile => ({
-  id: definition.id, title: definition.title, section: definition.section, wide: Boolean(definition.wide),
+  id: definition.id, title: definition.title, section: definition.section, cta: definition.cta,
   state: 'empty', label: null, emptyText: null, valueText: '', names: [], swatches: [], icons: [], shapes: [],
   brands: [], band: null, declaredText: null,
 });
@@ -162,7 +163,7 @@ export interface SourceSheetModel {
   sources: Array<{ id: 'liked' | 'passed' | 'wardrobe'; label: string; count: number; fraction: number }>;
   sourceNote: string;
   note: string;
-  button: { label: string; section: DeclarationSection };
+  button: { label: string; section: DeclarationSection } | null;
 }
 
 export function buildSourceSheet(tile: StyleTile, journey: StyleJourney): SourceSheetModel {
@@ -177,7 +178,7 @@ export function buildSourceSheet(tile: StyleTile, journey: StyleJourney): Source
     sourceNote: 'Tüm etkileşimlerinden',
     note: declared ? 'Bu seçimi sen belirledin; öneriler buna göre çalışır.'
       : 'Bu bir tahmin. Sen seçersen öneriler senin seçimine göre çalışır.',
-    button: { label: `${tile.title} seç`, section: tile.section },
+    button: tile.cta ? { label: `${tile.title} seç`, section: tile.section } : null,
   };
 }
 

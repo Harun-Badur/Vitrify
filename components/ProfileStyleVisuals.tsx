@@ -72,7 +72,7 @@ export function TileVisual({ tile }: { tile: StyleTile }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
+  row: { flexShrink: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
   swatch: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: colors.border },
   iconCircle: {
     width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
   },
   brandText: { color: colors.text, fontSize: 12, fontWeight: '700' },
-  priceBar: { flexDirection: 'row', gap: spacing.xs, width: '100%' },
+  priceBar: { flexDirection: 'row', gap: spacing.xs, width: 120 },
   priceSegment: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.border },
   priceActive: { backgroundColor: colors.profileRed },
 });
