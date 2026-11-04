@@ -31,6 +31,12 @@ export const colors = {
   accentSoft: 'rgba(254, 56, 43, 0.1)',
   /** Profil sekmesi: eksik kutu çerçevesi, "+" rozeti ve birincil buton/metin kırmızısı. */
   profileRed: '#D42A1D',
+  /** Profil sekmesi: koyu kart zemini, üstündeki soluk metin/çizgi, kart çerçevesi ve krem zemin. */
+  ink: '#1B1918',
+  inkMuted: 'rgba(255, 255, 255, 0.62)',
+  inkLine: 'rgba(255, 255, 255, 0.22)',
+  line: '#EBE3D8',
+  cream: '#F3ECE2',
   /** Yalnızca minimal kullanım: silme metin butonları. */
   destructive: '#DC2626',
   /** Kaydırma damgaları: traffic-light. */
@@ -61,7 +67,12 @@ export const radius = {
   chip: 999,
   /** Profil sekmesi kutuları ve kartları. */
   box: 20,
+  /** Profil sekmesi koyu yolculuk kartı. */
+  hero: 28,
 } as const;
+
+/** Profil sekmesinde bölümler arası boşluk. */
+export const PROFILE_SECTION_GAP = 28;
 
 export const spacing = {
   xs: 4,

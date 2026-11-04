@@ -1,72 +1,90 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Check, ChevronRight, Plus } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import PressableScale from './PressableScale';
-import { colors, radius, shadows, spacing } from '../lib/theme';
+import { colors, radius, spacing } from '../lib/theme';
 import type { JourneyTarget, StyleJourney } from '../lib/profileStyleJourney';
-import { buildJourneyBoxes, evaluationLine, type JourneyBox } from '../lib/profileStyleView';
+import { buildJourneyStepper, type JourneyStep } from '../lib/profileStyleView';
 
-const accessibilityFor = (box: JourneyBox): string =>
-  box.state === 'loading' ? `${box.label}: yükleniyor`
-    : box.state === 'complete' ? `${box.label}: ${box.value}, tamamlandı`
-      : `${box.label}: ${box.value}, eksik. Ekle`;
+const CIRCLE = 32;
+
+function StepMark({ step }: { step: JourneyStep }) {
+  const complete = step.state === 'complete';
+  return (
+    <View testID={`journey-step-${step.id}-${step.state}`}
+      style={[styles.circle, complete && styles.circleDone, step.state === 'current' && styles.circleCurrent,
+        (step.state === 'upcoming' || step.state === 'loading') && styles.circleQuiet]}>
+      {complete ? <Check size={16} color={colors.ink} strokeWidth={3} /> : (
+        <Text style={[styles.number, step.state === 'current' && styles.numberCurrent]}>{step.number}</Text>)}
+    </View>
+  );
+}
 
 export default function ProfileStyleJourney({ journey, onTask }: {
   journey: StyleJourney; onTask: (target: JourneyTarget) => void;
 }) {
-  const line = evaluationLine(journey);
+  const { total, subline, steps, next } = buildJourneyStepper(journey);
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Stil Yolculuğun</Text>
-      <Text style={styles.description}>Küçük adımlarla tercihlerini keşfediyoruz.</Text>
-      <View style={styles.list}>
-        {buildJourneyBoxes(journey).map(box => (
-          <PressableScale key={box.id} onPress={() => onTask(box.target)} accessibilityRole="button"
-            accessibilityLabel={accessibilityFor(box)}
-            style={[styles.row, box.state === 'missing' && styles.rowMissing]}>
-            {box.state === 'complete' ? (
-              <View testID={`journey-${box.id}-complete`} style={[styles.badge, styles.badgeDone]}>
-                <Check size={14} color={colors.inverseText} strokeWidth={3} />
-              </View>
-            ) : box.state === 'missing' ? (
-              <View testID={`journey-${box.id}-missing`} style={[styles.badge, styles.badgeAdd]}>
-                <Plus size={15} color={colors.inverseText} strokeWidth={3} />
-              </View>
-            ) : <View testID={`journey-${box.id}-loading`} style={[styles.badge, styles.badgeLoading]} />}
-            <View style={styles.copy}>
-              <Text style={styles.label}>{box.label}</Text>
-              <Text style={[styles.value, box.state === 'loading' && styles.valueLoading]} numberOfLines={2}>{box.value}</Text>
-            </View>
-            <ChevronRight size={15} color={colors.tabInactive} />
-          </PressableScale>
+      <Text style={styles.overline}>STİL YOLCULUĞUN</Text>
+      <View style={styles.totalRow}>
+        <Text style={styles.total} accessibilityLabel={total === null ? 'Yükleniyor' : `${total} değerlendirme`}>
+          {total === null ? '…' : String(total)}
+        </Text>
+        <Text style={styles.totalLabel}>değerlendirme</Text>
+      </View>
+      {subline ? <Text style={styles.subline}>{subline}</Text> : null}
+      <View style={styles.steps}>
+        {steps.map((step, index) => (
+          <View key={step.id} style={styles.step}>
+            {index < steps.length - 1 ? <View style={styles.connector} /> : null}
+            <StepMark step={step} />
+            <Text style={[styles.stepLabel, step.state === 'complete' && styles.stepLabelDone]} numberOfLines={2}>{step.label}</Text>
+          </View>
         ))}
       </View>
-      {journey.notice ? <Text style={styles.description}>{journey.notice}</Text>
-        : line ? <Text style={styles.evaluation}>{line}</Text> : null}
+      {journey.notice ? <Text style={styles.subline}>{journey.notice}</Text> : null}
+      {next ? (
+        <View style={styles.next}>
+          <View style={styles.nextCopy}>
+            <Text style={styles.overline}>SIRADAKİ ADIM</Text>
+            <Text style={styles.nextText}>{next.text}</Text>
+          </View>
+          <PressableScale onPress={() => onTask(next.target)} accessibilityRole="button" accessibilityLabel="Ekle" style={styles.add}>
+            <Text style={styles.addText}>Ekle</Text>
+          </PressableScale>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    gap: spacing.sm, padding: spacing.md, borderRadius: radius.box, backgroundColor: colors.input,
-    borderWidth: 1, borderColor: colors.hairline, ...shadows.segment,
+  card: { gap: spacing.md, padding: 20, borderRadius: radius.hero, backgroundColor: colors.ink },
+  overline: { color: colors.inkMuted, fontSize: 11, lineHeight: 15, fontWeight: '700', letterSpacing: 1.6 },
+  totalRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
+  total: { color: colors.inverseText, fontSize: 48, lineHeight: 54, fontWeight: '800' },
+  totalLabel: { color: colors.inkMuted, fontSize: 14, lineHeight: 20 },
+  subline: { color: colors.inkMuted, fontSize: 13, lineHeight: 18, marginTop: -spacing.sm },
+  steps: { flexDirection: 'row', marginTop: spacing.xs },
+  step: { flex: 1, minWidth: 0, alignItems: 'center', gap: spacing.sm },
+  connector: { position: 'absolute', top: CIRCLE / 2, left: '50%', right: '-50%', height: 1, backgroundColor: colors.inkLine },
+  circle: { width: CIRCLE, height: CIRCLE, borderRadius: CIRCLE / 2, alignItems: 'center', justifyContent: 'center' },
+  circleDone: { backgroundColor: colors.inverseText },
+  circleCurrent: { borderWidth: 2, borderColor: colors.profileRed, backgroundColor: colors.ink },
+  circleQuiet: { borderWidth: 1.5, borderColor: colors.inkLine, backgroundColor: colors.ink },
+  number: { color: colors.inkMuted, fontSize: 13, fontWeight: '700' },
+  numberCurrent: { color: colors.inverseText },
+  stepLabel: { color: colors.inkMuted, fontSize: 11, lineHeight: 15, textAlign: 'center' },
+  stepLabelDone: { color: colors.inverseText },
+  next: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.md, borderTopWidth: 1,
+    borderTopColor: colors.inkLine,
   },
-  title: { color: colors.text, fontSize: 17, fontWeight: '800' },
-  description: { color: colors.textSecondary, fontSize: 12, lineHeight: 17 },
-  evaluation: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, fontWeight: '600' },
-  list: { gap: spacing.sm },
-  row: {
-    minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm, borderRadius: radius.box, backgroundColor: colors.input,
-    borderWidth: 1.5, borderColor: colors.border,
+  nextCopy: { flex: 1, minWidth: 0, gap: 2 },
+  nextText: { color: colors.inverseText, fontSize: 15, lineHeight: 20, fontWeight: '700' },
+  add: {
+    minHeight: 44, minWidth: 72, paddingHorizontal: spacing.lg, borderRadius: 22, alignItems: 'center',
+    justifyContent: 'center', backgroundColor: colors.profileRed,
   },
-  rowMissing: { borderStyle: 'dashed', borderColor: colors.profileRed },
-  badge: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  badgeDone: { backgroundColor: colors.text },
-  badgeAdd: { backgroundColor: colors.profileRed },
-  badgeLoading: { backgroundColor: colors.border },
-  copy: { flex: 1, minWidth: 0, gap: 2 },
-  label: { color: colors.text, fontSize: 14, lineHeight: 19, fontWeight: '700' },
-  value: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-  valueLoading: { fontWeight: '600' },
+  addText: { color: colors.inverseText, fontSize: 14, fontWeight: '700' },
 });

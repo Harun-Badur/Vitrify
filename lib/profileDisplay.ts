@@ -50,21 +50,39 @@ export const colorName = (raw: string): string => colorNames.get(fold(raw)) ?? d
 
 export const colorHex = (raw: string): string => swatches.get(fold(raw)) ?? NEUTRAL_SWATCH;
 
-export type CategoryIcon = 'shirt' | 'outerwear' | 'pants' | 'dress' | 'shoe' | 'bag' | 'hat' | 'accessory';
-const CATEGORY_ICONS: Record<string, CategoryIcon> = {
-  ceket: 'outerwear', blazer: 'outerwear', mont: 'outerwear', kaban: 'outerwear', trenckot: 'outerwear', hirka: 'outerwear',
-  pantolon: 'pants', jean: 'pants', kargo: 'pants', esofman: 'pants', sort: 'pants', etek: 'pants', 'alt giyim': 'pants',
-  elbise: 'dress', dresses: 'dress',
-  'upper body': 'shirt', 'lower body': 'pants', shoes: 'shoe', bags: 'bag', hats: 'hat', accessories: 'accessory',
-  sneaker: 'shoe', bot: 'shoe', topuklu: 'shoe', sandalet: 'shoe', loafer: 'shoe', babet: 'shoe', ayakkabi: 'shoe',
-  canta: 'bag', sapka: 'hat', bere: 'hat',
-  kemer: 'accessory', atki: 'accessory', gozluk: 'accessory', taki: 'accessory', saat: 'accessory', aksesuar: 'accessory',
-};
-export const categoryIcon = (raw: string): CategoryIcon => CATEGORY_ICONS[fold(raw)] ?? 'shirt';
-
 export type FitShape = 'slim' | 'regular' | 'relaxed' | 'oversized';
 const FIT_SHAPES: readonly FitShape[] = ['slim', 'regular', 'relaxed', 'oversized'];
 export const fitShape = (raw: string): FitShape | null => FIT_SHAPES.find(shape => shape === fold(raw)) ?? null;
 
 export const PRICE_BANDS = ['low', 'mid', 'high', 'luxury'] as const;
 export const priceBandIndex = (raw: string): number => PRICE_BANDS.findIndex(band => band === fold(raw));
+
+const NAME_PART = /[A-Za-z0-9ÇĞİÖŞÜçğıöşü]/;
+const nameParts = (raw: string): string[] => raw.split(/[\s&\-_.]+/).filter(part => NAME_PART.test(part));
+const upperFirst = (word: string, count: number) => Array.from(word).slice(0, count).join('').toLocaleUpperCase('tr-TR');
+
+/** Avatar fallback: first letters of the first two words ("harun badur" -> "HB"). */
+export const initials = (raw: string): string => {
+  const parts = nameParts(raw);
+  return parts.length ? parts.slice(0, 2).map(part => upperFirst(part, 1)).join('') : '?';
+};
+
+/** Brand circle: two words -> their first letters, one word -> its first two letters. */
+export const brandMonogram = (raw: string): string => {
+  const parts = nameParts(raw);
+  if (!parts.length) return '';
+  return parts.length === 1 ? upperFirst(parts[0], 2) : parts.slice(0, 2).map(part => upperFirst(part, 1)).join('');
+};
+
+/** Removes repeats after normalisation (case and Turkish folding); keeps first spelling and order. */
+export const uniqueLabels = (labels: readonly string[]): string[] => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const label of labels) {
+    const key = compact(label);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(label.trim());
+  }
+  return result;
+};

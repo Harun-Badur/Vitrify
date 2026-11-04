@@ -2,8 +2,7 @@ import {
   STYLE_JOURNEY_GOALS, STYLE_VALUE_LABELS, type DeclaredKey, type JourneyTarget, type StyleJourney,
 } from './profileStyleJourney';
 import {
-  brandLabel, categoryIcon, colorHex, colorName, displayLabel, fitShape, priceBandIndex,
-  type CategoryIcon, type FitShape,
+  brandLabel, colorHex, colorName, displayLabel, fitShape, priceBandIndex, uniqueLabels,
 } from './profileDisplay';
 
 // View model of the Profile tab. Pure: reads a StyleJourney, writes nothing, calls nothing.
@@ -41,6 +40,49 @@ export function buildJourneyBoxes(journey: StyleJourney): JourneyBox[] {
   ];
 }
 
+export interface JourneyStep {
+  id: JourneyBox['id'];
+  number: 1 | 2 | 3;
+  label: string;
+  state: 'complete' | 'current' | 'upcoming' | 'loading';
+  target: JourneyTarget;
+}
+export interface JourneyStepper {
+  /** Distinct liked-or-passed products; null while ratings are not trustworthy. */
+  total: number | null;
+  subline: string | null;
+  steps: JourneyStep[];
+  next: { text: string; target: JourneyTarget } | null;
+}
+
+export function buildJourneyStepper(journey: StyleJourney): JourneyStepper {
+  const boxes = buildJourneyBoxes(journey);
+  const { counts } = journey;
+  const goals = STYLE_JOURNEY_GOALS;
+  const currentIndex = boxes.findIndex(box => box.state === 'missing');
+  const labels: Record<JourneyBox['id'], string> = {
+    liked: 'Beğeni',
+    wardrobe: `Dolap ${counts.wardrobe}/${goals.wardrobe} parça`,
+    preferences: `Tercih ${counts.preferences}/${PREFERENCE_TOTAL}`,
+  };
+  const loadingLabels: Record<JourneyBox['id'], string> = { liked: 'Yükleniyor', wardrobe: 'Dolap · Yükleniyor', preferences: 'Yükleniyor' };
+  const steps = boxes.map((box, index): JourneyStep => ({
+    id: box.id, number: (index + 1) as 1 | 2 | 3, target: box.target,
+    label: box.state === 'loading' ? loadingLabels[box.id] : labels[box.id],
+    state: box.state === 'missing' ? (index === currentIndex ? 'current' : 'upcoming') : box.state,
+  }));
+  const current = currentIndex < 0 ? null : boxes[currentIndex];
+  const nextText = !current ? null : current.id === 'liked' ? 'Biraz daha beğen'
+    : current.id === 'wardrobe' ? (counts.wardrobe === 0 ? 'Dolabına ilk parçanı ekle' : 'Dolabına parça ekle')
+      : 'Tercihlerini belirt';
+  return {
+    total: journey.ready.ratings ? counts.evaluations : null,
+    subline: journey.ready.ratings ? boxes[0].value : null,
+    steps,
+    next: current && nextText ? { text: nextText, target: current.target } : null,
+  };
+}
+
 export const evaluationLine = (journey: StyleJourney): string | null =>
   journey.ready.ratings ? `Önerilerin şu an ${journey.counts.evaluations} değerlendirmene dayanıyor.` : null;
 
@@ -57,10 +99,9 @@ export interface StyleTile {
   valueText: string;
   names: string[];
   swatches: string[];
-  icons: CategoryIcon[];
-  shapes: FitShape[];
   brands: string[];
-  band: { index: number; label: string } | null;
+  /** Learned price: band index (0-3), three-step tier (0-2) and the band name. */
+  band: { index: number; tier: number; label: string } | null;
   declaredText: string | null;
 }
 export interface StyleGridModel {
@@ -79,7 +120,7 @@ const DEFINITIONS: ReadonlyArray<{ id: TileId; title: string; section: Declarati
 
 const emptyTile = (definition: (typeof DEFINITIONS)[number]): StyleTile => ({
   id: definition.id, title: definition.title, section: definition.section, cta: definition.cta,
-  state: 'empty', label: null, emptyText: null, valueText: '', names: [], swatches: [], icons: [], shapes: [],
+  state: 'empty', label: null, emptyText: null, valueText: '', names: [], swatches: [],
   brands: [], band: null, declaredText: null,
 });
 
@@ -89,12 +130,12 @@ function declaredTile(base: StyleTile, journey: StyleJourney): StyleTile | null 
   const declared = journey.declaredValues;
   const mark = { ...base, state: 'declared' as const, label: 'Senin seçimin' as const };
   if (base.id === 'color' && declared.colors.length) {
-    const names = declared.colors.slice(0, DECLARED_SHOWN);
-    return { ...mark, names, swatches: names.map(colorHex), valueText: names.join(' · ') };
+    const names = uniqueLabels(declared.colors).slice(0, DECLARED_SHOWN);
+    return { ...mark, names, swatches: names.map(colorHex), valueText: names.join(', ') };
   }
   if (base.id === 'brand' && declared.brands.length) {
-    const brands = declared.brands.map(brandLabel).filter(Boolean).slice(0, DECLARED_SHOWN);
-    return brands.length ? { ...mark, brands, valueText: brands.join(' · ') } : null;
+    const brands = uniqueLabels(declared.brands.map(brandLabel)).slice(0, DECLARED_SHOWN);
+    return brands.length ? { ...mark, brands, valueText: brands.join(', ') } : null;
   }
   if (base.id === 'price' && declared.price) {
     const declaredText = `${money(declared.price.min)} – ${money(declared.price.max)}`;
@@ -103,35 +144,40 @@ function declaredTile(base: StyleTile, journey: StyleJourney): StyleTile | null 
   return null;
 }
 
+const BAND_NAME: Record<string, string> = { low: 'Uygun', mid: 'Orta', high: 'Yüksek', luxury: 'Lüks' };
+const PRICE_TIERS = 3;
+const KESIM_SUFFIX = /\s*kesim$/i;
+
 function learnedTile(base: StyleTile, journey: StyleJourney): StyleTile {
-  const values = journey.insights.find(item => item.id === base.id)?.values?.slice(0, LEARNED_SHOWN) ?? [];
+  // All ranked values arrive; repeats are removed after normalisation and only then cut to the top two.
+  const values = journey.insights.find(item => item.id === base.id)?.values ?? [];
   const learned = { ...base, state: 'learned' as const };
   const none: StyleTile = { ...base, emptyText: 'Yeterli veri yok', valueText: 'Yeterli veri yok' };
   if (!values.length) return none;
   const label = (value: string) => STYLE_VALUE_LABELS[value] ?? displayLabel(value);
   switch (base.id) {
     case 'color': {
-      const names = values.map(colorName);
-      return { ...learned, names, swatches: values.map(colorHex), valueText: names.join(' · ') };
+      const names = uniqueLabels(values.map(colorName)).slice(0, LEARNED_SHOWN);
+      return { ...learned, names, swatches: names.map(colorHex), valueText: names.join(', ') };
     }
     case 'category': {
-      const names = values.map(label);
-      return { ...learned, names, icons: values.map(categoryIcon), valueText: names.join(' · ') };
+      const names = uniqueLabels(values.map(label)).slice(0, LEARNED_SHOWN);
+      return { ...learned, names, valueText: names.join(', ') };
     }
     case 'fit': {
-      const shapes = values.flatMap(value => fitShape(value) ?? []);
-      const names = values.map(label);
-      return shapes.length ? { ...learned, names, shapes, valueText: names.join(' · ') } : none;
+      const names = uniqueLabels(values.filter(value => fitShape(value)).map(value => label(value).replace(KESIM_SUFFIX, '')))
+        .slice(0, LEARNED_SHOWN);
+      return names.length ? { ...learned, names, valueText: names.join(', ') } : none;
     }
     case 'brand': {
-      const brands = values.map(brandLabel).filter(Boolean);
-      return brands.length ? { ...learned, brands, valueText: brands.join(' · ') } : none;
+      const brands = uniqueLabels(values.map(brandLabel)).slice(0, LEARNED_SHOWN);
+      return brands.length ? { ...learned, brands, valueText: brands.join(', ') } : none;
     }
     case 'price': {
       const index = priceBandIndex(values[0]);
       if (index < 0) return none;
-      const name = label(values[0]);
-      return { ...learned, band: { index, label: name }, valueText: name };
+      const name = BAND_NAME[values[0]] ?? label(values[0]);
+      return { ...learned, band: { index, tier: Math.min(index, PRICE_TIERS - 1), label: name }, valueText: name };
     }
   }
 }

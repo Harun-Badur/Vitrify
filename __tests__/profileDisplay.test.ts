@@ -1,5 +1,5 @@
 import {
-  NEUTRAL_SWATCH, brandLabel, categoryIcon, colorHex, displayLabel, fitShape, priceBandIndex,
+  NEUTRAL_SWATCH, brandLabel, brandMonogram, colorHex, displayLabel, fitShape, initials, priceBandIndex, uniqueLabels,
 } from '../lib/profileDisplay';
 
 describe('brandLabel (display layer only)', () => {
@@ -44,15 +44,21 @@ describe('colorHex', () => {
   });
 });
 
-describe('categoryIcon', () => {
+describe('initials and brandMonogram', () => {
   test.each([
-    ['gomlek', 'shirt'], ['Tişört', 'shirt'], ['pantolon', 'pants'], ['jean', 'pants'], ['elbise', 'dress'],
-    ['sneaker', 'shoe'], ['canta', 'bag'], ['sapka', 'hat'], ['mont', 'outerwear'], ['blazer', 'outerwear'],
-    ['saat', 'accessory'],
-  ])('%s -> %s', (raw, icon) => expect(categoryIcon(raw)).toBe(icon));
-  test('unknown values fall back to the shirt icon', () => {
-    expect(categoryIcon('bilinmeyen-parca')).toBe('shirt');
-    expect(categoryIcon('')).toBe('shirt');
+    ['harun badur', 'HB'], ['Harun', 'H'], ['  ışık   özdemir ', 'IÖ'], ['a b c', 'AB'], ['', '?'], ['  ', '?'],
+  ])('initials(%s) -> %s', (raw, expected) => expect(initials(raw)).toBe(expected));
+  test.each([
+    ['LC Waikiki', 'LW'], ['ZARA', 'ZA'], ['Jack & Jones', 'JJ'], ['adidas', 'AD'], ['H&M', 'HM'], ['', ''],
+  ])('brandMonogram(%s) -> %s', (raw, expected) => expect(brandMonogram(raw)).toBe(expected));
+});
+
+describe('uniqueLabels (after normalisation)', () => {
+  test('variants that normalise to the same brand collapse to one, keeping the first order', () => {
+    expect(uniqueLabels(['lcw', 'lc-waikiki', 'LC WAIKIKI', 'zara', 'ZARA'].map(brandLabel))).toEqual(['LC Waikiki', 'ZARA']);
+  });
+  test('case and Turkish folding count as the same label; blanks are dropped', () => {
+    expect(uniqueLabels(['Işık', 'ışık', '', ' ', 'Siyah'])).toEqual(['Işık', 'Siyah']);
   });
 });
 

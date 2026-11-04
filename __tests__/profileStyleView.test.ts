@@ -1,6 +1,6 @@
 import { buildStyleJourney, type StyleJourneyInput } from '../lib/profileStyleJourney';
 import {
-  STYLE_TREND_MIN_EVALUATIONS, buildJourneyBoxes, buildOnlyYou, buildSourceSheet, buildStyleGrid, evaluationLine,
+  STYLE_TREND_MIN_EVALUATIONS, buildJourneyBoxes, buildJourneyStepper, buildOnlyYou, buildSourceSheet, buildStyleGrid, evaluationLine,
 } from '../lib/profileStyleView';
 import { emptyStyleProfile } from '../lib/scoring';
 import type { LikedProduct, Product } from '../types/product';
@@ -106,6 +106,7 @@ describe('style grid', () => {
     expect(color.state).toBe('learned');
     expect(color.label).toBeNull();
     expect(color.names).toEqual(['Siyah', 'Lacivert']);
+    expect(color.valueText).toBe('Siyah, Lacivert');
     expect(color.swatches).toEqual(['#111111', '#1F2A44']);
   });
   test('unknown learned colour renders a neutral grey circle', () => {
@@ -116,21 +117,43 @@ describe('style grid', () => {
     const journey = buildStyleJourney(input({ passedProductIds: passes(8), calculatedProfile: model({}) }));
     expect(buildStyleGrid(journey).tiles[0]).toMatchObject({ state: 'empty', emptyText: 'Yeterli veri yok' });
   });
-  test('parça, kesim and marka use icon, silhouette and a normalised brand badge', () => {
+  test('parça and kesim are text only; kesim drops the "kesim" suffix', () => {
     const journey = buildStyleJourney(input({
       passedProductIds: passes(6),
-      calculatedProfile: model({ subcategoryW: { pantolon: 1, bilinmeyen: 0.4 }, fitW: { slim: 1, oversized: 0.5 }, brandW: { lcw: 1, 'jack-jones': 0.3 } }),
+      calculatedProfile: model({ subcategoryW: { pantolon: 1, gomlek: 0.4 }, fitW: { regular: 1, oversized: 0.5 } }),
     }));
-    const [, category, fit, brand] = buildStyleGrid(journey).tiles;
-    expect(category.icons).toEqual(['pants', 'shirt']);
-    expect(fit.shapes).toEqual(['slim', 'oversized']);
-    expect(brand.brands).toEqual(['LC Waikiki', 'Jack & Jones']);
+    const [, category, fit] = buildStyleGrid(journey).tiles;
+    expect(category.names).toEqual(['Pantolon', 'Gömlek']);
+    expect(fit.names).toEqual(['Normal', 'Bol']);
+    expect(fit.valueText).toBe('Normal, Bol');
+    expect(Object.keys(category)).not.toContain('icons');
+    expect(Object.keys(fit)).not.toContain('shapes');
+    expect(JSON.stringify(fit)).not.toContain('kesim');
   });
-  test('learned price highlights a band and names it; no amount is ever invented', () => {
+  test('brands are de-duplicated AFTER normalisation, then the top two are shown', () => {
+    const journey = buildStyleJourney(input({
+      passedProductIds: passes(6),
+      calculatedProfile: model({ brandW: { lcw: 1, 'lc-waikiki': 0.9, 'lcw-basic': 0.8, 'jack-jones': 0.3, zara: 0.2 } }),
+    }));
+    const brand = buildStyleGrid(journey).tiles[3];
+    expect(brand.brands).toEqual(['LC Waikiki', 'Jack & Jones']);
+    expect(brand.valueText).toBe('LC Waikiki, Jack & Jones');
+  });
+  test('declared brands are de-duplicated too', () => {
+    const journey = buildStyleJourney(input({ profile: studio({ favoriteBrands: ['lcw', 'LC Waikiki', 'zara'] }), calculatedProfile: model({}) }));
+    expect(buildStyleGrid(journey).tiles[3].brands).toEqual(['LC Waikiki', 'ZARA']);
+  });
+  test('learned price is a three-step tier with the band name; no amount is ever invented', () => {
+    const tierOf = (band: string) => {
+      const journey = buildStyleJourney(input({ passedProductIds: passes(6), calculatedProfile: model({ priceBandW: { [band]: 1 } }) }));
+      return buildStyleGrid(journey).tiles[4].band;
+    };
+    expect(tierOf('low')).toEqual({ index: 0, tier: 0, label: 'Uygun' });
+    expect(tierOf('mid')).toEqual({ index: 1, tier: 1, label: 'Orta' });
+    expect(tierOf('high')).toEqual({ index: 2, tier: 2, label: 'Yüksek' });
+    expect(tierOf('luxury')).toEqual({ index: 3, tier: 2, label: 'Lüks' });
     const journey = buildStyleJourney(input({ passedProductIds: passes(6), calculatedProfile: model({ priceBandW: { mid: 1 } }) }));
-    const price = buildStyleGrid(journey).tiles[4];
-    expect(price.band).toEqual({ index: 1, label: 'Orta fiyat bandı' });
-    expect(JSON.stringify(price)).not.toContain('₺');
+    expect(JSON.stringify(buildStyleGrid(journey).tiles[4])).not.toContain('₺');
   });
   test('declared choices win over learned ones and carry the "Senin seçimin" label', () => {
     const journey = buildStyleJourney(input({
@@ -232,5 +255,49 @@ describe('only you', () => {
   test('another owner\'s declared values never show', () => {
     const boxes = buildOnlyYou(buildStyleJourney(input({ userId: 'B', profile: studio({ styleTags: ['minimal'] }) })));
     expect(boxes.every(box => box.value === null)).toBe(true);
+  });
+});
+
+describe('journey stepper', () => {
+  const full = { likedProducts: likes(5), passedProductIds: passes(5) };
+  const prefs = studio({ topSize: 'M', styleTags: ['minimal'], preferredColors: ['Siyah'], favoriteBrands: ['ZARA'], priceRange: { min: 100, max: 500 } });
+  test('empty account: big number 0, first step is current, the rest upcoming, next step is to like more', () => {
+    const stepper = buildJourneyStepper(buildStyleJourney(input()));
+    expect(stepper.total).toBe(0);
+    expect(stepper.subline).toBe('0 beğeni · 0 geçilen');
+    expect(stepper.steps.map(step => [step.number, step.label, step.state])).toEqual([
+      [1, 'Beğeni', 'current'], [2, 'Dolap 0/3 parça', 'upcoming'], [3, 'Tercih 0/5', 'upcoming'],
+    ]);
+    expect(stepper.next).toEqual({ text: 'Biraz daha beğen', target: 'discover' });
+  });
+  test('total is the distinct liked+passed count', () => {
+    const stepper = buildJourneyStepper(buildStyleJourney(input({ likedProducts: likes(3), passedProductIds: ['l0', ...passes(171)] })));
+    expect(stepper.total).toBe(174);
+    expect(stepper.subline).toBe('3 beğeni · 172 geçilen');
+  });
+  test('the first missing step drives the next-step line', () => {
+    const wardrobeNext = buildJourneyStepper(buildStyleJourney(input({ ...full })));
+    expect(wardrobeNext.steps.map(step => step.state)).toEqual(['complete', 'current', 'upcoming']);
+    expect(wardrobeNext.next).toEqual({ text: 'Dolabına ilk parçanı ekle', target: 'wardrobe' });
+    const prefsNext = buildJourneyStepper(buildStyleJourney(input({ ...full, wardrobeItems: wardrobe(3) })));
+    expect(prefsNext.steps.map(step => step.state)).toEqual(['complete', 'complete', 'current']);
+    expect(prefsNext.next).toEqual({ text: 'Tercihlerini belirt', target: 'preferences' });
+  });
+  test('everything complete hides the next step', () => {
+    const stepper = buildJourneyStepper(buildStyleJourney(input({ ...full, wardrobeItems: wardrobe(3), profile: prefs })));
+    expect(stepper.steps.every(step => step.state === 'complete')).toBe(true);
+    expect(stepper.next).toBeNull();
+  });
+  test('wardrobe that is not ready is a loading step, never a 0', () => {
+    const stepper = buildJourneyStepper(buildStyleJourney(input({ ...full, wardrobeStatus: 'loading' })));
+    expect(stepper.steps[1]).toMatchObject({ state: 'loading', label: 'Dolap · Yükleniyor' });
+    expect(stepper.steps[1].label).not.toContain('0/3');
+    expect(stepper.next).toEqual({ text: 'Tercihlerini belirt', target: 'preferences' });
+  });
+  test('ratings that are not ready show no total', () => {
+    const stepper = buildJourneyStepper(buildStyleJourney(input({ sessionSyncStatus: 'loading' })));
+    expect(stepper.total).toBeNull();
+    expect(stepper.subline).toBeNull();
+    expect(stepper.steps[0].state).toBe('loading');
   });
 });

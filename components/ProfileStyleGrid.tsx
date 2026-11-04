@@ -4,13 +4,13 @@ import { ChevronRight } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import ProfileSheet from './ProfileSheet';
 import { TileVisual } from './ProfileStyleVisuals';
-import { colors, radius, shadows, spacing } from '../lib/theme';
+import { colors, radius, spacing } from '../lib/theme';
 import type { StyleJourney } from '../lib/profileStyleJourney';
 import {
   buildSourceSheet, buildStyleGrid, type DeclarationSection, type SourceSheetModel, type StyleTile,
 } from '../lib/profileStyleView';
 
-const SOURCE_COLORS = { liked: colors.profileRed, passed: colors.tabInactive, wardrobe: colors.text } as const;
+const SOURCE_COLORS = { liked: colors.ink, passed: colors.tabInactive, wardrobe: colors.line } as const;
 
 export default function ProfileStyleGrid({ journey, onRetry, onSelectSection }: {
   journey: StyleJourney; onRetry: () => void; onSelectSection: (section: DeclarationSection) => void;
@@ -26,29 +26,30 @@ export default function ProfileStyleGrid({ journey, onRetry, onSelectSection }: 
         {grid.state === 'error' ? null : <Text style={styles.hint}>Dokun, kaynağı gör</Text>}
       </View>
       {grid.state === 'error' ? (
-        <View style={styles.errorCard} accessibilityRole="alert">
-          <Text style={styles.errorText}>{grid.errorText}</Text>
-          <PressableScale onPress={onRetry} accessibilityRole="button" accessibilityLabel="Yeniden dene" style={styles.retry}>
-            <Text style={styles.retryText}>Yeniden dene</Text>
-          </PressableScale>
+        <View style={styles.card} accessibilityRole="alert">
+          <View style={styles.errorBody}>
+            <Text style={styles.errorText}>{grid.errorText}</Text>
+            <PressableScale onPress={onRetry} accessibilityRole="button" accessibilityLabel="Yeniden dene" style={styles.retry}>
+              <Text style={styles.retryText}>Yeniden dene</Text>
+            </PressableScale>
+          </View>
         </View>
       ) : (
-        <View style={styles.list}>
-          {grid.tiles.map(tile => {
+        <View testID="style-card" style={styles.card}>
+          {grid.tiles.map((tile, index) => {
             const quiet = tile.state === 'empty' || tile.state === 'loading';
             return (
               <PressableScale key={tile.id} testID={`style-tile-${tile.id}-${tile.state}`}
                 onPress={() => setOpenId(tile.id)} accessibilityRole="button"
                 accessibilityLabel={`${tile.title}: ${tile.valueText}`}
-                style={[styles.row, quiet && styles.rowEmpty]}>
-                <View style={styles.rowHead}>
-                  <Text style={styles.tileTitle}>{tile.title}</Text>
-                  {tile.label ? <Text style={styles.declared}>{tile.label}</Text> : null}
+                style={[styles.row, index > 0 && styles.rowDivider]}>
+                <Text style={styles.rowLabel} numberOfLines={1}>{tile.title}</Text>
+                <View style={styles.rowContent}>
+                  <TileVisual tile={tile} />
+                  <Text style={quiet ? styles.quiet : styles.value} numberOfLines={1}>{tile.valueText}</Text>
+                  {tile.label ? <Text style={styles.declared} numberOfLines={1}>{tile.label}</Text> : null}
                 </View>
-                <TileVisual tile={tile} />
-                {tile.brands.length && !quiet ? <View style={styles.spacer} /> : (
-                  <Text style={quiet ? styles.emptyValue : styles.value} numberOfLines={2}>{tile.valueText}</Text>)}
-                <ChevronRight size={15} color={colors.tabInactive} />
+                <ChevronRight size={15} color={colors.line} />
               </PressableScale>
             );
           })}
@@ -91,49 +92,32 @@ export default function ProfileStyleGrid({ journey, onRetry, onSelectSection }: 
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.sm },
-  headingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: spacing.sm },
+  section: { gap: spacing.md },
+  headingRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   heading: { color: colors.text, fontSize: 20, fontWeight: '800' },
-  hint: { color: colors.textSecondary, fontSize: 11, lineHeight: 15 },
-  list: { gap: spacing.sm },
-  spacer: { flex: 1 },
-  row: {
-    minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md, borderRadius: radius.box, backgroundColor: colors.input,
-    borderWidth: 1, borderColor: colors.hairline, ...shadows.segment,
-  },
-  rowEmpty: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.tabInactive, backgroundColor: colors.bgSoft },
-  rowHead: { width: 72, gap: spacing.xs },
-  tileTitle: { color: colors.text, fontSize: 12, lineHeight: 16, fontWeight: '700' },
-  declared: {
-    alignSelf: 'flex-start', color: colors.profileRed, fontSize: 10, lineHeight: 14, fontWeight: '700',
-    paddingHorizontal: spacing.sm, borderRadius: radius.chip, backgroundColor: colors.accentSoft, overflow: 'hidden',
-  },
-  value: { flex: 1, minWidth: 0, color: colors.textSecondary, fontSize: 12, lineHeight: 16 },
-  emptyValue: { flex: 1, minWidth: 0, color: colors.textSecondary, fontSize: 12, lineHeight: 16, fontWeight: '600' },
-  errorCard: {
-    gap: spacing.sm, padding: spacing.md, borderRadius: radius.box, backgroundColor: colors.input,
-    borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.profileRed,
-  },
-  errorText: { color: colors.text, fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  retry: {
-    minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.button,
-    backgroundColor: colors.profileRed,
-  },
+  hint: { color: colors.tabInactive, fontSize: 11, lineHeight: 15 },
+  card: { borderRadius: radius.card, backgroundColor: colors.input, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
+  row: { minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  rowDivider: { borderTopWidth: 1, borderTopColor: colors.line },
+  rowLabel: { width: 76, color: colors.tabInactive, fontSize: 13, lineHeight: 18 },
+  rowContent: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  value: { flexShrink: 1, color: colors.text, fontSize: 15, lineHeight: 20, fontWeight: '700' },
+  quiet: { flexShrink: 1, color: colors.tabInactive, fontSize: 14, lineHeight: 20 },
+  declared: { color: colors.tabInactive, fontSize: 10, lineHeight: 14, fontWeight: '600' },
+  errorBody: { gap: spacing.md, padding: spacing.lg },
+  errorText: { color: colors.text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  retry: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.button, backgroundColor: colors.profileRed },
   retryText: { color: colors.inverseText, fontSize: 14, fontWeight: '700' },
   sheetBody: { gap: spacing.md },
   sheetValue: { color: colors.text, fontSize: 18, lineHeight: 24, fontWeight: '800' },
   source: { gap: spacing.sm },
   sourceHeading: { color: colors.text, fontSize: 14, fontWeight: '700' },
-  stack: { flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: colors.border },
+  stack: { flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: colors.line },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   dot: { width: 8, height: 8, borderRadius: 4 },
   legendText: { color: colors.textSecondary, fontSize: 12, lineHeight: 16 },
   note: { color: colors.textSecondary, fontSize: 12, lineHeight: 17 },
-  primary: {
-    minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.button,
-    backgroundColor: colors.profileRed,
-  },
+  primary: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.button, backgroundColor: colors.profileRed },
   primaryText: { color: colors.inverseText, fontSize: 15, fontWeight: '700' },
 });

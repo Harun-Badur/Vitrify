@@ -162,10 +162,11 @@ export function buildStyleJourney(input: StyleJourneyInput): StyleJourney {
     + 'V2 geçiş güncelliği okuma sırasında denetlenir; örnek sayısı ve boyut bazında güven skoru mevcut değildir. '
     + 'Dolap sahipliği beğeni sayılmaz. Manuel tercihler ayrı alanda korunur.';
   const preference = (id: StyleInsight['id'], title: string, weights: Record<string, number>): StyleInsight => {
-    const values = model && model.eventCount > 0 ? Object.entries(weights).filter(([,w])=>Number.isFinite(w)&&w>0)
-      .sort(([a,x],[b,y])=>y-x||a.localeCompare(b,'tr')).slice(0,2) : [];
+    const ranked = model && model.eventCount > 0 ? Object.entries(weights).filter(([,w])=>Number.isFinite(w)&&w>0)
+      .sort(([a,x],[b,y])=>y-x||a.localeCompare(b,'tr')) : [];
+    const values = ranked.slice(0,2);
     const displayLabels = values.map(([value]) => id === 'color' ? colorLabels.get(token(value)) ?? value : id === 'brand' ? value.replace(/-/g, ' ') : STYLE_VALUE_LABELS[value] ?? value);
-    return { id, title, values: values.map(([value]) => value), status: values.length ? 'Gelişiyor' : 'Henüz keşfedilmedi',
+    return { id, title, values: ranked.slice(0,5).map(([value]) => value), status: values.length ? 'Gelişiyor' : 'Henüz keşfedilmedi',
       summary: displayLabels.length ? displayLabels.join(' · ') : 'Yeterli tercih verisi yok',
       detail: sourceDetail + (values.length ? '' : 'Yeterli doğrulanmış tercih verisi yok.') };
   };

@@ -32,7 +32,7 @@ import {
   ChevronRight,
   CircleHelp,
   LogOut,
-  Pencil,
+  Settings,
   ShieldCheck,
   Shirt,
   Sparkles,
@@ -59,7 +59,8 @@ import { buildInviteShareMessage } from '../../lib/inviteShare';
 import { logger } from '../../lib/logger';
 import { checkLowResolutionPersonPhoto } from '../../lib/personPhotoPrepare';
 import { PRIVACY_URL, SUPPORT_EMAIL } from '../../lib/privacy';
-import { colors, radius, shadows, spacing } from '../../lib/theme';
+import { PROFILE_SECTION_GAP, colors, radius, spacing } from '../../lib/theme';
+import { initials } from '../../lib/profileDisplay';
 import { buildStyleJourney, type JourneyTarget } from '../../lib/profileStyleJourney';
 import { fetchCalculatedStyleProfile, subscribeStyleProfileChanges } from '../../lib/recsConfig';
 import { refreshStartState, type CalculatedRefreshReason } from '../../lib/calculatedProfileRefresh';
@@ -87,12 +88,13 @@ import {
   type UserStudioProfile,
 } from '../../types/profile';
 
-const AVATAR_SIZE = 82;
+const AVATAR_SIZE = 68;
 const AVATAR_RADIUS = AVATAR_SIZE / 2;
 const ICON_SM = 18;
-const CAMERA_BADGE_SIZE = 32;
-const CAMERA_HIT_SLOP = 8; // 32 + 2*8 = 48dp touch target
-const ICON_AVATAR = 26;
+const CAMERA_BADGE_SIZE = 28;
+const CAMERA_BADGE_BORDER = 3;
+const CAMERA_HIT_SLOP = 8; // 28 + 2*8 = 44dp touch target
+const SETTINGS_BUTTON_SIZE = 44;
 const TOAST_DURATION_MS = 1600;
 const INVITE_SAVED_TOAST = 'Kod alındı — yakında aktifleşecek';
 
@@ -597,18 +599,31 @@ export default function ProfileScreen() {
     <View style={[styles.root, { paddingTop: insets.top + spacing.md,
       paddingLeft: Math.max(insets.left, spacing.lg),
       paddingRight: Math.max(insets.right, spacing.lg) }]}>
-      <Text
-        style={styles.header}
-        onLongPress={perfTraceEnabled() ? () => Alert.alert('Performans özeti', logPerfSummary() || 'Henüz ölçüm yok.') : undefined}
-      >
-        Profil
-      </Text>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
+        <View style={styles.headerRow}>
+          <Text
+            style={styles.header}
+            onLongPress={perfTraceEnabled() ? () => Alert.alert('Performans özeti', logPerfSummary() || 'Henüz ölçüm yok.') : undefined}
+          >
+            Profil
+          </Text>
+          <PressableScale
+            onPress={() => {
+              void handleOpenAccount();
+            }}
+            disabled={isBusy}
+            style={styles.settingsButton}
+            accessibilityRole="button"
+            accessibilityLabel="Ayarlar"
+          >
+            <Settings size={20} color={colors.text} />
+          </PressableScale>
+        </View>
         {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
         <View style={styles.profileCard}>
@@ -631,7 +646,7 @@ export default function ProfileScreen() {
                   />
                 ) : (
                   <View style={styles.avatarPlaceholder}>
-                    <User color={colors.textSecondary} size={ICON_AVATAR} />
+                    <Text style={styles.avatarInitials}>{initials(displayName)}</Text>
                   </View>
                 )}
                 {uploadProgress !== null ? (
@@ -650,7 +665,7 @@ export default function ProfileScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Profil fotoğrafını değiştir"
               >
-                <Camera size={16} color={colors.accent} />
+                <Camera size={14} color={colors.inverseText} />
               </PressableScale>
             </View>
             <View style={[styles.heroCopy, compactProfile && styles.compactHeroCopy]}>
@@ -672,15 +687,14 @@ export default function ProfileScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Düzenle"
                 >
-                  <Pencil size={14} color={colors.text} />
                   <Text style={styles.editButtonText}>Düzenle</Text>
                 </PressableScale>
               </View>
               <View style={styles.statsRow}>
                 {[
-                  { label: 'Dolabım', value: wardrobeCount },
-                  { label: 'Favoriler', value: favoriteCount },
-                  { label: 'Kombinlerim', value: outfitCount },
+                  { label: 'Dolap', value: wardrobeCount },
+                  { label: 'Favori', value: favoriteCount },
+                  { label: 'Kombin', value: outfitCount },
                 ].map((stat, index) => (
                   <View
                     key={stat.label}
@@ -962,13 +976,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   header: {
+    flex: 1,
     fontSize: 28,
     fontWeight: '800',
     color: colors.text,
-    marginBottom: spacing.md,
+  },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  settingsButton: {
+    width: SETTINGS_BUTTON_SIZE,
+    height: SETTINGS_BUTTON_SIZE,
+    borderRadius: SETTINGS_BUTTON_SIZE / 2,
+    borderWidth: 1,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scroll: {
-    gap: spacing.md,
+    gap: PROFILE_SECTION_GAP,
     paddingBottom: spacing.xxl,
   },
   error: {
@@ -985,9 +1009,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.input,
     borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: colors.hairline,
-    padding: spacing.md,
-    ...shadows.segment,
+    borderColor: colors.line,
+    padding: spacing.lg,
   },
   heroRow: {
     flexDirection: 'row',
@@ -997,7 +1020,7 @@ const styles = StyleSheet.create({
   compactHero: { flexDirection: 'column' },
   compactHeroCopy: { flex: 0, alignSelf: 'stretch' },
   compactIdentity: { flexWrap: 'wrap' },
-  avatarWrap: { width: AVATAR_SIZE, height: AVATAR_SIZE, marginTop: 4, marginRight: spacing.sm, marginBottom: spacing.sm },
+  avatarWrap: { width: AVATAR_SIZE, height: AVATAR_SIZE, marginTop: 4, marginRight: spacing.xs, marginBottom: spacing.xs },
   avatar: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
@@ -1013,7 +1036,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.cream,
   },
+  avatarInitials: { color: colors.ink, fontSize: 24, fontWeight: '800' },
   avatarScrim: {
     ...StyleSheet.absoluteFill,
     backgroundColor: colors.inverseSurface,
@@ -1022,14 +1047,14 @@ const styles = StyleSheet.create({
   },
   cameraButton: {
     position: 'absolute',
-    right: -spacing.sm,
-    bottom: -spacing.sm,
+    right: -spacing.xs,
+    bottom: -spacing.xs,
     width: CAMERA_BADGE_SIZE,
     height: CAMERA_BADGE_SIZE,
     borderRadius: CAMERA_BADGE_SIZE / 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.input,
+    borderWidth: CAMERA_BADGE_BORDER,
+    borderColor: colors.input,
+    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1046,14 +1071,14 @@ const styles = StyleSheet.create({
   identityCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
   userName: {
     color: colors.text,
-    fontSize: 17,
-    lineHeight: 22,
+    fontSize: 20,
+    lineHeight: 26,
     fontWeight: '800',
   },
   email: {
     color: colors.tabInactive,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 18,
   },
   statsRow: { flexDirection: 'row' },
   stat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 3 },
@@ -1066,17 +1091,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   editButton: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+    minHeight: 32,
+    justifyContent: 'center',
     flexShrink: 0,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.button,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.input,
+    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.cream,
   },
   editButtonText: {
     color: colors.text,
@@ -1087,7 +1107,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.input,
     borderRadius: radius.card,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: colors.line,
     overflow: 'hidden',
   },
   menuRow: {
@@ -1134,7 +1154,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: { backgroundColor: colors.accentSoft },
   deleteButtonText: { color: colors.accent, fontSize: 15, fontWeight: '600' },
-  signOutButton: { backgroundColor: colors.hairline, marginTop: -4 },
+  signOutButton: { backgroundColor: colors.hairline, marginTop: -(PROFILE_SECTION_GAP - spacing.md) },
   signOutText: { color: colors.text, fontSize: 15, fontWeight: '500' },
   toast: {
     position: 'absolute',
