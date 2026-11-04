@@ -40,46 +40,56 @@ export function buildJourneyBoxes(journey: StyleJourney): JourneyBox[] {
   ];
 }
 
-export interface JourneyStep {
+export interface JourneyRow {
   id: JourneyBox['id'];
-  number: 1 | 2 | 3;
-  label: string;
-  state: 'complete' | 'current' | 'upcoming' | 'loading';
-  target: JourneyTarget;
+  title: string;
+  subtitle: string;
+  state: JourneyBox['state'];
+  /** hint: muted text, button: filled "Ekle", link: red text "Belirt". Null when nothing is left to do. */
+  action: { label: string; kind: 'hint' | 'button' | 'link'; target: JourneyTarget } | null;
 }
-export interface JourneyStepper {
-  /** Distinct liked-or-passed products; null while ratings are not trustworthy. */
-  total: number | null;
-  subline: string | null;
-  steps: JourneyStep[];
-  next: { text: string; target: JourneyTarget } | null;
+export interface JourneyCard {
+  completed: number;
+  title: string;
+  stages: readonly [string, string, string];
+  /** Index of the current stage in `stages`. */
+  stage: 0 | 1 | 2;
+  ringLabel: string;
+  rows: JourneyRow[];
 }
 
-export function buildJourneyStepper(journey: StyleJourney): JourneyStepper {
-  const boxes = buildJourneyBoxes(journey);
+const STAGES = ['Tanışıyoruz', 'Tanıyoruz', 'İyi tanıyoruz'] as const;
+const STAGE_TITLES = ['Seni tanımaya başlıyoruz', 'Seni tanıyoruz', 'Seni iyi tanıyoruz'] as const;
+
+export function buildJourneyCard(journey: StyleJourney): JourneyCard {
+  const [liked, wardrobe, preferences] = buildJourneyBoxes(journey);
   const { counts } = journey;
   const goals = STYLE_JOURNEY_GOALS;
-  const currentIndex = boxes.findIndex(box => box.state === 'missing');
-  const labels: Record<JourneyBox['id'], string> = {
-    liked: 'Beğeni',
-    wardrobe: `Dolap ${counts.wardrobe}/${goals.wardrobe} parça`,
-    preferences: `Tercih ${counts.preferences}/${PREFERENCE_TOTAL}`,
-  };
-  const loadingLabels: Record<JourneyBox['id'], string> = { liked: 'Yükleniyor', wardrobe: 'Dolap · Yükleniyor', preferences: 'Yükleniyor' };
-  const steps = boxes.map((box, index): JourneyStep => ({
-    id: box.id, number: (index + 1) as 1 | 2 | 3, target: box.target,
-    label: box.state === 'loading' ? loadingLabels[box.id] : labels[box.id],
-    state: box.state === 'missing' ? (index === currentIndex ? 'current' : 'upcoming') : box.state,
-  }));
-  const current = currentIndex < 0 ? null : boxes[currentIndex];
-  const nextText = !current ? null : current.id === 'liked' ? 'Biraz daha beğen'
-    : current.id === 'wardrobe' ? (counts.wardrobe === 0 ? 'Dolabına ilk parçanı ekle' : 'Dolabına parça ekle')
-      : 'Tercihlerini belirt';
+  const completed = [liked, wardrobe, preferences].filter(box => box.state === 'complete').length;
+  const stage = (completed <= 1 ? 0 : completed - 1) as 0 | 1 | 2;
+  const done = (box: JourneyBox) => box.state === 'complete';
+  const rows: JourneyRow[] = [
+    {
+      id: 'liked', title: 'Beğenilerin', state: liked.state,
+      subtitle: liked.state === 'loading' ? LOADING_TEXT : done(liked) ? `${counts.evaluations} değerlendirme · kullanılıyor`
+        : `${counts.evaluations}/${goals.evaluations} değerlendirme`,
+      action: liked.state === 'missing' ? { label: 'Biraz daha beğen', kind: 'hint', target: liked.target } : null,
+    },
+    {
+      id: 'wardrobe', title: 'Dolabın', state: wardrobe.state,
+      subtitle: wardrobe.state === 'loading' ? LOADING_TEXT : done(wardrobe) ? `${counts.wardrobe} parça`
+        : 'Dolabına uyan ürünleri işaretleriz',
+      action: wardrobe.state === 'missing' ? { label: 'Ekle', kind: 'button', target: wardrobe.target } : null,
+    },
+    {
+      id: 'preferences', title: `Tercihlerin ${counts.preferences}/${PREFERENCE_TOTAL}`, state: preferences.state,
+      subtitle: 'Öneriler senin seçimine göre çalışır',
+      action: preferences.state === 'missing' ? { label: 'Belirt', kind: 'link', target: preferences.target } : null,
+    },
+  ];
   return {
-    total: journey.ready.ratings ? counts.evaluations : null,
-    subline: journey.ready.ratings ? boxes[0].value : null,
-    steps,
-    next: current && nextText ? { text: nextText, target: current.target } : null,
+    completed, title: STAGE_TITLES[stage], stages: STAGES, stage, rows,
+    ringLabel: `Stil yolculuğu: 3 adımdan ${completed} tamam`,
   };
 }
 

@@ -1,6 +1,6 @@
 import { buildStyleJourney, type StyleJourneyInput } from '../lib/profileStyleJourney';
 import {
-  STYLE_TREND_MIN_EVALUATIONS, buildJourneyBoxes, buildJourneyStepper, buildOnlyYou, buildSourceSheet, buildStyleGrid, evaluationLine,
+  STYLE_TREND_MIN_EVALUATIONS, buildJourneyBoxes, buildJourneyCard, buildOnlyYou, buildSourceSheet, buildStyleGrid, evaluationLine,
 } from '../lib/profileStyleView';
 import { emptyStyleProfile } from '../lib/scoring';
 import type { LikedProduct, Product } from '../types/product';
@@ -258,46 +258,57 @@ describe('only you', () => {
   });
 });
 
-describe('journey stepper', () => {
-  const full = { likedProducts: likes(5), passedProductIds: passes(5) };
+describe('journey card', () => {
+  const liked10 = { likedProducts: likes(5), passedProductIds: passes(5) };
   const prefs = studio({ topSize: 'M', styleTags: ['minimal'], preferredColors: ['Siyah'], favoriteBrands: ['ZARA'], priceRange: { min: 100, max: 500 } });
-  test('empty account: big number 0, first step is current, the rest upcoming, next step is to like more', () => {
-    const stepper = buildJourneyStepper(buildStyleJourney(input()));
-    expect(stepper.total).toBe(0);
-    expect(stepper.subline).toBe('0 beğeni · 0 geçilen');
-    expect(stepper.steps.map(step => [step.number, step.label, step.state])).toEqual([
-      [1, 'Beğeni', 'current'], [2, 'Dolap 0/3 parça', 'upcoming'], [3, 'Tercih 0/5', 'upcoming'],
-    ]);
-    expect(stepper.next).toEqual({ text: 'Biraz daha beğen', target: 'discover' });
+  const card = (patch: Partial<StyleJourneyInput> = {}) => buildJourneyCard(buildStyleJourney(input(patch)));
+
+  test('stage title follows the completed step count: 0/1 -> starting, 2 -> know, 3 -> know well', () => {
+    expect(card()).toMatchObject({ completed: 0, title: 'Seni tanımaya başlıyoruz', stage: 0 });
+    expect(card(liked10)).toMatchObject({ completed: 1, title: 'Seni tanımaya başlıyoruz', stage: 0 });
+    expect(card({ ...liked10, wardrobeItems: wardrobe(3) })).toMatchObject({ completed: 2, title: 'Seni tanıyoruz', stage: 1 });
+    expect(card({ ...liked10, wardrobeItems: wardrobe(3), profile: prefs }))
+      .toMatchObject({ completed: 3, title: 'Seni iyi tanıyoruz', stage: 2 });
   });
-  test('total is the distinct liked+passed count', () => {
-    const stepper = buildJourneyStepper(buildStyleJourney(input({ likedProducts: likes(3), passedProductIds: ['l0', ...passes(171)] })));
-    expect(stepper.total).toBe(174);
-    expect(stepper.subline).toBe('3 beğeni · 172 geçilen');
+  test('the stage line and the ring accessibility label', () => {
+    const full = card({ ...liked10, wardrobeItems: wardrobe(3), profile: prefs });
+    expect(full.stages).toEqual(['Tanışıyoruz', 'Tanıyoruz', 'İyi tanıyoruz']);
+    expect(full.ringLabel).toBe('Stil yolculuğu: 3 adımdan 3 tamam');
+    expect(card().ringLabel).toBe('Stil yolculuğu: 3 adımdan 0 tamam');
   });
-  test('the first missing step drives the next-step line', () => {
-    const wardrobeNext = buildJourneyStepper(buildStyleJourney(input({ ...full })));
-    expect(wardrobeNext.steps.map(step => step.state)).toEqual(['complete', 'current', 'upcoming']);
-    expect(wardrobeNext.next).toEqual({ text: 'Dolabına ilk parçanı ekle', target: 'wardrobe' });
-    const prefsNext = buildJourneyStepper(buildStyleJourney(input({ ...full, wardrobeItems: wardrobe(3) })));
-    expect(prefsNext.steps.map(step => step.state)).toEqual(['complete', 'complete', 'current']);
-    expect(prefsNext.next).toEqual({ text: 'Tercihlerini belirt', target: 'preferences' });
+  test('thresholds are unchanged: liked+passed >= 10, wardrobe >= 3, preferences 5/5', () => {
+    expect(card({ likedProducts: likes(5), passedProductIds: passes(4) }).rows[0].state).toBe('missing');
+    expect(card(liked10).rows[0].state).toBe('complete');
+    expect(card({ wardrobeItems: wardrobe(2) }).rows[1].state).toBe('missing');
+    expect(card({ wardrobeItems: wardrobe(3) }).rows[1].state).toBe('complete');
+    expect(card({ profile: studio({ topSize: 'M' }) }).rows[2].state).toBe('missing');
+    expect(card({ profile: prefs }).rows[2].state).toBe('complete');
   });
-  test('everything complete hides the next step', () => {
-    const stepper = buildJourneyStepper(buildStyleJourney(input({ ...full, wardrobeItems: wardrobe(3), profile: prefs })));
-    expect(stepper.steps.every(step => step.state === 'complete')).toBe(true);
-    expect(stepper.next).toBeNull();
+  test('liked row copy and hint', () => {
+    expect(card({ likedProducts: likes(2), passedProductIds: passes(3) }).rows[0]).toMatchObject({
+      title: 'Beğenilerin', subtitle: '5/10 değerlendirme', action: { label: 'Biraz daha beğen', kind: 'hint', target: 'discover' } });
+    expect(card(liked10).rows[0]).toMatchObject({ subtitle: '10 değerlendirme · kullanılıyor', action: null });
   });
-  test('wardrobe that is not ready is a loading step, never a 0', () => {
-    const stepper = buildJourneyStepper(buildStyleJourney(input({ ...full, wardrobeStatus: 'loading' })));
-    expect(stepper.steps[1]).toMatchObject({ state: 'loading', label: 'Dolap · Yükleniyor' });
-    expect(stepper.steps[1].label).not.toContain('0/3');
-    expect(stepper.next).toEqual({ text: 'Tercihlerini belirt', target: 'preferences' });
+  test('wardrobe row: Ekle button when missing, parça count when complete, Yükleniyor while loading', () => {
+    expect(card().rows[1]).toMatchObject({ title: 'Dolabın', subtitle: 'Dolabına uyan ürünleri işaretleriz',
+      action: { label: 'Ekle', kind: 'button', target: 'wardrobe' } });
+    expect(card({ wardrobeItems: wardrobe(4) }).rows[1]).toMatchObject({ subtitle: '4 parça', action: null });
+    const loading = card({ wardrobeStatus: 'loading', wardrobeItems: wardrobe(3) }).rows[1];
+    expect(loading).toMatchObject({ state: 'loading', subtitle: 'Yükleniyor', action: null });
+    expect(JSON.stringify(loading)).not.toContain('0/3');
+    expect(card({ wardrobeStatus: 'loading', ...liked10 }).completed).toBe(1);
   });
-  test('ratings that are not ready show no total', () => {
-    const stepper = buildJourneyStepper(buildStyleJourney(input({ sessionSyncStatus: 'loading' })));
-    expect(stepper.total).toBeNull();
-    expect(stepper.subline).toBeNull();
-    expect(stepper.steps[0].state).toBe('loading');
+  test('preferences row: Belirt link when missing, nothing when 5/5', () => {
+    expect(card({ profile: studio({ topSize: 'M', styleTags: ['minimal'] }) }).rows[2]).toMatchObject({
+      title: 'Tercihlerin 2/5', subtitle: 'Öneriler senin seçimine göre çalışır',
+      action: { label: 'Belirt', kind: 'link', target: 'preferences' } });
+    expect(card({ profile: prefs }).rows[2]).toMatchObject({ title: 'Tercihlerin 5/5', action: null });
+  });
+  test('ratings not ready: liked row is loading', () => {
+    expect(card({ sessionSyncStatus: 'loading' }).rows[0]).toMatchObject({ state: 'loading', subtitle: 'Yükleniyor', action: null });
+  });
+  test('no percent, points, badge or level wording anywhere in the card', () => {
+    const text = JSON.stringify([card(), card(liked10), card({ ...liked10, wardrobeItems: wardrobe(3), profile: prefs })]);
+    expect(text).not.toMatch(/%|puan|rozet|seviye|daha iyi/i);
   });
 });

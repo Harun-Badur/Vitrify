@@ -53,64 +53,74 @@ async function mount(element: ReactElement): Promise<Tree> {
   return view;
 }
 
-describe('Stil Yolculuğun dark card', () => {
-  test('big total, split line and three steps; no percent, no ring, no old counter sentence', async () => {
-    const journey = buildStyleJourney(base({ passedProductIds: ids(174) }));
-    const view = await mount(createElement(ProfileStyleJourney, { journey, onTask: jest.fn() }));
+describe('Stil Yolculuğun card', () => {
+  const wardrobeItems = Array.from({ length: 3 }, (_, i) => ({ id: `w${i}`, title: 'F', brand: '', imageUrl: 'file://f', category: 'upper_body' as const, createdAt: '2026-10-12' }));
+  const profile = { userId: 'A', heightCm: 170, weightKg: 60, topSize: 'M' as const, bottomSize: 'M' as const, styleTags: ['minimal' as const],
+    modelPhotoPath: null, preferredColors: ['Siyah'], favoriteBrands: ['ZARA'], priceRange: { min: 1, max: 2 } };
+  const render = (patch = {}, onTask = jest.fn()) =>
+    mount(createElement(ProfileStyleJourney, { journey: buildStyleJourney(base(patch)), onTask }));
+
+  test.each([
+    [{}, 'Seni tanımaya başlıyoruz', 0],
+    [{ passedProductIds: ids(10) }, 'Seni tanımaya başlıyoruz', 1],
+    [{ passedProductIds: ids(10), wardrobeItems }, 'Seni tanıyoruz', 2],
+    [{ passedProductIds: ids(10), wardrobeItems, profile }, 'Seni iyi tanıyoruz', 3],
+  ])('stage title and ring label for %#', async (patch, title, done) => {
+    const view = await render(patch);
     try {
       const text = texts(view);
-      for (const part of ['STİL YOLCULUĞUN', '174', 'değerlendirme', '0 beğeni · 174 geçilen', 'Beğeni', 'Dolap 0/3 parça', 'Tercih 0/5']) {
+      for (const part of ['STİL YOLCULUĞUN', title, 'Paylaştıkça önerilerin sana yaklaşır.', 'Tanışıyoruz', 'Tanıyoruz', 'İyi tanıyoruz']) {
         expect(text).toContain(part);
       }
-      expect(text).not.toContain('%');
-      expect(text).not.toContain('Önerilerin şu an');
-      expect(view.root.findAllByProps({ accessibilityRole: 'progressbar' })).toHaveLength(0);
+      expect(view.root.findByProps({ accessibilityLabel: `Stil yolculuğu: 3 adımdan ${done} tamam` })).toBeDefined();
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('complete step shows the check, the first missing step is current, the next-step row opens that flow', async () => {
-    const journey = buildStyleJourney(base({ passedProductIds: ids(10) }));
+  test('rows: complete ones show a check, missing ones their action; Ekle opens the wardrobe flow, Belirt the preferences flow', async () => {
     const onTask = jest.fn();
-    const view = await mount(createElement(ProfileStyleJourney, { journey, onTask }));
+    const view = await render({ passedProductIds: ids(10) }, onTask);
     try {
-      expect(view.root.findAllByProps({ testID: 'journey-step-liked-complete' }).length).toBeGreaterThan(0);
-      expect(view.root.findAllByProps({ testID: 'journey-step-wardrobe-current' }).length).toBeGreaterThan(0);
-      expect(view.root.findAllByProps({ testID: 'journey-step-preferences-upcoming' }).length).toBeGreaterThan(0);
-      const text = texts(view);
-      expect(text).toContain('SIRADAKİ ADIM');
-      expect(text).toContain('Dolabına ilk parçanı ekle');
+      expect(hosts(view, 'journey-row-liked-complete').length).toBe(1);
+      expect(hosts(view, 'journey-row-wardrobe-missing').length).toBe(1);
+      expect(texts(view)).toContain('10 değerlendirme · kullanılıyor');
       await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Ekle' }).props.onPress as () => void)(); });
-      expect(onTask).toHaveBeenCalledWith('wardrobe');
+      await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Belirt' }).props.onPress as () => void)(); });
+      expect(onTask.mock.calls).toEqual([['wardrobe'], ['preferences']]);
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('everything complete hides the next-step row', async () => {
-    const journey = buildStyleJourney(base({
-      passedProductIds: ids(10),
-      wardrobeItems: Array.from({ length: 3 }, (_, i) => ({ id: `w${i}`, title: 'F', brand: '', imageUrl: 'file://f', category: 'upper_body' as const, createdAt: '2026-10-12' })),
-      profile: { userId: 'A', heightCm: 170, weightKg: 60, topSize: 'M', bottomSize: 'M', styleTags: ['minimal'], modelPhotoPath: null,
-        preferredColors: ['Siyah'], favoriteBrands: ['ZARA'], priceRange: { min: 1, max: 2 } },
-    }));
-    const view = await mount(createElement(ProfileStyleJourney, { journey, onTask: jest.fn() }));
+  test('liked below the threshold reads N/10 with the hint', async () => {
+    const view = await render({ passedProductIds: ids(4) });
     try {
-      expect(texts(view)).not.toContain('SIRADAKİ ADIM');
-      expect(view.root.findAllByProps({ accessibilityLabel: 'Ekle' })).toHaveLength(0);
+      expect(texts(view)).toContain('4/10 değerlendirme');
+      expect(texts(view)).toContain('Biraz daha beğen');
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('wardrobe still loading reads "Yükleniyor", never 0/3', async () => {
-    const journey = buildStyleJourney(base({ wardrobeStatus: 'loading' }));
-    const view = await mount(createElement(ProfileStyleJourney, { journey, onTask: jest.fn() }));
+  test('wardrobe still loading reads "Yükleniyor", never 0/3, and offers no Ekle', async () => {
+    const view = await render({ wardrobeStatus: 'loading', passedProductIds: ids(10) });
     try {
       expect(texts(view)).toContain('Yükleniyor');
       expect(texts(view)).not.toContain('0/3');
-      expect(view.root.findAllByProps({ testID: 'journey-step-wardrobe-loading' }).length).toBeGreaterThan(0);
+      expect(view.root.findAllByProps({ accessibilityLabel: 'Ekle' })).toHaveLength(0);
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('the Ekle button has at least a 44dp touch target', async () => {
-    const view = await mount(createElement(ProfileStyleJourney, { journey: buildStyleJourney(base()), onTask: jest.fn() }));
+  test('Ekle is 40dp tall with a hit area of at least 44dp; Belirt has a 44dp hit area', async () => {
+    const view = await render();
     try {
-      const button = view.root.findByProps({ accessibilityLabel: 'Ekle' });
-      const style = ([] as Record<string, number>[]).concat(button.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
-      expect(style.minHeight).toBeGreaterThanOrEqual(44);
+      const add = view.root.findByProps({ accessibilityLabel: 'Ekle' });
+      const style = ([] as Record<string, number>[]).concat(add.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
+      const slop = (add.props.hitSlop as number | undefined) ?? 0;
+      expect(style.height ?? style.minHeight).toBe(40);
+      expect(40 + 2 * slop).toBeGreaterThanOrEqual(44);
+      const link = view.root.findByProps({ accessibilityLabel: 'Belirt' });
+      const linkStyle = ([] as Record<string, number>[]).concat(link.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
+      expect(linkStyle.minHeight).toBeGreaterThanOrEqual(44);
     } finally { await renderer.act(() => view.unmount()); }
+  });
+  test('no percent, points, badge or level wording', async () => {
+    for (const patch of [{}, { passedProductIds: ids(10), wardrobeItems, profile }]) {
+      const view = await render(patch);
+      try { expect(texts(view)).not.toMatch(/%|puan|rozet|seviye|daha iyi/i); }
+      finally { await renderer.act(() => view.unmount()); }
+    }
   });
 });
 
