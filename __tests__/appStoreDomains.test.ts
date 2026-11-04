@@ -92,7 +92,7 @@ describe('app store domain state', () => {
     expect(useAppStore.getState()).toMatchObject({
       currentProducts: [second],
       passedProductIds: [first.id],
-      passedStack: [first],
+      passedStack: [{ product: first, kind: 'passed' }],
       likedProducts: [],
     });
 
@@ -131,7 +131,7 @@ describe('app store domain state', () => {
       currentProducts: [third],
       likedProducts: [liked],
       passedProductIds: [second.id],
-      passedStack: [second],
+      passedStack: [{ product: second, kind: 'passed' }],
       feedIsPersonalized: true,
       feedFallback: true,
       feedRelaxed: ['category'],

@@ -70,9 +70,10 @@ const withFeedDeadline = <T>(work: Promise<T>): Promise<T> =>
 
 /**
  * One return stack for the down swipe. `liked` entries are cards that left the deck while liked:
- * returning to them is a view change only (no pass was ever written). Missing kind = passed.
+ * returning to them is a view change only (no pass was ever written).
+ * The product object is stored as is: the complements cache finds cards by object identity.
  */
-export type PassedStackEntry = Product & { stackKind?: 'passed' | 'liked' };
+export interface PassedStackEntry { product: Product; kind: 'passed' | 'liked' }
 export const PASSED_STACK_LIMIT = 20;
 
 /** Current card plus the next/warm cards the screen has already prepared. */
@@ -84,21 +85,21 @@ const appendUniqueId = (ids: string[], productId: string): string[] =>
 const pushPassedProduct = (
   stack: PassedStackEntry[], product: Product, stackKind: 'passed' | 'liked' = 'passed',
 ): PassedStackEntry[] => {
-  const without = stack.filter((item) => item.id !== product.id);
-  return [...without, { ...product, stackKind }].slice(-PASSED_STACK_LIMIT);
+  const without = stack.filter((item) => item.product.id !== product.id);
+  return [...without, { product, kind: stackKind }].slice(-PASSED_STACK_LIMIT);
 };
 
 const popPassedProduct = (
   stack: PassedStackEntry[],
-): { stack: PassedStackEntry[]; product: PassedStackEntry | null } => {
+): { stack: PassedStackEntry[]; entry: PassedStackEntry | null } => {
   if (stack.length === 0) {
-    return { stack, product: null };
+    return { stack, entry: null };
   }
-  const product = stack[stack.length - 1];
-  if (product === undefined) {
-    return { stack: [], product: null };
+  const entry = stack[stack.length - 1];
+  if (entry === undefined) {
+    return { stack: [], entry: null };
   }
-  return { stack: stack.slice(0, -1), product };
+  return { stack: stack.slice(0, -1), entry };
 };
 
 export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice> =
@@ -346,7 +347,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           passedProductIds: state.passedProductIds.filter(
             (id) => id !== product.id,
           ),
-          passedStack: state.passedStack.filter((item) => item.id !== product.id),
+          passedStack: state.passedStack.filter((item) => item.product.id !== product.id),
         }));
       });
       passWrites.set(product.id, settled);
@@ -356,24 +357,24 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       const current = captureOwnerPublication(userId);
       if (!current()) return false;
       if (userId && pendingUndo?.owner === userId) return pendingUndo.promise;
-      const { product } = popPassedProduct(get().passedStack);
-      if (product === null) {
+      const { entry } = popPassedProduct(get().passedStack);
+      if (entry === null) {
         return false;
       }
-      const { stackKind, ...card } = product;
-      if (stackKind === 'liked') {
+      const { product } = entry;
+      if (entry.kind === 'liked') {
         // View only: the like stays, no pass was written, so nothing is undone on the server.
         set((state) => ({
-          currentProducts: restoreProduct(state.currentProducts, card),
-          passedStack: state.passedStack.filter(item => item.id !== product.id),
+          currentProducts: restoreProduct(state.currentProducts, product),
+          passedStack: state.passedStack.filter(item => item.product.id !== product.id),
         }));
         return true;
       }
 
       const restore = () => set((state) => ({
-        currentProducts: state.likedProducts.some(item => item.product.id === product.id) ? state.currentProducts : restoreProduct(state.currentProducts, card),
+        currentProducts: state.likedProducts.some(item => item.product.id === product.id) ? state.currentProducts : restoreProduct(state.currentProducts, product),
         passedProductIds: state.passedProductIds.filter((id) => id !== product.id),
-        passedStack: state.passedStack.filter(item => item.id !== product.id),
+        passedStack: state.passedStack.filter(item => item.product.id !== product.id),
       }));
       if (!userId) { restore(); return true; }
       const capturedGeneration = mutationGeneration;

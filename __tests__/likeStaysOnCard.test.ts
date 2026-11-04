@@ -89,7 +89,7 @@ describe('swiping a liked card away', () => {
     expect(deleteLikedProduct).not.toHaveBeenCalled();
     expect(state.likedProducts.map(item => item.product.id)).toEqual([first.id]);
     expect(state.passedProductIds).toEqual([]);
-    expect(state.passedStack.map(item => [item.id, item.stackKind])).toEqual([[first.id, 'liked']]);
+    expect(state.passedStack.map(item => [item.product.id, item.kind])).toEqual([[first.id, 'liked']]);
     expect(state.currentProducts.map(item => item.id)).toEqual([second.id]);
   });
   test('an unliked card still records its pass exactly as before', async () => {
@@ -125,7 +125,7 @@ describe('returning to a card with the down swipe (undoPass)', () => {
   test('a passed entry keeps the old behaviour: server undo, then the card returns', async () => {
     useAppStore.getState().swipeLeft(first);
     await flush();
-    expect(useAppStore.getState().passedStack.map(item => item.stackKind)).toEqual(['passed']);
+    expect(useAppStore.getState().passedStack.map(item => item.kind)).toEqual(['passed']);
     const result = useAppStore.getState().undoPass();
     expect(result).toBeInstanceOf(Promise);
     await expect(result).resolves.toBe(true);
@@ -139,7 +139,7 @@ describe('returning to a card with the down swipe (undoPass)', () => {
     await flush();
     jest.mocked(deletePassedProduct).mockRejectedValueOnce(new Error('offline'));
     await expect(useAppStore.getState().undoPass()).rejects.toThrow();
-    expect(useAppStore.getState().passedStack.map(item => item.id)).toEqual([first.id]);
+    expect(useAppStore.getState().passedStack.map(item => item.product.id)).toEqual([first.id]);
     expect(useAppStore.getState().currentProducts.map(item => item.id)).toEqual([second.id]);
   });
   test('a passed entry for a product that is liked meanwhile still does not duplicate it in the deck', async () => {
@@ -153,7 +153,7 @@ describe('returning to a card with the down swipe (undoPass)', () => {
     const products = Array.from({ length: 21 }, (_, i) => productWithId(`p${i}`));
     useAppStore.setState({ currentProducts: products });
     for (const product of products) useAppStore.getState().swipeLeft(product);
-    const ids = useAppStore.getState().passedStack.map(item => item.id);
+    const ids = useAppStore.getState().passedStack.map(item => item.product.id);
     expect(ids).toHaveLength(20);
     expect(ids[0]).toBe('p1');
     expect(ids[19]).toBe('p20');
@@ -166,7 +166,7 @@ describe('returning to a card with the down swipe (undoPass)', () => {
     expect(insertPassedProduct).not.toHaveBeenCalled();
     useAppStore.setState({ currentProducts: [products[21]] });
     useAppStore.getState().swipeLeft(products[21]);
-    expect(useAppStore.getState().passedStack.filter(item => item.id === 'l21')).toHaveLength(1);
+    expect(useAppStore.getState().passedStack.filter(item => item.product.id === 'l21')).toHaveLength(1);
   });
 });
 

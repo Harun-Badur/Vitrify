@@ -96,7 +96,7 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
       if (keepInDeck && previous) return;
       const latest = nextVersion(userId,product.id);
       const priorPass = get().passedProductIds.includes(product.id);
-      const priorStack = get().passedStack.find(item => item.id === product.id);
+      const priorStack = get().passedStack.find(item => item.product.id === product.id);
       const valid = () => current() && get().sessionUserId === userId && latest();
       status(userId,'loading');
 
@@ -106,7 +106,7 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
         passedProductIds: state.passedProductIds.filter(
           (id) => id !== product.id,
         ),
-        passedStack: state.passedStack.filter((item) => item.id !== product.id),
+        passedStack: state.passedStack.filter((item) => item.product.id !== product.id),
       }));
 
       if (!userId) {
@@ -134,7 +134,7 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
           currentProducts: !likeCommitted && !previous && !priorPass ? restoreProduct(state.currentProducts, product) : state.currentProducts,
           likedProducts: likeCommitted || previous ? state.likedProducts : removeLiked(state.likedProducts, product.id),
           passedProductIds: priorPass && !state.passedProductIds.includes(product.id) ? [...state.passedProductIds,product.id] : state.passedProductIds,
-          passedStack: priorStack && !state.passedStack.some(item => item.id === product.id) ? [...state.passedStack,priorStack] : state.passedStack,
+          passedStack: priorStack && !state.passedStack.some(item => item.product.id === product.id) ? [...state.passedStack,priorStack] : state.passedStack,
         }));
         status(userId,'error',isPreferenceOutcomeUnknown(error) ? 'İşlem sonucu henüz doğrulanamadı. Aynı işlem yeniden doğrulanacak.' : likeCommitted ? 'Beğeni kaydedildi; geçme temizliği tamamlanamadı. Tekrar dene.' : 'Beğeni kaydedilemedi. Mevcut veriler korundu; tekrar dene.');
       });

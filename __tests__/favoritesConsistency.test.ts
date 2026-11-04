@@ -64,7 +64,7 @@ test('old owner write failure and read result cannot change the new owner',async
 });
 test('partial like commit preserves committed favorite and exposes pass cleanup failure',async()=>{
   const error=Object.assign(Error('partial'),{likeCommitted:true});jest.mocked(insertLikedProduct).mockRejectedValueOnce(error);
-  store.setState({passedProductIds:[p.id],passedStack:[p]});store.getState().swipeRight(p);await flush();
+  store.setState({passedProductIds:[p.id],passedStack:[{product:p,kind:"passed"}]});store.getState().swipeRight(p);await flush();
   expect(store.getState().likedProducts).toHaveLength(1);expect(store.getState().favoritesStatus).toBe('error');
   expect(store.getState().passedProductIds).toEqual([p.id]);
 });

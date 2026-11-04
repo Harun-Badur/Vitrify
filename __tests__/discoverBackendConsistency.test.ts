@@ -37,7 +37,7 @@ test('offline delete rejects, retains pass and retry succeeds',async()=>{
   store.getState().swipeLeft(product);await flush();
   jest.mocked(deletePassedProduct).mockRejectedValueOnce(Error('offline'));
   await expect(store.getState().undoPass()).rejects.toThrow();
-  expect(store.getState().passedStack).toEqual([{ ...product, stackKind: 'passed' }]);
+  expect(store.getState().passedStack).toEqual([{ product, kind: 'passed' }]);
   expect(store.getState().currentProducts).toEqual([]);
   expect(await store.getState().undoPass()).toBe(true);
 });

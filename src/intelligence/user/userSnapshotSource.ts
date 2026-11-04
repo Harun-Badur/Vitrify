@@ -43,7 +43,8 @@ export const selectUserSnapshotInput = ({ state, profile, attributeContexts }: U
   profile: profile && profile.userId === state.sessionUserId ? profile : null,
   likedProducts: [...state.likedProducts],
   passedProductIds: [...state.passedProductIds],
-  passedProducts: [...state.passedStack],
+  // Liked entries on the return stack are views of cards that were never passed.
+  passedProducts: state.passedStack.filter(entry => entry.kind === 'passed').map(entry => entry.product),
   resolveProductIntelligence: contextualIntelligence(attributeContexts),
 });
 

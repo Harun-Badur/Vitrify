@@ -35,8 +35,9 @@ const product = (id: string, title: string, patch: Partial<Product> = {}): Produ
 const liked = (item: Product): LikedProduct => ({ product: item, notifyOnPriceDrop: true, likedAt: '2026-10-01T10:00:00.000Z' });
 const many = (count: number, prefix: string, title: string): Product[] =>
   Array.from({ length: count }, (_, index) => product(`${prefix}-${index}`, title));
-const state = (patch: Partial<UserSnapshotStoreState> = {}): UserSnapshotStoreState => ({
-  sessionUserId: 'user-1', likedProducts: [], passedProductIds: [], passedStack: [], ...patch,
+const entries = (products: readonly Product[], kind: 'passed' | 'liked' = 'passed') => products.map(item => ({ product: item, kind }));
+const state = (patch: Partial<Omit<UserSnapshotStoreState, 'passedStack'>> & { passedStack?: readonly Product[] } = {}): UserSnapshotStoreState => ({
+  sessionUserId: 'user-1', likedProducts: [], passedProductIds: [], ...patch, passedStack: entries(patch.passedStack ?? []),
 });
 const profile = (patch: Partial<UserStudioProfile> = {}): UserStudioProfile => ({
   userId: 'user-1', heightCm: null, weightKg: null, topSize: null, bottomSize: null,
@@ -214,7 +215,7 @@ describe('selectUserSnapshotInput: purity', () => {
     const first = buildUserSnapshotFromSources(sources);
     const second = buildUserSnapshotFromSources(sources);
     const reordered = buildUserSnapshotFromSources({ ...sources, state: { ...sources.state,
-      likedProducts: [...likes].reverse(), passedStack: [...stack].reverse(), passedProductIds: [...sources.state.passedProductIds].reverse() } });
+      likedProducts: [...likes].reverse(), passedStack: entries([...stack].reverse()), passedProductIds: [...sources.state.passedProductIds].reverse() } });
     expect(second).toEqual(first);
     expect(reordered).toEqual(first);
     expect(JSON.stringify(sources)).toBe(before);
@@ -259,5 +260,15 @@ describe('UserSnapshot source adapter boundary', () => {
     for (const forbidden of ['getState', 'setState', 'fetch(', 'productsById(', 'track(', 'Date.now', 'new Date', 'await ']) {
       expect(code).not.toContain(forbidden);
     }
+  });
+});
+
+describe('return-stack entries that are liked views', () => {
+  test('a liked entry on the return stack is never a passed product for the snapshot', () => {
+    const passed = product('s1', 'Siyah Gömlek');
+    const liked = product('l1', 'Beyaz Gömlek');
+    const input = selectUserSnapshotInput({ state: { sessionUserId: 'user-1', likedProducts: [], passedProductIds: ['s1'],
+      passedStack: [{ product: passed, kind: 'passed' }, { product: liked, kind: 'liked' }] }, profile: null, attributeContexts: new Map() } as never);
+    expect(input.passedProducts).toEqual([passed]);
   });
 });

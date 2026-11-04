@@ -256,7 +256,7 @@ export default function FeedScreen() {
   const undoPass = useAppStore((state) => state.undoPass);
   const lastPassed = useAppStore((state) => {
     const stack = state.passedStack;
-    return stack[stack.length - 1] ?? null;
+    return stack[stack.length - 1]?.product ?? null;
   });
 
   const estimatedH = estimateDiscoverCardHeight(windowHeight);
