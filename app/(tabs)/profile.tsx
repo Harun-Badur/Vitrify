@@ -49,7 +49,6 @@ import {premiumClient} from '../../services/revenueCatMobile';
 import {buildPremiumDeletionNotice,subscriptionManagementUrl} from '../../lib/premiumDeletionNotice';
 import ProfileStyleJourney from '../../components/ProfileStyleJourney';
 import ProfileStyleGrid from '../../components/ProfileStyleGrid';
-import ProfileOnlyYou from '../../components/ProfileOnlyYou';
 import SizeStudioSheet, {
   type StyleSheetSection,
 } from '../../components/SizeStudioSheet';
@@ -714,14 +713,13 @@ export default function ProfileScreen() {
           <Text style={styles.lowResHint}>{LOW_RES_MODEL_PHOTO_HINT}</Text>
         ) : null}
 
+        <PremiumMembership key={`membership:${userId ?? 'signed-out'}`} />
+
         <ProfileStyleJourney key={`style-journey:${userId ?? 'signed-out'}`} journey={journey} onTask={handleJourneyTask} />
 
         <ProfileStyleGrid key={`style-grid:${userId ?? 'signed-out'}`} journey={journey}
           onRetry={handleRetryCalculated} onSelectSection={openPreferenceSection} />
-        <ProfileOnlyYou key={`only-you:${userId ?? 'signed-out'}`} journey={journey}
-          onOpen={openPreferenceSection} disabled={preferencesDisabled} />
 
-        <PremiumMembership key={`membership:${userId ?? 'signed-out'}`} />
         <View style={styles.menuCard}>
           <MenuRow
             label="Denemelerim"
@@ -893,6 +891,22 @@ export default function ProfileScreen() {
               {accountNotice}
             </Text>
           ) : null}
+          {(['style', 'body'] as const).map((section) => (
+            <PressableScale
+              key={section}
+              onPress={() => {
+                setAccountOpen(false);
+                openPreferenceSection(section);
+              }}
+              disabled={preferencesDisabled}
+              style={styles.accountLink}
+              accessibilityRole="button"
+              accessibilityLabel={section === 'style' ? 'Stil tarzı' : 'Beden bilgilerim'}
+            >
+              <Text style={styles.accountLinkText}>{section === 'style' ? 'Stil tarzı' : 'Beden bilgilerim'}</Text>
+              <ChevronRight color={colors.tabInactive} size={ICON_SM} />
+            </PressableScale>
+          ))}
           <PressableScale
             onPress={() => {
               void handleSaveAccount();
@@ -957,6 +971,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.input,
   },
   accountNotice: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
+  accountLink: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+  },
+  accountLinkText: { color: colors.text, fontSize: 15, fontWeight: '600' },
   accountSaveButton: {
     minHeight: 48,
     borderRadius: radius.button,

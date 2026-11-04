@@ -1,6 +1,6 @@
 import { buildStyleJourney, type StyleJourneyInput } from '../lib/profileStyleJourney';
 import {
-  STYLE_TREND_MIN_EVALUATIONS, buildJourneyBoxes, buildJourneyCard, buildOnlyYou, buildSourceSheet, buildStyleGrid, evaluationLine,
+  STYLE_TREND_MIN_EVALUATIONS, buildJourneyBoxes, buildJourneyCard, buildSourceSheet, buildStyleGrid, evaluationLine,
 } from '../lib/profileStyleView';
 import { emptyStyleProfile } from '../lib/scoring';
 import type { LikedProduct, Product } from '../types/product';
@@ -234,27 +234,6 @@ describe('source sheet', () => {
     const empty = buildStyleJourney(input({ calculatedProfile: model({}) }));
     const sheet = buildSourceSheet(buildStyleGrid(empty).tiles[0], empty);
     expect(sheet.sources.every(source => source.count === 0 && source.fraction === 0)).toBe(true);
-  });
-});
-
-describe('only you', () => {
-  test('unset style and size are "+" boxes', () => {
-    const boxes = buildOnlyYou(buildStyleJourney(input({ profile: studio() })));
-    expect(boxes).toEqual([
-      { id: 'style', title: 'Stil tarzı', value: null, section: 'style' },
-      { id: 'body', title: 'Beden', value: null, section: 'body' },
-    ]);
-  });
-  test('set values are shown', () => {
-    const boxes = buildOnlyYou(buildStyleJourney(input({
-      profile: studio({ styleTags: ['minimal', 'classic'], topSize: 'M', bottomSize: 'L', heightCm: 180 }),
-    })));
-    expect(boxes[0].value).toBe('Minimal, Klasik');
-    expect(boxes[1].value).toBe('M · Alt: L · 180 cm');
-  });
-  test('another owner\'s declared values never show', () => {
-    const boxes = buildOnlyYou(buildStyleJourney(input({ userId: 'B', profile: studio({ styleTags: ['minimal'] }) })));
-    expect(boxes.every(box => box.value === null)).toBe(true);
   });
 });
 

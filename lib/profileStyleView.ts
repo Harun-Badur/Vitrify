@@ -238,16 +238,4 @@ export function buildSourceSheet(tile: StyleTile, journey: StyleJourney): Source
   };
 }
 
-export interface OnlyYouBox {
-  id: 'style' | 'body';
-  title: string;
-  value: string | null;
-  section: DeclarationSection;
-}
-
-export const buildOnlyYou = (journey: StyleJourney): OnlyYouBox[] => [
-  { id: 'style', title: 'Stil tarzı', value: journey.declaredValues.styleLabels.join(', ') || null, section: 'style' },
-  { id: 'body', title: 'Beden', value: journey.declaredValues.body, section: 'body' },
-];
-
 export type { DeclaredKey };

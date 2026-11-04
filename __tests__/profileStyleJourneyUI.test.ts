@@ -4,7 +4,6 @@ import { join } from 'path';
 import { Text } from 'react-native';
 import ProfileStyleJourney from '../components/ProfileStyleJourney';
 import ProfileStyleGrid from '../components/ProfileStyleGrid';
-import ProfileOnlyYou from '../components/ProfileOnlyYou';
 import { buildStyleJourney } from '../lib/profileStyleJourney';
 import type { StyleJourneyInput } from '../lib/profileStyleJourney';
 import { emptyStyleProfile } from '../lib/scoring';
@@ -211,25 +210,9 @@ describe('Stilin grid', () => {
   });
 });
 
-describe('Sadece sen belirlersin', () => {
-  test('unset style and size are "+" boxes that open the existing sheets', async () => {
-    const onOpen = jest.fn();
-    const journey = buildStyleJourney(base());
-    const view = await mount(createElement(ProfileOnlyYou, { journey, onOpen, disabled: false }));
-    try {
-      const text = texts(view);
-      for (const label of ['Sadece sen belirlersin', 'Bunları tahmin etmiyoruz.', 'Stil tarzı', 'Beden', 'Belirlenmedi', 'Ekle']) expect(text).toContain(label);
-      expect(view.root.findAllByProps({ testID: 'only-you-style-add' }).length).toBeGreaterThan(0);
-      await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Stil tarzı ekle' }).props.onPress as () => void)(); });
-      await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Beden ekle' }).props.onPress as () => void)(); });
-      expect(onOpen.mock.calls).toEqual([['style'], ['body']]);
-    } finally { await renderer.act(() => view.unmount()); }
-  });
-});
-
 describe('presentation rules', () => {
   test('no dashed borders or card shadows remain in the profile style components', () => {
-    for (const file of ['ProfileStyleJourney', 'ProfileStyleGrid', 'ProfileOnlyYou', 'ProfileStyleVisuals']) {
+    for (const file of ['ProfileStyleJourney', 'ProfileStyleGrid', 'ProfileStyleVisuals']) {
       const source = readFileSync(join(__dirname, '..', 'components', `${file}.tsx`), 'utf8');
       expect(source).not.toMatch(/dashed/);
       expect(source).not.toMatch(/\.\.\.shadows\./);
@@ -251,5 +234,22 @@ describe('presentation rules', () => {
       expect(hosts(view, 'price-pill')).toHaveLength(2);
       expect(texts(view)).toContain('Orta');
     } finally { await renderer.act(() => view.unmount()); }
+  });
+});
+
+describe('Profile screen order', () => {
+  const source = readFileSync(join(__dirname, '..', 'app', '(tabs)', 'profile.tsx'), 'utf8');
+  test('identity -> membership -> style journey -> stilin -> menu; no "Sadece sen belirlersin" section', () => {
+    const order = ['styles.profileCard', '<PremiumMembership', '<ProfileStyleJourney', '<ProfileStyleGrid', 'styles.menuCard'].map(marker => source.indexOf(marker));
+    expect(order.every(index => index >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(source.match(/<PremiumMembership/g)).toHaveLength(1);
+    expect(source).not.toContain('ProfileOnlyYou');
+    expect(source).not.toContain('Sadece sen belirlersin');
+  });
+  test('style and size stay reachable from the account sheet via the existing flows', () => {
+    expect(source).toContain("'Stil tarzı'");
+    expect(source).toContain("'Beden bilgilerim'");
+    expect(source).toMatch(/openPreferenceSection\(section\)/);
   });
 });
