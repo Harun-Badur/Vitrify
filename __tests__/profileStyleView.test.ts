@@ -263,28 +263,29 @@ describe('journey card', () => {
     expect(card({ profile: studio({ topSize: 'M' }) }).rows[2].state).toBe('missing');
     expect(card({ profile: prefs }).rows[2].state).toBe('complete');
   });
-  test('liked row copy and hint', () => {
+  test('liked row copy: hint only, never tappable', () => {
     expect(card({ likedProducts: likes(2), passedProductIds: passes(3) }).rows[0]).toMatchObject({
-      title: 'Beğenilerin', subtitle: '5/10 değerlendirme', action: { label: 'Biraz daha beğen', kind: 'hint', target: 'discover' } });
-    expect(card(liked10).rows[0]).toMatchObject({ subtitle: '10 değerlendirme · kullanılıyor', action: null });
+      title: 'Beğenilerin', subtitle: '5/10 değerlendirme', hint: 'Biraz daha beğen', target: null });
+    expect(card(liked10).rows[0]).toMatchObject({ subtitle: '10 değerlendirme · kullanılıyor', hint: null, target: null });
   });
-  test('wardrobe row: Ekle button when missing, parça count when complete, Yükleniyor while loading', () => {
-    expect(card().rows[1]).toMatchObject({ title: 'Dolabın', subtitle: 'Dolabına uyan ürünleri işaretleriz',
-      action: { label: 'Ekle', kind: 'button', target: 'wardrobe' } });
-    expect(card({ wardrobeItems: wardrobe(4) }).rows[1]).toMatchObject({ subtitle: '4 parça', action: null });
+  test('wardrobe row is tappable (also when complete); loading is not', () => {
+    expect(card().rows[1]).toMatchObject({ title: 'Dolabın', subtitle: 'Dolabına uyan ürünleri işaretleriz', target: 'wardrobe' });
+    expect(card({ wardrobeItems: wardrobe(4) }).rows[1]).toMatchObject({ subtitle: '4 parça', target: 'wardrobe' });
     const loading = card({ wardrobeStatus: 'loading', wardrobeItems: wardrobe(3) }).rows[1];
-    expect(loading).toMatchObject({ state: 'loading', subtitle: 'Yükleniyor', action: null });
+    expect(loading).toMatchObject({ state: 'loading', subtitle: 'Yükleniyor', target: null });
     expect(JSON.stringify(loading)).not.toContain('0/3');
     expect(card({ wardrobeStatus: 'loading', ...liked10 }).completed).toBe(1);
   });
-  test('preferences row: Belirt link when missing, nothing when 5/5', () => {
+  test('preferences row is tappable in every state', () => {
     expect(card({ profile: studio({ topSize: 'M', styleTags: ['minimal'] }) }).rows[2]).toMatchObject({
-      title: 'Tercihlerin 2/5', subtitle: 'Öneriler senin seçimine göre çalışır',
-      action: { label: 'Belirt', kind: 'link', target: 'preferences' } });
-    expect(card({ profile: prefs }).rows[2]).toMatchObject({ title: 'Tercihlerin 5/5', action: null });
+      title: 'Tercihlerin 2/5', subtitle: 'Öneriler senin seçimine göre çalışır', target: 'preferences' });
+    expect(card({ profile: prefs }).rows[2]).toMatchObject({ title: 'Tercihlerin 5/5', target: 'preferences' });
+  });
+  test('no Ekle / Belirt wording in the card model', () => {
+    expect(JSON.stringify(card())).not.toMatch(/Ekle|Belirt/);
   });
   test('ratings not ready: liked row is loading', () => {
-    expect(card({ sessionSyncStatus: 'loading' }).rows[0]).toMatchObject({ state: 'loading', subtitle: 'Yükleniyor', action: null });
+    expect(card({ sessionSyncStatus: 'loading' }).rows[0]).toMatchObject({ state: 'loading', subtitle: 'Yükleniyor', target: null });
   });
   test('no percent, points, badge or level wording anywhere in the card', () => {
     const text = JSON.stringify([card(), card(liked10), card({ ...liked10, wardrobeItems: wardrobe(3), profile: prefs })]);

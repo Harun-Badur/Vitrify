@@ -45,8 +45,10 @@ export interface JourneyRow {
   title: string;
   subtitle: string;
   state: JourneyBox['state'];
-  /** hint: muted text, button: filled "Ekle", link: red text "Belirt". Null when nothing is left to do. */
-  action: { label: string; kind: 'hint' | 'button' | 'link'; target: JourneyTarget } | null;
+  /** Muted text for a row that cannot be tapped (Beğenilerin). */
+  hint: string | null;
+  /** Flow the whole row opens; null = row is not tappable (Beğenilerin, or the wardrobe while it loads). */
+  target: JourneyTarget | null;
 }
 export interface JourneyCard {
   completed: number;
@@ -73,18 +75,18 @@ export function buildJourneyCard(journey: StyleJourney): JourneyCard {
       id: 'liked', title: 'Beğenilerin', state: liked.state,
       subtitle: liked.state === 'loading' ? LOADING_TEXT : done(liked) ? `${counts.evaluations} değerlendirme · kullanılıyor`
         : `${counts.evaluations}/${goals.evaluations} değerlendirme`,
-      action: liked.state === 'missing' ? { label: 'Biraz daha beğen', kind: 'hint', target: liked.target } : null,
+      hint: liked.state === 'missing' ? 'Biraz daha beğen' : null, target: null,
     },
     {
       id: 'wardrobe', title: 'Dolabın', state: wardrobe.state,
       subtitle: wardrobe.state === 'loading' ? LOADING_TEXT : done(wardrobe) ? `${counts.wardrobe} parça`
         : 'Dolabına uyan ürünleri işaretleriz',
-      action: wardrobe.state === 'missing' ? { label: 'Ekle', kind: 'button', target: wardrobe.target } : null,
+      hint: null, target: wardrobe.state === 'loading' ? null : wardrobe.target,
     },
     {
       id: 'preferences', title: `Tercihlerin ${counts.preferences}/${PREFERENCE_TOTAL}`, state: preferences.state,
       subtitle: 'Öneriler senin seçimine göre çalışır',
-      action: preferences.state === 'missing' ? { label: 'Belirt', kind: 'link', target: preferences.target } : null,
+      hint: null, target: preferences.target,
     },
   ];
   return {

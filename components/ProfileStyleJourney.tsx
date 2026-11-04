@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
-import { Check } from 'lucide-react-native';
+import { Check, ChevronRight } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import { colors, radius, spacing } from '../lib/theme';
 import type { JourneyTarget, StyleJourney } from '../lib/profileStyleJourney';
@@ -12,14 +12,13 @@ const RADIUS = (RING - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const CENTER = RING / 2;
 const MARK = 28;
-const ADD_HEIGHT = 40;
-const HIT = 44;
 // Core saturation grows with completed steps: 0-1 steps, 2 steps, 3 steps. Static drawing, no animation.
 const CORE_TONES: ReadonlyArray<{ center: string; edge: string; glow: number }> = [
   { center: '#FF6A5E', edge: '#FBE9E6', glow: 0.14 },
   { center: '#FF4F42', edge: '#F7C9C3', glow: 0.2 },
   { center: '#FE382B', edge: '#FE6A5E', glow: 0.25 },
 ];
+const STATE_TEXT = { complete: 'tamamlandı', missing: 'eksik', loading: 'yükleniyor' } as const;
 const SPARKLE = 'M0 -9 C1 -3 3 -1 9 0 C3 1 1 3 0 9 C-1 3 -3 1 -9 0 C-3 -1 -1 -3 0 -9 Z';
 
 function FocusRing({ completed, label }: { completed: number; label: string }) {
@@ -64,7 +63,7 @@ function RowMark({ row }: { row: JourneyRow }) {
   if (row.state === 'complete') {
     return <View style={[styles.mark, styles.markDone]}><Check size={16} color={colors.inverseText} strokeWidth={3} /></View>;
   }
-  return <View style={[styles.mark, row.action?.kind === 'button' ? styles.markRed : styles.markQuiet]} />;
+  return <View style={[styles.mark, row.state === 'missing' && row.id === 'wardrobe' ? styles.markRed : styles.markQuiet]} />;
 }
 
 export default function ProfileStyleJourney({ journey, onTask }: {
@@ -90,26 +89,33 @@ export default function ProfileStyleJourney({ journey, onTask }: {
         ))}
       </View>
       <View>
-        {card.rows.map((row, index) => (
-          <View key={row.id} testID={`journey-row-${row.id}-${row.state}`} style={[styles.row, index > 0 && styles.rowDivider]}>
-            <RowMark row={row} />
-            <View style={styles.rowCopy}>
-              <Text style={styles.rowTitle}>{row.title}</Text>
-              <Text style={styles.rowSub} numberOfLines={2}>{row.subtitle}</Text>
+        {card.rows.map((row, index) => {
+          const content = (
+            <>
+              <RowMark row={row} />
+              <View style={styles.rowCopy}>
+                <Text style={styles.rowTitle}>{row.title}</Text>
+                <Text style={styles.rowSub} numberOfLines={2}>{row.subtitle}</Text>
+              </View>
+              {row.hint ? <Text style={styles.hint}>{row.hint}</Text> : null}
+              {row.target ? <View testID={`journey-chevron-${row.id}`}><ChevronRight size={15} color={colors.line} /></View> : null}
+            </>
+          );
+          const rowStyle = [styles.row, index > 0 && styles.rowDivider];
+          const testID = `journey-row-${row.id}-${row.state}`;
+          const target = row.target;
+          return target ? (
+            <PressableScale key={row.id} testID={testID} onPress={() => onTask(target)} accessibilityRole="button"
+              accessibilityLabel={row.id === 'preferences' ? row.title : `${row.title}, ${STATE_TEXT[row.state]}`} style={rowStyle}>
+              {content}
+            </PressableScale>
+          ) : (
+            <View key={row.id} testID={testID} style={rowStyle}
+              accessibilityLabel={row.id === 'liked' ? undefined : `${row.title}, ${STATE_TEXT[row.state]}`}>
+              {content}
             </View>
-            {row.action?.kind === 'button' ? (
-              <PressableScale onPress={() => onTask(row.action!.target)} hitSlop={(HIT - ADD_HEIGHT) / 2}
-                accessibilityRole="button" accessibilityLabel={row.action.label} style={styles.add}>
-                <Text style={styles.addText}>{row.action.label}</Text>
-              </PressableScale>
-            ) : row.action?.kind === 'link' ? (
-              <PressableScale onPress={() => onTask(row.action!.target)} accessibilityRole="button"
-                accessibilityLabel={row.action.label} style={styles.link}>
-                <Text style={styles.linkText}>{row.action.label}</Text>
-              </PressableScale>
-            ) : row.action ? <Text style={styles.hint}>{row.action.label}</Text> : null}
-          </View>
-        ))}
+          );
+        })}
       </View>
       {journey.notice ? <Text style={styles.lead}>{journey.notice}</Text> : null}
     </View>
@@ -139,8 +145,4 @@ const styles = StyleSheet.create({
   rowTitle: { color: colors.text, fontSize: 15, lineHeight: 20, fontWeight: '700' },
   rowSub: { color: colors.tabInactive, fontSize: 13, lineHeight: 18 },
   hint: { color: colors.tabInactive, fontSize: 12, lineHeight: 16, fontWeight: '600', maxWidth: 110, textAlign: 'right' },
-  add: { height: ADD_HEIGHT, minWidth: 64, paddingHorizontal: spacing.lg, borderRadius: ADD_HEIGHT / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent },
-  addText: { color: colors.inverseText, fontSize: 14, fontWeight: '700' },
-  link: { minHeight: HIT, minWidth: HIT, alignItems: 'center', justifyContent: 'center' },
-  linkText: { color: colors.accent, fontSize: 14, fontWeight: '700' },
 });

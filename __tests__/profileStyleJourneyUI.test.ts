@@ -74,16 +74,29 @@ describe('Stil Yolculuğun card', () => {
       expect(view.root.findByProps({ accessibilityLabel: `Stil yolculuğu: 3 adımdan ${done} tamam` })).toBeDefined();
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('rows: complete ones show a check, missing ones their action; Ekle opens the wardrobe flow, Belirt the preferences flow', async () => {
+  test('Dolabın and Tercihlerin rows are whole-row buttons that open the old flows; no Ekle/Belirt text', async () => {
     const onTask = jest.fn();
     const view = await render({ passedProductIds: ids(10) }, onTask);
     try {
       expect(hosts(view, 'journey-row-liked-complete').length).toBe(1);
       expect(hosts(view, 'journey-row-wardrobe-missing').length).toBe(1);
       expect(texts(view)).toContain('10 değerlendirme · kullanılıyor');
-      await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Ekle' }).props.onPress as () => void)(); });
-      await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Belirt' }).props.onPress as () => void)(); });
+      expect(texts(view)).not.toMatch(/Ekle|Belirt/);
+      await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Dolabın, eksik' }).props.onPress as () => void)(); });
+      await renderer.act(() => { (view.root.findByProps({ accessibilityLabel: 'Tercihlerin 0/5' }).props.onPress as () => void)(); });
       expect(onTask.mock.calls).toEqual([['wardrobe'], ['preferences']]);
+    } finally { await renderer.act(() => view.unmount()); }
+  });
+  test('Beğenilerin is not tappable and has no chevron; the other two rows have one chevron each', async () => {
+    const view = await render({ passedProductIds: ids(10), wardrobeItems, profile });
+    try {
+      const liked = view.root.findAll(node => typeof node.type === 'string' && node.props.testID === 'journey-row-liked-complete')[0];
+      expect(liked.props.onPress).toBeUndefined();
+      expect(liked.props.accessibilityRole).toBeUndefined();
+      expect(hosts(view, 'journey-chevron-liked')).toHaveLength(0);
+      expect(hosts(view, 'journey-chevron-wardrobe')).toHaveLength(1);
+      expect(hosts(view, 'journey-chevron-preferences')).toHaveLength(1);
+      expect(view.root.findByProps({ accessibilityLabel: 'Dolabın, tamamlandı' })).toBeDefined();
     } finally { await renderer.act(() => view.unmount()); }
   });
   test('liked below the threshold reads N/10 with the hint', async () => {
@@ -93,25 +106,23 @@ describe('Stil Yolculuğun card', () => {
       expect(texts(view)).toContain('Biraz daha beğen');
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('wardrobe still loading reads "Yükleniyor", never 0/3, and offers no Ekle', async () => {
+  test('wardrobe still loading reads "Yükleniyor", never 0/3, with no chevron and no tap', async () => {
     const view = await render({ wardrobeStatus: 'loading', passedProductIds: ids(10) });
     try {
       expect(texts(view)).toContain('Yükleniyor');
       expect(texts(view)).not.toContain('0/3');
-      expect(view.root.findAllByProps({ accessibilityLabel: 'Ekle' })).toHaveLength(0);
+      expect(hosts(view, 'journey-chevron-wardrobe')).toHaveLength(0);
+      expect(view.root.findAllByProps({ accessibilityLabel: 'Dolabın, yükleniyor' }).filter(node => node.props.onPress)).toHaveLength(0);
     } finally { await renderer.act(() => view.unmount()); }
   });
-  test('Ekle is 40dp tall with a hit area of at least 44dp; Belirt has a 44dp hit area', async () => {
+  test('tappable rows are at least 60dp tall', async () => {
     const view = await render();
     try {
-      const add = view.root.findByProps({ accessibilityLabel: 'Ekle' });
-      const style = ([] as Record<string, number>[]).concat(add.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
-      const slop = (add.props.hitSlop as number | undefined) ?? 0;
-      expect(style.height ?? style.minHeight).toBe(40);
-      expect(40 + 2 * slop).toBeGreaterThanOrEqual(44);
-      const link = view.root.findByProps({ accessibilityLabel: 'Belirt' });
-      const linkStyle = ([] as Record<string, number>[]).concat(link.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
-      expect(linkStyle.minHeight).toBeGreaterThanOrEqual(44);
+      for (const label of ['Dolabın, eksik', 'Tercihlerin 0/5']) {
+        const row = view.root.findByProps({ accessibilityLabel: label });
+        const style = ([] as Record<string, number>[]).concat(row.props.style as never).flat(2).reduce((all, part) => ({ ...all, ...part }), {});
+        expect(style.minHeight).toBeGreaterThanOrEqual(60);
+      }
     } finally { await renderer.act(() => view.unmount()); }
   });
   test('no percent, points, badge or level wording', async () => {
