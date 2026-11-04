@@ -1,7 +1,7 @@
 import { MOCK_PRODUCTS } from '../data/mockProducts';
 import { useAppStore } from '../store/useAppStore';
 import { track } from '../lib/analytics';
-import { deleteLikedProduct, insertLikedProduct, insertPassedProduct } from '../services/likeService';
+import { deleteLikedProduct, deletePassedProduct, insertLikedProduct, insertPassedProduct } from '../services/likeService';
 import { likedIdSet } from '../lib/likedIds';
 import { decideLikeTap } from '../lib/likeTap';
 import type { LikedProduct } from '../types/product';
@@ -11,7 +11,7 @@ import { join } from 'path';
 jest.mock('../services/productService', () => ({ fetchFeedProducts: jest.fn() }));
 jest.mock('../services/likeService', () => ({
   fetchLikedProducts: jest.fn(), fetchPassedProductIds: jest.fn(), insertLikedProduct: jest.fn(),
-  insertPassedProduct: jest.fn(), deleteLikedProduct: jest.fn(), updateLikedProductAlert: jest.fn(),
+  insertPassedProduct: jest.fn(), deleteLikedProduct: jest.fn(), deletePassedProduct: jest.fn(), updateLikedProductAlert: jest.fn(),
 }));
 jest.mock('../lib/analytics', () => ({ track: jest.fn() }));
 jest.mock('../lib/sessionIntent', () => ({ recordSessionProductAction: jest.fn(), resetSessionIntent: jest.fn() }));
@@ -28,6 +28,7 @@ beforeEach(() => {
   jest.mocked(insertLikedProduct).mockResolvedValue(undefined);
   jest.mocked(insertPassedProduct).mockResolvedValue(undefined);
   jest.mocked(deleteLikedProduct).mockResolvedValue(undefined);
+  jest.mocked(deletePassedProduct).mockResolvedValue(undefined);
   useAppStore.setState({
     currentProducts: [first, second], likedProducts: [], passedProductIds: [], passedStack: [],
     sessionUserId: 'user-1', sessionSyncStatus: 'success',
@@ -88,7 +89,7 @@ describe('swiping a liked card away', () => {
     expect(deleteLikedProduct).not.toHaveBeenCalled();
     expect(state.likedProducts.map(item => item.product.id)).toEqual([first.id]);
     expect(state.passedProductIds).toEqual([]);
-    expect(state.passedStack).toEqual([]);
+    expect(state.passedStack.map(item => [item.id, item.stackKind])).toEqual([[first.id, 'liked']]);
     expect(state.currentProducts.map(item => item.id)).toEqual([second.id]);
   });
   test('an unliked card still records its pass exactly as before', async () => {
@@ -96,6 +97,76 @@ describe('swiping a liked card away', () => {
     await flush();
     expect(insertPassedProduct).toHaveBeenCalledTimes(1);
     expect(useAppStore.getState().passedProductIds).toEqual([first.id]);
+  });
+});
+
+describe('returning to a card with the down swipe (undoPass)', () => {
+  const productWithId = (id: string) => ({ ...first, id });
+  test('a liked entry comes back as a pure view change: no network, no event, like untouched', async () => {
+    useAppStore.setState({ likedProducts: [likedEntry()] });
+    useAppStore.getState().swipeLeft(first);
+    const likedBefore = useAppStore.getState().likedProducts;
+    jest.clearAllMocks();
+
+    const result = useAppStore.getState().undoPass();
+    expect(result).toBe(true); // synchronous, nothing awaited
+    const state = useAppStore.getState();
+    expect(deleteLikedProduct).not.toHaveBeenCalled();
+    expect(jest.mocked(deletePassedProduct)).not.toHaveBeenCalled();
+    expect(insertLikedProduct).not.toHaveBeenCalled();
+    expect(insertPassedProduct).not.toHaveBeenCalled();
+    expect(track).not.toHaveBeenCalled();
+    expect(state.likedProducts).toBe(likedBefore);
+    expect(state.currentProducts.map(item => item.id)).toEqual([first.id, second.id]);
+    expect(state.passedStack).toEqual([]);
+    expect(state.passedProductIds).toEqual([]);
+    expect(likedIdSet(state.likedProducts).has(first.id)).toBe(true);
+  });
+  test('a passed entry keeps the old behaviour: server undo, then the card returns', async () => {
+    useAppStore.getState().swipeLeft(first);
+    await flush();
+    expect(useAppStore.getState().passedStack.map(item => item.stackKind)).toEqual(['passed']);
+    const result = useAppStore.getState().undoPass();
+    expect(result).toBeInstanceOf(Promise);
+    await expect(result).resolves.toBe(true);
+    expect(deletePassedProduct).toHaveBeenCalledTimes(1);
+    const state = useAppStore.getState();
+    expect(state.passedProductIds).toEqual([]);
+    expect(state.currentProducts.map(item => item.id)).toEqual([first.id, second.id]);
+  });
+  test('a passed entry whose server undo fails stays on the stack (retry possible)', async () => {
+    useAppStore.getState().swipeLeft(first);
+    await flush();
+    jest.mocked(deletePassedProduct).mockRejectedValueOnce(new Error('offline'));
+    await expect(useAppStore.getState().undoPass()).rejects.toThrow();
+    expect(useAppStore.getState().passedStack.map(item => item.id)).toEqual([first.id]);
+    expect(useAppStore.getState().currentProducts.map(item => item.id)).toEqual([second.id]);
+  });
+  test('a passed entry for a product that is liked meanwhile still does not duplicate it in the deck', async () => {
+    useAppStore.getState().swipeLeft(first);
+    await flush();
+    useAppStore.setState({ likedProducts: [likedEntry()] });
+    await useAppStore.getState().undoPass();
+    expect(useAppStore.getState().currentProducts.map(item => item.id)).toEqual([second.id]);
+  });
+  test('the stack holds at most 20 entries: the 21st push drops the oldest', async () => {
+    const products = Array.from({ length: 21 }, (_, i) => productWithId(`p${i}`));
+    useAppStore.setState({ currentProducts: products });
+    for (const product of products) useAppStore.getState().swipeLeft(product);
+    const ids = useAppStore.getState().passedStack.map(item => item.id);
+    expect(ids).toHaveLength(20);
+    expect(ids[0]).toBe('p1');
+    expect(ids[19]).toBe('p20');
+  });
+  test('the cap also applies to liked entries, and the same id is never added twice', async () => {
+    const products = Array.from({ length: 22 }, (_, i) => productWithId(`l${i}`));
+    useAppStore.setState({ currentProducts: products, likedProducts: products.map(item => likedEntry(item)) });
+    for (const product of products) useAppStore.getState().swipeLeft(product);
+    expect(useAppStore.getState().passedStack).toHaveLength(20);
+    expect(insertPassedProduct).not.toHaveBeenCalled();
+    useAppStore.setState({ currentProducts: [products[21]] });
+    useAppStore.getState().swipeLeft(products[21]);
+    expect(useAppStore.getState().passedStack.filter(item => item.id === 'l21')).toHaveLength(1);
   });
 });
 
