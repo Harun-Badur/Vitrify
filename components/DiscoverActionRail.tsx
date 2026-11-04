@@ -22,19 +22,29 @@ const RAIL_ITEM_COUNT = 4;
 const RAIL_GAP = 6;
 const RAIL_MIN_GAP = 4;
 const LABEL_MAX_FONT_SCALE = 1.15;
+/** Label is wider than the 44dp column so "Mağaza" stays on one line; it is centred and may overflow evenly. */
+const LABEL_BOX_WIDTH = 60;
+const LABEL_LINE_HEIGHT = 16;
+const ITEM_ICON_LABEL_GAP = 2;
 
-/** Sığmazsa öğeler gizlenmez, aralıklar RAIL_MIN_GAP'e kadar sıkışır. */
+/** Sığmazsa öğeler gizlenmez, aralıklar RAIL_MIN_GAP'e kadar sıkışır (daireler küçülmez). */
 export function computeRailGap(count: number, maxHeight?: number): number {
   if (maxHeight === undefined || count < 2) return RAIL_GAP;
-  const fitting = (maxHeight - count * HIT_SIZE) / (count - 1);
+  // One item (Dene) is taller than the touch minimum because of its larger circle.
+  const occupied = (count - 1) * HIT_SIZE + TRY_ITEM_HEIGHT;
+  const fitting = (maxHeight - occupied) / (count - 1);
   return Math.min(RAIL_GAP, Math.max(RAIL_MIN_GAP, fitting));
 }
 
-const TRY_SIZE = 28;
-const TRY_ICON_SIZE = 13;
-const ICON_SIZE = 19;
-const HEART_SIZE = 19;
-const HIT_SIZE = 44;
+// ~20% larger than before: circle 28->34, glyphs 13->16 and 19->23, touch minimum 44->48.
+const TRY_SIZE = 34;
+const TRY_ICON_SIZE = 16;
+const ICON_SIZE = 23;
+const HEART_SIZE = 23;
+const HIT_SIZE = 48;
+/** 44dp column + 2dp hitSlop each side = 48dp wide touch target; the column (and header axis) stays 44. */
+const HIT_SLOP = { left: 2, right: 2 } as const;
+const TRY_ITEM_HEIGHT = TRY_SIZE + ITEM_ICON_LABEL_GAP + LABEL_LINE_HEIGHT;
 
 interface DiscoverActionRailProps {
   onTry: () => void;
@@ -76,26 +86,29 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
       <PressableScale
         onPress={onTry}
         style={styles.item}
+        hitSlop={HIT_SLOP}
         accessibilityRole="button"
         accessibilityLabel="Dene"
       >
         <View style={styles.tryCircle}>
           <ShadowedIcon name="sparkles" size={TRY_ICON_SIZE} />
         </View>
-        <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Dene</Text>
+        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Dene</Text>
       </PressableScale>
       <PressableScale
         onPress={onStore}
         style={styles.item}
+        hitSlop={HIT_SLOP}
         accessibilityRole="button"
         accessibilityLabel="Mağazaya git"
       >
         <ShadowedIcon name="shopping-bag" size={ICON_SIZE} />
-        <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Mağaza</Text>
+        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Mağaza</Text>
       </PressableScale>
       <PressableScale
         onPress={onLike}
         style={styles.item}
+        hitSlop={HIT_SLOP}
         accessibilityRole="button"
         accessibilityLabel="Beğen"
         accessibilityState={{ selected: liked }}
@@ -103,7 +116,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
         <Animated.View style={heartStyle}>
           <ShadowedIcon name={liked ? 'heart-liked' : 'heart'} size={HEART_SIZE} />
         </Animated.View>
-        <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Beğen</Text>
+        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Beğen</Text>
       </PressableScale>
       <Animated.View
         style={whyStyle}
@@ -114,6 +127,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
         <PressableScale
           onPress={onWhy}
           disabled={!whyVisible}
+          hitSlop={HIT_SLOP}
           style={styles.item}
           accessibilityRole="button"
           accessibilityLabel="Neden bu öneri?"
@@ -124,7 +138,7 @@ function DiscoverActionRail({ onTry, onStore, onLike, liked, onWhy, whyVisible, 
               <Text style={styles.badgeText} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>{INSIGHT_CHIP_COPY.aiBadge}</Text>
             </View>
           </View>
-          <Text style={styles.label} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Uyumlu</Text>
+          <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}>Uyumlu</Text>
         </PressableScale>
       </Animated.View>
     </View>
@@ -143,7 +157,7 @@ const styles = StyleSheet.create({
     minHeight: HIT_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: ITEM_ICON_LABEL_GAP,
   },
   tryCircle: {
     width: TRY_SIZE,
@@ -155,8 +169,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -10,
+    top: -5,
+    right: -12,
     backgroundColor: colors.inverseText,
     borderRadius: 8,
     paddingHorizontal: 3,
@@ -164,12 +178,15 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: colors.accent,
-    fontSize: 7.5,
+    fontSize: 9,
     fontWeight: '800',
   },
   label: {
     color: colors.inverseText,
-    fontSize: 10.5,
+    width: LABEL_BOX_WIDTH,
+    textAlign: 'center',
+    fontSize: 12.5,
+    lineHeight: LABEL_LINE_HEIGHT,
     fontWeight: '700',
     textShadowColor: 'rgba(0, 0, 0, 0.65)',
     textShadowOffset: { width: 0, height: 1 },

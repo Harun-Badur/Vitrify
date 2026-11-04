@@ -136,15 +136,46 @@ describe('touch absorption and shadowed icons', () => {
     expect(light).not.toEqual(dark);
   });
 
-  it('shrunk rail keeps every item at least 44dp to touch', () => {
+  it('every item has a touch target of at least 48dp including hitSlop, and the larger glyphs', () => {
     const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
+    expect(buttons(tree)).toHaveLength(4);
     for (const button of buttons(tree)) {
       const style = Object.assign({}, ...[button.props.style].flat());
-      expect(style.width).toBeGreaterThanOrEqual(44);
-      expect(style.minHeight).toBeGreaterThanOrEqual(44);
+      const slop = button.props.hitSlop ?? {};
+      expect(style.width + (slop.left ?? 0) + (slop.right ?? 0)).toBeGreaterThanOrEqual(48);
+      expect(style.minHeight + (slop.top ?? 0) + (slop.bottom ?? 0)).toBeGreaterThanOrEqual(48);
     }
     const sizes = tree.root.findAllByType(ShadowedIcon).map(n => n.props.size);
-    expect(sizes).toEqual([13, 19, 19, 19]);
+    expect(sizes).toEqual([16, 23, 23, 23]);
+  });
+
+  it('item hit areas never overlap, even at the tightest gap', () => {
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, maxHeight: 100 }));
+    const host = tree.root.findAllByType('View')[0];
+    expect(Object.assign({}, ...[host.props.style].flat()).gap).toBeGreaterThanOrEqual(4);
+    for (const button of buttons(tree)) expect(button.props.hitSlop.top ?? 0).toBe(0);
+  });
+
+  it('labels keep the readable shadow and are 12.5sp on a single line', () => {
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false }));
+    const labels = tree.root.findAllByType('Text').filter(text => ['Dene', 'Mağaza', 'Beğen', 'Uyumlu'].includes(text.props.children as string));
+    expect(labels).toHaveLength(4);
+    for (const label of labels) {
+      const style = Object.assign({}, ...[label.props.style].flat());
+      expect(style).toMatchObject({ fontSize: 12.5, textShadowColor: 'rgba(0, 0, 0, 0.65)', textShadowRadius: 3 });
+      expect(label.props.numberOfLines).toBe(1);
+    }
+  });
+
+  it('the four handlers still fire from their buttons', () => {
+    const calls = handlers();
+    const tree = mount(createElement(DiscoverActionRail, { ...calls, liked: false }));
+    const [dene, magaza, begen, uyumlu] = buttons(tree);
+    dene.props.onPress(); magaza.props.onPress(); begen.props.onPress(); uyumlu.props.onPress();
+    expect(calls.onTry).toHaveBeenCalledTimes(1);
+    expect(calls.onStore).toHaveBeenCalledTimes(1);
+    expect(calls.onLike).toHaveBeenCalledTimes(1);
+    expect(calls.onWhy).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -152,14 +183,14 @@ describe('device-robust alignment', () => {
   it('rail gap shrinks to 4dp minimum instead of hiding items', () => {
     expect(computeRailGap(4)).toBe(6);
     expect(computeRailGap(4, 400)).toBe(6);
-    expect(computeRailGap(4, 188)).toBe(4);
+    expect(computeRailGap(4, 208)).toBe(4);
     expect(computeRailGap(4, 100)).toBe(4);
-    expect(computeRailGap(4, 190)).toBeCloseTo(4.67, 1);
-    expect(computeRailGap(4, 192)).toBeCloseTo(5.33, 1);
+    expect(computeRailGap(4, 210)).toBeCloseTo(4.67, 1);
+    expect(computeRailGap(4, 212)).toBeCloseTo(5.33, 1);
   });
 
   it('rail keeps all items under a tight maxHeight and applies the computed gap', () => {
-    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, maxHeight: 188 }));
+    const tree = mount(createElement(DiscoverActionRail, { ...handlers(), liked: false, maxHeight: 208 }));
     expect(buttons(tree)).toHaveLength(4);
     const host = tree.root.findAllByType('View')[0];
     expect(Object.assign({}, ...[host.props.style].flat())).toMatchObject({ width: RAIL_COLUMN_WIDTH, gap: 4 });
@@ -268,7 +299,7 @@ describe('SwipeCard presentation wiring (source contract)', () => {
     const seg = read('components/FeedModeSegment.tsx');
     expect(seg).toMatch(/overlayLabel: \{[^}]*fontSize: 14[^}]*fontWeight: '700'[^}]*textShadowColor: 'rgba\(0, 0, 0, 0\.6\)'/);
     expect(seg).toMatch(/overlayLabelInactive: \{ color: 'rgba\(255, 255, 255, 0\.85\)' \}/);
-    expect(read('components/DiscoverActionRail.tsx')).toMatch(/ICON_SIZE = 19/);
+    expect(read('components/DiscoverActionRail.tsx')).toMatch(/ICON_SIZE = 23/);
   });
 
   it('the header only adds readable shadows, no new layers', () => {
