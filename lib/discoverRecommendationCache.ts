@@ -132,15 +132,17 @@ export class DiscoverRecommendationCache {
       (entry.exposure.size === this.exposure.size && [...entry.exposure].every(([id, count]) => this.exposure.get(id) === count))));
   }
   lookup(product: Product): readonly OutfitDiscoverRecommendation[] | undefined { return this.find(product)?.result; }
-  activate(product: Product): void {
+  /** Returns true when the product was newly shown, i.e. exposure (and so other cards' lookups) changed. */
+  activate(product: Product): boolean {
     const entry = this.find(product);
-    if (!entry) return; // A miss is not a displayed valid empty engine result.
+    if (!entry) return false; // A miss is not a displayed valid empty engine result.
     this.pinned.set(product.id, entry);
-    if (this.shown.has(product.id)) return;
+    if (this.shown.has(product.id)) return false;
     this.shown.add(product.id);
     for (const recommended of complementaryProductsForDisplay(entry.result, product.id)) {
       this.exposure.set(recommended.id, (this.exposure.get(recommended.id) ?? 0) + 1);
     }
     this.preparationListeners.forEach(listener => listener());
+    return true;
   }
 }
