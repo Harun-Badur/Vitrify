@@ -12,7 +12,7 @@ jest.mock('react-native', () => {
   const flatten = (style: unknown): Record<string, unknown> => Array.isArray(style)
     ? Object.assign({}, ...style.map(flatten)) : typeof style === 'object' && style !== null ? style as Record<string, unknown> : {};
   return {
-    ActivityIndicator: 'ActivityIndicator', Modal: 'Modal', Text: 'Text', View: 'View',
+    ActivityIndicator: 'ActivityIndicator', Modal: 'Modal', Pressable: 'Pressable', Text: 'Text', View: 'View',
     Platform: { OS: 'android', select: (options: Record<string, unknown>) => options.android ?? options.default },
     Dimensions: { get: () => ({ width: 390, height: 844 }) },
     useWindowDimensions: () => ({ width: 390, height: 844 }),

@@ -93,6 +93,29 @@ describe('a page whose products are all filtered out by the client', () => {
     expect(state.hasMore).toBe(false);
     expect(state.feedStatus).toBe('success');
   });
+  test('a page holding only detour-opened cards counts as empty: at most 3 more requests, then the feed ends', async () => {
+    fetchMock.mockResolvedValueOnce(page([a]));
+    await useAppStore.getState().loadFeed(null);
+    expect(useAppStore.getState().openDetour(a, b)).toBe(true);
+    fetchMock.mockResolvedValue(page([b])); // the server keeps returning the card already opened as a detour
+    await runScreenEffect(25);
+    expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(4); // loadFeed + at most 3 empty pages
+    expect(useAppStore.getState().hasMore).toBe(false);
+    expect(useAppStore.getState().currentProducts.filter(item => item.id === b.id)).toHaveLength(1);
+  });
+  test('a reload whose page is emptied by the detour filter retries once, then ends', async () => {
+    fetchMock.mockResolvedValueOnce(page([a]));
+    await useAppStore.getState().loadFeed(null);
+    expect(useAppStore.getState().openDetour(a, b)).toBe(true);
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValue(page([b]));
+    await useAppStore.getState().loadFeed(null);
+    expect(useAppStore.getState().currentProducts).toEqual([]);
+    expect(useAppStore.getState().hasMore).toBe(true);
+    await runScreenEffect(25);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(useAppStore.getState().hasMore).toBe(false);
+  });
   test('a network error is not exhaustion: hasMore stays, status is error, the counter is untouched', async () => {
     fetchMock.mockResolvedValueOnce(page([a]));
     await useAppStore.getState().loadFeed(null);

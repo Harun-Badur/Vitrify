@@ -32,8 +32,10 @@ import { DISCOVER_EDGE_MARGIN, RAIL_COLUMN_WIDTH } from '../../components/Discov
 import {
   runOnUI,
   useSharedValue,
+  withSpring,
   type SharedValue,
 } from 'react-native-reanimated';
+import { CARD_THROW_SPRING } from '../../lib/motion';
 import FeedModeSegment from '../../components/FeedModeSegment';
 import SwipeCard, {
   SWIPE_CARD_HEIGHT,
@@ -684,6 +686,14 @@ export default function FeedScreen() {
     [noteSwipe, swipeLeft],
   );
 
+  /** The next top-card change is a complement detour: the new card slides in from below. */
+  const detourEnterRef = useRef(false);
+  const openDetour = useAppStore((state) => state.openDetour);
+  const handleOpenComplement = useCallback((source: Product, opened: Product): void => {
+    detourEnterRef.current = true;
+    if (!openDetour(source, opened)) detourEnterRef.current = false;
+  }, [openDetour]);
+
   const [tryOnProduct, setTryOnProduct] = useOwnedState<Product | null>(userId, null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [hintStatus, setHintStatus] = useState<HintStatus>('checking');
@@ -695,6 +705,8 @@ export default function FeedScreen() {
 
   const handleImpression = useCallback(
     (product: Product, dwellMs: number): void => {
+      // A detour card was not ranked into the feed: no impression feeds the ranking.
+      if (useAppStore.getState().detourIds.includes(product.id)) return;
       const position = currentProductsRef.current.findIndex(
         (item) => item.id === product.id,
       );
@@ -897,9 +909,14 @@ export default function FeedScreen() {
 
     const H = pageHeight.value > 0 ? pageHeight.value : estimatedH;
     let nextDrag = dragOffset.value;
+    let enterFromBelow = false;
     if (!isFirst && topProductId !== null && prev !== topProductId) {
       const d = dragOffset.value;
-      if (d < -H / 2) {
+      enterFromBelow = detourEnterRef.current;
+      detourEnterRef.current = false;
+      if (enterFromBelow) {
+        nextDrag = H;
+      } else if (d < -H / 2) {
         nextDrag = d + H;
       } else if (d > H / 2) {
         nextDrag = d - H;
@@ -925,6 +942,7 @@ export default function FeedScreen() {
       // Assigning even the same value cancels an in-flight Reanimated spring.
       // Pagination can append mid-throw without changing the active product.
       if (reconcileDrag) dragOffset.value = nextDrag;
+      if (enterFromBelow) dragOffset.value = withSpring(0, CARD_THROW_SPRING);
     })();
   }, [
     topProductId,
@@ -1059,6 +1077,7 @@ export default function FeedScreen() {
                   recommendationStatus={recommendationStatus}
                   selectedRecommendationProductIds={selectedRecommendationProductIds}
                   onSelectRecommendation={canLike ? handleSwipeRight : handleRequireAuth}
+                  onOpenComplement={handleOpenComplement}
                   insightChip={insightChip && !hiddenInsightKinds.has(insightChip.kind) ? insightChip : null}
                   onOpenInsightWardrobe={handleOpenLiked}
                   onHideInsightKind={handleHideInsightKind}

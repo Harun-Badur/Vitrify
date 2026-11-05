@@ -106,7 +106,7 @@ export const createFavoritesSlice: StateCreator<AppState, [], [], FavoritesSlice
         passedProductIds: state.passedProductIds.filter(
           (id) => id !== product.id,
         ),
-        passedStack: state.passedStack.filter((item) => item.product.id !== product.id),
+        passedStack: state.passedStack.filter((item) => item.kind === 'detour' || item.product.id !== product.id),
       }));
 
       if (!userId) {

@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import DiscoverProductImage from './DiscoverProductImage';
 import { Check, Heart } from 'lucide-react-native';
 import PressableScale from './PressableScale';
@@ -20,6 +20,8 @@ interface DiscoverRecommendationsProps {
   recommendations?: readonly DiscoverRecommendation[];
   selectedProductIds?: readonly string[];
   onSelectProduct?: (product: Product) => void;
+  /** Tap on the card body (not the heart/check button): opens the product as a temporary next card. */
+  onOpenProduct?: (product: Product) => void;
 }
 
 // UI container measurements from the approved reference, independent of bitmap fitting.
@@ -37,6 +39,7 @@ function DiscoverRecommendations({
   recommendations = [],
   selectedProductIds = [],
   onSelectProduct,
+  onOpenProduct,
 }: DiscoverRecommendationsProps) {
   const { width, height } = useWindowDimensions();
   const columnWidth = (width - spacing.lg * 2 - spacing.sm * 2) / 3;
@@ -80,9 +83,13 @@ function DiscoverRecommendations({
             const imageUrl = getProductImages(product)[0];
             return (
               <View key={product.id} style={styles.column}>
-                <View
+                <Pressable
                   style={styles.card}
                   testID={`discover-recommendation-card-${product.id}`}
+                  disabled={!onOpenProduct}
+                  onPress={onOpenProduct ? () => onOpenProduct(product) : undefined}
+                  accessibilityRole={onOpenProduct ? 'button' : undefined}
+                  accessibilityLabel={onOpenProduct ? `${product.title} aç` : undefined}
                 >
                   <View
                     style={[styles.imageWrap, { height: imageHeight }]}
@@ -149,7 +156,7 @@ function DiscoverRecommendations({
                       {product.subcategory ?? product.title}
                     </Text>
                   </View>
-                </View>
+                </Pressable>
               </View>
             );
           })}

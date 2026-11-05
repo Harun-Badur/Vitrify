@@ -68,7 +68,8 @@ const isEventType = (value: unknown): value is AnalyticsEventType =>
   value === 'filter' ||
   value === 'back' ||
   value === 'share' ||
-  value === 'feed_fallback';
+  value === 'feed_fallback' ||
+  value === 'complement_open';
 
 const isPayloadValue = (
   value: unknown,
@@ -202,7 +203,7 @@ const sendBatch = async (batch: AnalyticsQueueItem[]): Promise<boolean> => {
     logger.debug('Analytics ingest başarısız', { detail: error.message });
     return false;
   }
-  if (batch.some(item => item.event_type !== 'impression' && item.event_type !== 'search' && item.event_type !== 'filter')) invalidateStyleProfileSnapshot(owner);
+  if (batch.some(item => item.event_type !== 'impression' && item.event_type !== 'complement_open' && item.event_type !== 'search' && item.event_type !== 'filter')) invalidateStyleProfileSnapshot(owner);
   return true;
 };
 
