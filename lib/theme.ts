@@ -29,6 +29,15 @@ export const colors = {
   journeyPink: '#FFE1E1',
   journeyBadge: '#FFDAB5',
   accentSoft: 'rgba(254, 56, 43, 0.1)',
+  /** Profil sekmesi: eksik kutu çerçevesi, "+" rozeti ve birincil buton/metin kırmızısı. */
+  profileRed: '#D42A1D',
+  /** Profil sekmesi: mürekkep tonu, kart çerçevesi ve krem zemin. */
+  ink: '#1B1918',
+  line: '#EBE3D8',
+  cream: '#F3ECE2',
+  /** Profil sekmesi: ikincil değer metni ve açık renk swatch çerçevesi. */
+  valueMuted: '#6E665E',
+  swatchBorder: '#DDD4C8',
   /** Yalnızca minimal kullanım: silme metin butonları. */
   destructive: '#DC2626',
   /** Kaydırma damgaları: traffic-light. */
@@ -57,7 +66,14 @@ export const radius = {
   card: 24,
   button: 16,
   chip: 999,
+  /** Profil sekmesi kutuları ve kartları. */
+  box: 20,
+  /** Profil sekmesi Stil Yolculuğun kartı. */
+  hero: 28,
 } as const;
+
+/** Profil sekmesinde bölümler arası boşluk. */
+export const PROFILE_SECTION_GAP = 28;
 
 export const spacing = {
   xs: 4,
@@ -195,3 +211,10 @@ export const shadows = {
 /** Discover park/clip: deste gölgesinin yayılımı. */
 export const CARD_SHADOW_SPREAD_PX =
   shadows.stackSoft.shadowOffset.height + shadows.stackSoft.shadowRadius;
+
+/** Profil alt menüsü satır etiketi ("Denemelerim", "Hesap Bilgilerim"); Stilin satır etiketleri de bunu kullanır. */
+export const PROFILE_MENU_LABEL = {
+  color: colors.text,
+  fontSize: 16,
+  fontWeight: '500',
+} as const;
