@@ -47,6 +47,8 @@ import TouchClaim from './TouchClaim';
 import DiscoverActionRail, { DISCOVER_EDGE_MARGIN } from './DiscoverActionRail';
 import InsightWhySheet from './InsightWhySheet';
 import type { InsightChip as InsightChipModel } from '../lib/insightChip';
+import { decideLikeTap } from '../lib/likeTap';
+import { useIsLiked } from '../hooks/useIsLiked';
 import type { DiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 import { logger } from '../lib/logger';
 import { stripBrandPrefix } from '../lib/productTitle';
@@ -122,7 +124,10 @@ export interface SwipeCardProps {
   pageHeight: SharedValue<number>;
   /** Ortak sürükleme ofseti; commit sonrası parent 0'a baslar. */
   dragOffset: SharedValue<number>;
+  /** Favourite from the card; the card stays on screen. */
   onAddToCloset: (product: Product, source?: LikeInputSource) => void;
+  /** Heart pressed on an already liked card; the card stays on screen. */
+  onUnlike?: (product: Product) => Promise<void> | void;
   /** Pass throw settle sonrası tek store reconcile. */
   onPass: (product: Product) => void;
   onVirtualTryOn: (product: Product) => void;
@@ -184,6 +189,7 @@ function SwipeCard({
   pageHeight,
   dragOffset,
   onAddToCloset,
+  onUnlike,
   onPass,
   onVirtualTryOn,
   onBuy,
@@ -295,7 +301,11 @@ function SwipeCard({
     [product.title, product.brand],
   );
   const [isInsightOpen, setIsInsightOpen] = useState(false);
-  const [isLikedLocal, setIsLikedLocal] = useState(false);
+  // Narrow subscription: this card re-renders only when its own liked flag flips.
+  const liked = useIsLiked(product.id);
+  const likedRef = useRef(liked);
+  likedRef.current = liked;
+  const unlikePendingRef = useRef(false);
   /** Görselin alt kenarı (kart koordinatı); ray bu kenara göre konumlanır. */
   const [imageBottom, setImageBottom] = useState(0);
   /** Tek/çift dokunuş yalnız fotoğraf alanında geçerli; alt bilgi dokunuşları yutulur. */
@@ -304,7 +314,6 @@ function SwipeCard({
   const zoomFocalX = useSharedValue(0);
   const zoomFocalY = useSharedValue(0);
   const pinchActive = useSharedValue(false);
-  const likeSourceRef = useRef<LikeInputSource>('double_tap');
 
   const hasExited = useSharedValue(false);
   const exitAnimationId = useSharedValue(0);
@@ -452,16 +461,35 @@ function SwipeCard({
     handleBuy();
   }, [handleBuy]);
 
-  const finishDoubleTapLike = useCallback((): void => {
-    const source = likeSourceRef.current;
-    likeSourceRef.current = 'double_tap';
-    if (!canLike) {
+  const playHeart = useCallback((): void => {
+    runOnUI(() => {
+      'worklet';
+      heartBurst.value = withSequence(
+        withTiming(1, { duration: HEART_BURST_IN_MS }),
+        withTiming(0, { duration: HEART_BURST_OUT_MS }),
+      );
+    })();
+  }, [heartBurst]);
+
+  /** Double tap and heart button share this path. The card never leaves the screen. */
+  const handleLikeInput = useCallback((source: LikeInputSource): void => {
+    const decision = decideLikeTap({ canLike, liked: likedRef.current, source });
+    if (decision === 'require_auth') {
       handleRequireAuth();
       return;
     }
-    handleAddToCloset(source);
-  }, [canLike, handleAddToCloset, handleRequireAuth]);
-
+    if (decision === 'unlike') {
+      if (unlikePendingRef.current) return;
+      unlikePendingRef.current = true;
+      void Promise.resolve()
+        .then(() => onUnlike?.(product))
+        .catch((error: unknown) => logger.error('Beğeni geri alınamadı', { error, productId: product.id }))
+        .finally(() => { unlikePendingRef.current = false; });
+      return;
+    }
+    playHeart();
+    if (decision === 'like') handleAddToCloset(source);
+  }, [canLike, handleAddToCloset, handleRequireAuth, onUnlike, playHeart, product]);
 
   const snapHome = (): void => {
     'worklet';
@@ -549,41 +577,10 @@ function SwipeCard({
       snapHome();
     });
 
-  const playHeartThenLike = (): void => {
-    'worklet';
-    if (hasExited.value) {
-      return;
-    }
-    exitAnimationId.value += 1;
-    hasExited.value = true;
-    heartBurst.value = withSequence(
-      withTiming(1, { duration: HEART_BURST_IN_MS }),
-      withTiming(0, { duration: HEART_BURST_OUT_MS }, (finished) => {
-        if (finished) {
-          runOnJS(finishDoubleTapLike)();
-        }
-      }),
-    );
-  };
-
   const openInsight = useCallback((): void => setIsInsightOpen(true), []);
 
-  const playHeartRef = useRef(playHeartThenLike);
-  playHeartRef.current = playHeartThenLike;
-
-  /** Beğen butonu: çift dokunuşla aynı kalp animasyonu ve beğeni akışı. */
-  const handleLikeButton = useCallback((): void => {
-    if (!canLike) {
-      handleRequireAuth();
-      return;
-    }
-    likeSourceRef.current = 'button';
-    setIsLikedLocal(true);
-    runOnUI(() => {
-      'worklet';
-      playHeartRef.current();
-    })();
-  }, [canLike, handleRequireAuth]);
+  /** Beğen butonu: çift dokunuşla aynı akış; beğenilmişse beğeniyi geri alır. */
+  const handleLikeButton = useCallback((): void => handleLikeInput('button'), [handleLikeInput]);
 
   const doubleTapGesture = Gesture.Tap()
     .enabled(isCurrent)
@@ -595,11 +592,7 @@ function SwipeCard({
       if (hasExited.value || event.y > imageBottomSV.value) {
         return;
       }
-      if (!canLike) {
-        runOnJS(handleRequireAuth)();
-        return;
-      }
-      playHeartThenLike();
+      runOnJS(handleLikeInput)('double_tap');
     });
 
   /**
@@ -1028,7 +1021,7 @@ function SwipeCard({
             onTry={handleVirtualTryOn}
             onStore={handleStorePress}
             onLike={handleLikeButton}
-            liked={isLikedLocal}
+            liked={liked}
             onWhy={openInsight}
             whyVisible={insightChip !== null && insightChip !== undefined}
             maxHeight={imageBottom - RAIL_BOTTOM_PADDING - railTopInset}

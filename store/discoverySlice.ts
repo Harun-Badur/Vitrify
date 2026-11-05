@@ -24,7 +24,7 @@ export interface DiscoverySlice {
   invalidateDiscoveryWork: () => void;
   currentProducts: Product[];
   passedProductIds: string[];
-  passedStack: Product[];
+  passedStack: PassedStackEntry[];
   feedStatus: FeedStatus;
   feedWarning: 'LOCAL_RANK_FAILED' | 'FEED_TIMEOUT' | null;
   feedSource: FeedSource | null;
@@ -68,6 +68,14 @@ const withFeedDeadline = <T>(work: Promise<T>): Promise<T> =>
     );
   });
 
+/**
+ * One return stack for the down swipe. `liked` entries are cards that left the deck while liked:
+ * returning to them is a view change only (no pass was ever written).
+ * The product object is stored as is: the complements cache finds cards by object identity.
+ */
+export interface PassedStackEntry { product: Product; kind: 'passed' | 'liked' }
+export const PASSED_STACK_LIMIT = 20;
+
 /** Current card plus the next/warm cards the screen has already prepared. */
 const PRESERVED_HEAD = 3;
 /** Consecutive pages that produced no showable product before the feed is treated as finished. */
@@ -76,22 +84,24 @@ const MAX_EMPTY_PAGES = 3;
 const appendUniqueId = (ids: string[], productId: string): string[] =>
   ids.includes(productId) ? ids : [...ids, productId];
 
-const pushPassedProduct = (stack: Product[], product: Product): Product[] => {
-  const without = stack.filter((item) => item.id !== product.id);
-  return [...without, product];
+const pushPassedProduct = (
+  stack: PassedStackEntry[], product: Product, stackKind: 'passed' | 'liked' = 'passed',
+): PassedStackEntry[] => {
+  const without = stack.filter((item) => item.product.id !== product.id);
+  return [...without, { product, kind: stackKind }].slice(-PASSED_STACK_LIMIT);
 };
 
 const popPassedProduct = (
-  stack: Product[],
-): { stack: Product[]; product: Product | null } => {
+  stack: PassedStackEntry[],
+): { stack: PassedStackEntry[]; entry: PassedStackEntry | null } => {
   if (stack.length === 0) {
-    return { stack, product: null };
+    return { stack, entry: null };
   }
-  const product = stack[stack.length - 1];
-  if (product === undefined) {
-    return { stack: [], product: null };
+  const entry = stack[stack.length - 1];
+  if (entry === undefined) {
+    return { stack: [], entry: null };
   }
-  return { stack: stack.slice(0, -1), product };
+  return { stack: stack.slice(0, -1), entry };
 };
 
 export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice> =
@@ -307,7 +317,14 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       const userId = get().sessionUserId;
       const current = captureOwnerPublication(userId);
       if (!current()) return;
-      if (get().likedProducts.some(item => item.product.id === product.id)) return;
+      if (get().likedProducts.some(item => item.product.id === product.id)) {
+        // A liked card is not a pass: no event, no write, the like stays. It only leaves the deck.
+        set((state) => ({
+          currentProducts: removeProduct(state.currentProducts, product.id),
+          passedStack: pushPassedProduct(state.passedStack, product, 'liked'),
+        }));
+        return;
+      }
       const version = (passVersions.get(product.id) ?? 0) + 1;
       passVersions.set(product.id, version);
       const capturedGeneration = mutationGeneration;
@@ -340,7 +357,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           passedProductIds: state.passedProductIds.filter(
             (id) => id !== product.id,
           ),
-          passedStack: state.passedStack.filter((item) => item.id !== product.id),
+          passedStack: state.passedStack.filter((item) => item.product.id !== product.id),
         }));
       });
       passWrites.set(product.id, settled);
@@ -350,15 +367,24 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       const current = captureOwnerPublication(userId);
       if (!current()) return false;
       if (userId && pendingUndo?.owner === userId) return pendingUndo.promise;
-      const { product } = popPassedProduct(get().passedStack);
-      if (product === null) {
+      const { entry } = popPassedProduct(get().passedStack);
+      if (entry === null) {
         return false;
+      }
+      const { product } = entry;
+      if (entry.kind === 'liked') {
+        // View only: the like stays, no pass was written, so nothing is undone on the server.
+        set((state) => ({
+          currentProducts: restoreProduct(state.currentProducts, product),
+          passedStack: state.passedStack.filter(item => item.product.id !== product.id),
+        }));
+        return true;
       }
 
       const restore = () => set((state) => ({
         currentProducts: state.likedProducts.some(item => item.product.id === product.id) ? state.currentProducts : restoreProduct(state.currentProducts, product),
         passedProductIds: state.passedProductIds.filter((id) => id !== product.id),
-        passedStack: state.passedStack.filter(item => item.id !== product.id),
+        passedStack: state.passedStack.filter(item => item.product.id !== product.id),
       }));
       if (!userId) { restore(); return true; }
       const capturedGeneration = mutationGeneration;
