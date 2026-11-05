@@ -1,3 +1,4 @@
+import { useFocusGatedSelection } from '../../hooks/useFocusGatedSelection';
 import { useOwnedState } from '../../hooks/useOwnedState';
 import { captureOwnerPublication, trackOwnerWork } from '../../lib/accountDeviceWork';
 import {
@@ -23,7 +24,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useIsFocused, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as StoreReview from 'expo-store-review';
 import {
@@ -60,7 +61,7 @@ import { checkLowResolutionPersonPhoto } from '../../lib/personPhotoPrepare';
 import { PRIVACY_URL, SUPPORT_EMAIL } from '../../lib/privacy';
 import { PROFILE_MENU_LABEL, PROFILE_SECTION_GAP, colors, radius, spacing } from '../../lib/theme';
 import { initials } from '../../lib/profileDisplay';
-import { buildStyleJourney, type JourneyTarget } from '../../lib/profileStyleJourney';
+import { buildStyleJourney, type JourneyTarget, type StyleJourney } from '../../lib/profileStyleJourney';
 import { fetchCalculatedStyleProfile, subscribeStyleProfileChanges } from '../../lib/recsConfig';
 import { refreshStartState, type CalculatedRefreshReason } from '../../lib/calculatedProfileRefresh';
 import type { CalculatedStyleProfileState } from '../../types/calculatedStyleProfile';
@@ -155,16 +156,21 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { width, fontScale } = useWindowDimensions();
   const compactProfile = width < 380 || fontScale > 1.3;
-  const wardrobeCount = useAppStore((state) => state.wardrobeItems.length);
-  const favoriteCount = useAppStore((state) => state.likedProducts.length);
-  const outfitCount = useAppStore((state) => state.savedOutfits.length);
+  const focused = useIsFocused();
+  // Every Discover swipe replaces these arrays; a hidden Profile must not follow them.
+  const { wardrobeCount, favoriteCount, outfitCount, likedProducts, passedProductIds, wardrobeItems, savedOutfits } =
+    useFocusGatedSelection(focused, (state) => ({
+      wardrobeCount: state.wardrobeItems.length,
+      favoriteCount: state.likedProducts.length,
+      outfitCount: state.savedOutfits.length,
+      likedProducts: state.likedProducts,
+      passedProductIds: state.passedProductIds,
+      wardrobeItems: state.wardrobeItems,
+      savedOutfits: state.savedOutfits,
+    }));
   const sessionUserId = useAppStore((state) => state.sessionUserId);
   const sessionSyncStatus = useAppStore((state) => state.sessionSyncStatus);
   const wardrobeStatus = useAppStore((state) => state.wardrobeStatus);
-  const likedProducts = useAppStore((state) => state.likedProducts);
-  const passedProductIds = useAppStore((state) => state.passedProductIds);
-  const wardrobeItems = useAppStore((state) => state.wardrobeItems);
-  const savedOutfits = useAppStore((state) => state.savedOutfits);
   const [account, setAccount] = useOwnedState<AccountDetails | null>(userId, null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [accountLoading, setAccountLoading] = useState(false);
@@ -229,9 +235,11 @@ export default function ProfileScreen() {
   }, [userId, sessionUserId, sessionSyncStatus, studio]));
   const handleRetryCalculated = useCallback(() => { refreshRef.current?.('retry'); }, []);
   useEffect(() => cancelScheduledFeedRefreshOnOwnerChange(sessionUserId), [sessionUserId]);
-  const journey = useMemo(() => buildStyleJourney({ userId, sessionUserId, sessionSyncStatus,
-    wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, profile: studio, calculatedProfile }),
-  [userId, sessionUserId, sessionSyncStatus, wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, studio, calculatedProfile]);
+  const journeyRef = useRef<StyleJourney | null>(null);
+  const journey = useMemo(() => focused || !journeyRef.current ? buildStyleJourney({ userId, sessionUserId, sessionSyncStatus,
+    wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, profile: studio, calculatedProfile }) : journeyRef.current,
+  [focused, userId, sessionUserId, sessionSyncStatus, wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, studio, calculatedProfile]);
+  journeyRef.current = journey;
   const openPreferenceSection = (section: StyleSheetSection): void => {
     setStyleSheetSection(section);
     setSizeOpen(true);
