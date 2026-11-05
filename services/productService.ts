@@ -57,6 +57,8 @@ export class FeedServiceError extends Error {
 
 export interface FetchFeedProductsResult {
   hasMore?: boolean;
+  /** Server products the client gate dropped (not feed-eligible / inactive); the caller excludes them next time. */
+  rejectedIds?: string[];
   products: Product[];
   source: FeedSource;
   isPersonalized: boolean;
@@ -577,14 +579,18 @@ const fetchFeedProductsUntraced = async (
         n: edge.items.length,
         fallback: edge.fallback === true,
       });
+      const rejectedIds: string[] = [];
       const edgeProducts = edge.items.map((item) => item.product).filter(product => {
         if (excluded.has(product.id)) return false;
         excluded.add(product.id);
-        return isFeedEligibleProduct(product) && isActiveCatalogRecord(product);
+        const accepted = isFeedEligibleProduct(product) && isActiveCatalogRecord(product);
+        if (!accepted) rejectedIds.push(product.id);
+        return accepted;
       });
       return {
         hasMore: edge.has_more ?? true,
         products: edgeProducts,
+        ...(rejectedIds.length > 0 ? { rejectedIds } : {}),
         source: 'edge',
         isPersonalized: true,
         recommendationId: edge.recommendation_id,
