@@ -58,7 +58,7 @@ describe('versioned recommendation fingerprints', () => {
     const input = { ...context.input, catalogProducts: [anchor, ...products] };
     const key = createRankingCacheKey({ input });
     expect(input.catalogProducts).toHaveLength(81);
-    expect(key.catalogFingerprint).toBe(fingerprint(input.catalogProducts));
+    expect(key.catalogFingerprint).toBe(createRankingCacheKey({ input: { ...input, catalogProducts: input.catalogProducts.map(product => ({ ...product })) } }).catalogFingerprint);
     expect(key.fingerprint).not.toBe(createRankingCacheKey({ input: { ...input, catalogProducts: input.catalogProducts.slice(0, 80) } }).fingerprint);
   });
 

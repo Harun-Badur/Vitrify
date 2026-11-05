@@ -1,6 +1,5 @@
-import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { type RecommendationCacheKey } from '../../src/recommendationCache/fingerprint';
+import { cacheKeyHash, type RecommendationCacheKey } from '../../src/recommendationCache/fingerprint';
 import { anchorContext, decodeSnapshot, type FeedPacketRequest, type RecommendationFeedPacket } from '../../src/recommendationCache/feedPacket';
 import { complementaryProductsForDisplay } from '../../src/intelligence/recommendations/complementaryProductsForDisplay';
 import { serializeFinal } from '../../src/recommendationCache/codec';
@@ -15,7 +14,7 @@ export class SupabaseRecommendationRecordStore implements RecommendationRecordSt
     private readonly claim?: RecommendationJobClaim) {
     this.scope = ownerId ?? 'public';
   }
-  private hash(key: RecommendationCacheKey): string { return createHash('sha256').update(key.fingerprint).digest('hex'); }
+  private hash(key: RecommendationCacheKey): string { return cacheKeyHash(key); }
   async read(key: RecommendationCacheKey): Promise<string | undefined> {
     const { data, error } = await this.client.from('discover_recommendation_cache').select('payload')
       .eq('scope', this.scope).eq('kind', key.kind).eq('cache_key_hash', this.hash(key))

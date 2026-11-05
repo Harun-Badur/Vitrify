@@ -7,9 +7,14 @@ Discover through separate consumers without changing feed selection or Style Int
 - Pass the exact engine input to key creation and serialization. The existing
   80-product pool and anchor precedence belong to the caller; nothing is sampled,
   expanded or reordered here.
-- Keys are versioned, collision-free canonical snapshot strings, not shortened
-  hashes. Full product/wardrobe snapshots conservatively invalidate even display
-  metadata changes. Exposure affects final keys only; map insertion order does not.
+- Keys are versioned SHA-256 digests over the full canonical snapshots (catalog =
+  ordered list of per-product digests, memoized per product object). Full
+  product/wardrobe snapshots conservatively invalidate even display metadata
+  changes. Exposure affects final keys only; map insertion order does not.
+  `ProductRepository.register` forgets a product's digest when it refreshes the
+  object in place; wardrobe items are never memoized. `cacheKeyHash` (the
+  Supabase `cache_key_hash` / file name) uses the same SHA-256 function. Records
+  written before hashed keys are a `context-mismatch` miss; re-run import after deploy.
 - Bump `RECOMMENDATION_ENGINE_VERSION` when engine rules or normalization change.
   Supply `catalogVersion` when a catalog revision is available. Rebuild keys whenever
   their input snapshots change; do not mutate snapshots or cached values in place.

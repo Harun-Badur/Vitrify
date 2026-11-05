@@ -7,6 +7,8 @@ import { complementaryProductsForDisplay } from '../src/intelligence/recommendat
 import * as engine from '../src/intelligence/recommendations/getDiscoverRecommendations';
 import { getProductRepository } from '../services/productRepository';
 import type { Product } from '../types/product';
+import { fingerprint } from '../src/recommendationCache/fingerprint';
+import { legacyFinalFingerprint } from './fixtures/legacyRecommendationCacheKey';
 
 jest.mock('../lib/supabase', () => ({ getSupabaseClient: jest.fn() }));
 const top: Product = { id: 'top', title: 'Top', price: 100, brand: 'Brand', category: 'upper_body',
@@ -25,6 +27,13 @@ function backend(rows: unknown[] = [], error: unknown = null) {
     channel: jest.fn() };
   jest.mocked(getSupabaseClient).mockReturnValue(client as never);
   return { query, client };
+}
+/** A record written before keys were hashed: canonical-string envelope key, valid integrity. */
+function legacyPayload(result: Parameters<typeof serializeFinal>[0], context: Parameters<typeof serializeFinal>[1]) {
+  const payload = JSON.parse(serializeFinal(result, context));
+  payload.envelope.key = legacyFinalFingerprint(context);
+  payload.integrity = fingerprint(payload.envelope);
+  return JSON.stringify(payload);
 }
 function session(owner: string | null = 'owner') {
   const canonical = getProductRepository().register(catalog.map(product => ({ ...product })));
@@ -115,6 +124,42 @@ describe('optional Discover cache with local engine fallback', () => {
     await completion;
     expect(query.abortSignal.mock.calls[0][0].aborted).toBe(true);
     expect(complementaryProductsForDisplay(cache.lookup(canonical[0])!, 'top')).toHaveLength(3);
+  });
+
+  it('treats a pre-hash legacy record as a safe miss: one local computation, one packet, no error report', async () => {
+    const { query } = backend();
+    const { cache, canonical, request } = session();
+    const context = anchorContext(canonical, canonical[0], [], new Map());
+    const expected = engine.getDiscoverRecommendations(context.input);
+    query.limit.mockResolvedValue({ data: [{ anchor_product_id: 'top', catalog_version: '', payload: legacyPayload(expected, context) }], error: null });
+    const local = jest.spyOn(engine, 'getDiscoverRecommendationsAsync'), onCacheError = jest.fn();
+    const packets: RecommendationFeedPacket[] = [];
+    await loadDiscoverRecommendationPacket(request, 'owner', new AbortController().signal, receive(cache, [canonical[0]], packets), undefined, onCacheError);
+    expect(local).toHaveBeenCalledTimes(1);
+    expect(packets).toHaveLength(1);
+    expect(onCacheError).not.toHaveBeenCalled();
+    expect(cache.lookup(canonical[0])).toStrictEqual(expected);
+  });
+
+  it('prepared window: a legacy record falls back once and does not loop', async () => {
+    const { query } = backend();
+    const { cache, canonical } = session(null);
+    cache.setPreparationWindow([canonical[0]]);
+    const request = cache.request([canonical[0]], 1);
+    const context = anchorContext(canonical, canonical[0], [], new Map());
+    const expected = engine.getDiscoverRecommendations(context.input);
+    query.limit.mockResolvedValue({ data: [{ anchor_product_id: 'top', catalog_version: '', payload: legacyPayload(expected, context) }], error: null });
+    const prepare = jest.spyOn(engine, 'prepareDiscoverRankingAsync'), onCacheError = jest.fn();
+    const controller = new AbortController(), packets: RecommendationFeedPacket[] = [];
+    const done = loadDiscoverRecommendationPacket(request, null, controller.signal, receive(cache, [canonical[0]], packets), cache, onCacheError);
+    const deadline = Date.now() + 5000;
+    while (packets.length === 0 && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 5));
+    await new Promise(resolve => setTimeout(resolve, 50));
+    controller.abort(); await done;
+    expect(packets).toHaveLength(1);
+    expect(prepare).toHaveBeenCalledTimes(1);
+    expect(onCacheError).not.toHaveBeenCalled();
+    expect(cache.peekPrepared(canonical[0])).toStrictEqual(expected);
   });
 
   it('does not publish a local result after cancellation', async () => {

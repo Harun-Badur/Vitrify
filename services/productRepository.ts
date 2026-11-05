@@ -3,6 +3,7 @@ import { logger } from '../lib/logger';
 import { getSupabaseClient } from '../lib/supabase';
 import type { ProductAttributeContext, ProductSemanticAttributeRow } from '../src/intelligence/product/productIntelligence';
 import { enrichProduct } from '../src/intelligence/style/productStyle';
+import { forgetSnapshotDigest } from '../src/recommendationCache/fingerprint';
 import { isAttributeRow, isFeedProductRow, mapFeedRow, withVariantColumns } from './catalogProductAdapter';
 
 export interface ProductRepositoryLoad {
@@ -38,6 +39,7 @@ export class ProductRepository {
           if (!Object.hasOwn(product, key)) delete canonical[key];
         }
         Object.assign(canonical, product);
+        forgetSnapshotDigest(canonical);
       }
       return canonical;
     });
