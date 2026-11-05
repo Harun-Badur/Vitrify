@@ -1,5 +1,5 @@
 import type { FeedFormat } from './parse';
-import type { MerchantImportResult } from './mapRow';
+import type { MerchantImportResult, PossibleDuplicateUrl } from './mapRow';
 
 export interface FrequencyEntry {
   key: string;
@@ -33,6 +33,10 @@ export interface MerchantFeedReport {
     missing: Record<string, number>;
   };
   enrichmentReview: number;
+  warnings: {
+    /** Different external_ids sharing one canonical URL; accepted, not rejected. */
+    possible_duplicate_url: { count: number; samples: PossibleDuplicateUrl[] };
+  };
 }
 
 const frequencies = (counts: Readonly<Record<string, number>>): FrequencyEntry[] =>
@@ -84,6 +88,12 @@ export const buildReport = (
       missing,
     },
     enrichmentReview: stats.enrichmentReview,
+    warnings: {
+      possible_duplicate_url: {
+        count: stats.possibleDuplicateUrls.length,
+        samples: stats.possibleDuplicateUrls.slice(0, 20),
+      },
+    },
   };
 };
 
@@ -125,6 +135,8 @@ export const renderMarkdown = (report: MerchantFeedReport): string => {
       ['isActiveCatalogRecord (provider kontrolü hariç)', eligibility.active],
       ...Object.entries(eligibility.missing).map(([key, count]) => [`eksik: ${key}`, count] as const),
     ]),
+    '',
+    `Uyarı possible_duplicate_url (kabul sayısını etkilemez): ${report.warnings.possible_duplicate_url.count}`,
     '',
     `Başlık kuralının feed değerini değiştirdiği (review) alan sayısı: ${report.enrichmentReview}`,
     '',

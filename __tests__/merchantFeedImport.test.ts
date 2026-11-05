@@ -22,6 +22,7 @@ describe('buildMerchantImport (rss-full fixture)', () => {
       'ornekmarka-J3001',
       'ornekmarka-M6001',
       'ornekmarka-P1201',
+      'ornekmarka-P1202',
       'ornekmarka-S9001',
       'ornekmarka-TS1-beyaz',
       'ornekmarka-TS1-navy-blue',
@@ -32,7 +33,6 @@ describe('buildMerchantImport (rss-full fixture)', () => {
       K4001: 'child',
       N1101: 'missing_image',
       O5001: 'out_of_stock',
-      P1202: 'duplicate_in_input',
       U7001: 'unsupported_category',
       U7002: 'unmapped_category',
       X8001: 'unsupported_currency',
@@ -121,19 +121,46 @@ describe('buildMerchantImport (rss-full fixture)', () => {
     ]);
     expect(product(result, 'ornekmarka-M6001').product.eligibility_missing).toEqual(['renk']);
     expect(product(result, 'ornekmarka-P1201').product.eligibility_missing).toEqual(['renk']);
+    expect(product(result, 'ornekmarka-P1202').product.eligibility_missing).toEqual(['renk']);
     expect(product(result, 'ornekmarka-P1201').product.gender).toBe('kadin');
     expect(product(result, 'ornekmarka-M6001').active).toBe(false);
     expect(product(result, 'ornekmarka-D2001').active).toBe(true);
   });
 
   it('records unmapped colors and categories with frequencies', () => {
-    expect(result.stats.unmappedColors).toEqual({ pudra: 1 });
+    expect(result.stats.unmappedColors).toEqual({ pudra: 2 });
     expect(result.stats.unmappedCategories).toEqual({ havlu: 1, swimwear: 1 });
   });
 
   it('counts variant groups', () => {
     expect(result.stats.variantGroups).toBe(1);
     expect(result.stats.multiColorGroups).toBe(1);
+  });
+});
+
+describe('duplicate rules', () => {
+  const item = (id: string, link: string) => '<item><g:id>' + id + '</g:id><g:title>Siyah Tişört</g:title><link>' + link + '</link>'
+    + '<g:image_link>https://a.example/i.jpg</g:image_link><g:price>10 TRY</g:price><g:product_type>Tişört</g:product_type></item>';
+  const build = (...items: string[]) => buildMerchantImport(parseMerchantFeed(
+    '<rss xmlns:g="http://base.google.com/ns/1.0"><channel>' + items.join('') + '</channel></rss>').items, 'ornekmarka');
+
+  it('accepts different external_ids that share a canonical URL and warns', () => {
+    const result = build(item('A', 'https://a.example/p/x?renk=1&utm_source=m'), item('B', 'https://a.example/p/x?renk=2#top'));
+    expect(result.payloads.map((p) => p.product.product_url)).toEqual([
+      'https://a.example/p/x?renk=1',
+      'https://a.example/p/x?renk=2',
+    ]);
+    expect(result.rejected).toEqual([]);
+    expect(result.stats.possibleDuplicateUrls).toEqual([
+      { id: 'ornekmarka-B', otherId: 'ornekmarka-A', canonicalUrl: 'https://a.example/p/x' },
+    ]);
+  });
+
+  it('rejects only a repeated external_id', () => {
+    const result = build(item('A', 'https://a.example/p/a'), item('A', 'https://a.example/p/b'));
+    expect(result.payloads).toHaveLength(1);
+    expect(result.rejected).toEqual([{ id: 'A', reason: 'duplicate_in_input' }]);
+    expect(result.stats.possibleDuplicateUrls).toEqual([]);
   });
 });
 
@@ -192,15 +219,16 @@ describe('report', () => {
       mode: 'dry-run',
       format: 'rss',
       generatedOn: '2026-11-05',
-      totals: { items: 24, units: 15, accepted: 8, rejected: 7, childItems: 1, outOfStockItems: 2, variantGroups: 1 },
+      totals: { items: 24, units: 15, accepted: 9, rejected: 6, childItems: 1, outOfStockItems: 2, variantGroups: 1 },
       rejectedByReason: {
-        child: 1, missing_image: 1, out_of_stock: 1, duplicate_in_input: 1,
+        child: 1, missing_image: 1, out_of_stock: 1,
         unsupported_category: 1, unmapped_category: 1, unsupported_currency: 1,
       },
-      eligibility: { feedEligible: 6, notFeedEligible: 2, active: 6, missing: { renk: 2 } },
+      eligibility: { feedEligible: 6, notFeedEligible: 3, active: 6, missing: { renk: 3 } },
     });
     expect(report.unmappedCategories).toEqual([{ key: 'havlu', count: 1 }, { key: 'swimwear', count: 1 }]);
-    expect(report.unmappedColors).toEqual([{ key: 'pudra', count: 1 }]);
+    expect(report.unmappedColors).toEqual([{ key: 'pudra', count: 2 }]);
+    expect(report.warnings.possible_duplicate_url.count).toBe(1);
   });
 
   it('renders markdown with the same numbers and a stable file name', () => {
@@ -230,7 +258,7 @@ describe('CLI', () => {
     const report = await runMerchantFeedDryRun({
       file, provider: 'ornekmarka', outDir, now: new Date('2026-11-05T10:00:00Z'),
     });
-    expect(report.totals.accepted).toBe(8);
+    expect(report.totals.accepted).toBe(9);
     const json = JSON.parse(readFileSync(path.join(outDir, 'ornekmarka-2026-11-05.json'), 'utf8'));
     expect(json.totals.items).toBe(24);
     expect(readFileSync(path.join(outDir, 'ornekmarka-2026-11-05.md'), 'utf8')).toContain('ornekmarka');

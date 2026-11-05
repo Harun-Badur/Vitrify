@@ -100,6 +100,15 @@ describe('mapFeedCategory', () => {
     expect(ok(mapFeedCategory({ googleCategory: '212', productTypes: [] }))).toEqual(['upper_body', null, 'top']);
   });
 
+  it('resolves ids through the verified taxonomy table and never guesses unlisted ids', () => {
+    expect(ok(mapFeedCategory({ googleCategory: '204', productTypes: [] }))).toEqual(['lower_body', 'pantolon', 'bottom']);
+    expect(ok(mapFeedCategory({ googleCategory: '187', productTypes: [] }))).toEqual(['shoes', 'ayakkabi', 'shoes']);
+    expect(mapFeedCategory({ googleCategory: '1', productTypes: [] })).toEqual({ ok: false, reason: 'unmapped_category', key: '1' });
+    // An unlisted id does not block the product_type text.
+    expect(ok(mapFeedCategory({ googleCategory: '1', productTypes: ['Kadın > Elbiseler'] })))
+      .toEqual(['dresses', 'elbise', 'one_piece']);
+  });
+
   it('refines a generic google category with a specific product_type', () => {
     expect(ok(mapFeedCategory({
       googleCategory: 'Apparel & Accessories > Clothing > Shirts & Tops',

@@ -70,6 +70,14 @@ export interface MerchantStats {
   unmappedColors: Record<string, number>;
   unmappedCategories: Record<string, number>;
   enrichmentReview: number;
+  /** Different external_ids whose links share one canonical URL. A warning only: both are accepted. */
+  possibleDuplicateUrls: PossibleDuplicateUrl[];
+}
+
+export interface PossibleDuplicateUrl {
+  id: string;
+  otherId: string;
+  canonicalUrl: string;
 }
 
 export interface MerchantImportResult {
@@ -155,7 +163,10 @@ interface ValidItem {
   id: string;
   title: string;
   brand: string | null;
+  /** Stored link: tracking and size parameters removed, colour/variant parameters kept. */
   productUrl: string;
+  /** canonicalizeCatalogUrl form, used for duplicate-URL warnings only. */
+  canonicalUrl: string;
   imageUrl: string;
   extraImages: string[];
   price: number;
@@ -169,6 +180,21 @@ type ItemCheck = { ok: true; value: ValidItem } | { ok: false; reason: MerchantR
 
 const fail = (reason: MerchantRejectReason, key?: string): ItemCheck => ({ ok: false, reason, key });
 
+const TRACKING_PARAM = /^(utm_.*|gclid|gbraid|wbraid|fbclid|msclkid|srsltid|mc_.*|_ga|ref|referrer|source|campaign)$/i;
+const SIZE_PARAM = /^(size|beden|boyut|numara)$/i;
+
+/** Keeps query parameters that tell colour/variant pages apart; drops tracking, size and the fragment. */
+export const storedProductUrl = (raw: string): string => {
+  const url = new URL(raw);
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('invalid_url');
+  for (const name of [...url.searchParams.keys()]) {
+    if (TRACKING_PARAM.test(name) || SIZE_PARAM.test(name)) url.searchParams.delete(name);
+  }
+  url.hash = '';
+  url.pathname = url.pathname.replace(/\/+$/, '');
+  return url.toString();
+};
+
 const checkItem = (item: RawFeedItem): ItemCheck => {
   const id = field(item, 'id');
   if (id.length === 0) return fail('missing_id');
@@ -177,8 +203,10 @@ const checkItem = (item: RawFeedItem): ItemCheck => {
   const link = field(item, 'link');
   if (link.length === 0) return fail('missing_link');
   let productUrl: string;
+  let canonicalUrl: string;
   try {
-    productUrl = canonicalizeCatalogUrl(link);
+    canonicalUrl = canonicalizeCatalogUrl(link);
+    productUrl = storedProductUrl(link);
   } catch {
     return fail('invalid_url');
   }
@@ -205,6 +233,7 @@ const checkItem = (item: RawFeedItem): ItemCheck => {
       title,
       brand: field(item, 'brand') || null,
       productUrl,
+      canonicalUrl,
       imageUrl,
       extraImages: fieldAll(item, 'additional_image_link').filter(httpsUrl),
       price: price.amount,
@@ -235,7 +264,8 @@ const buildUnits = (items: readonly RawFeedItem[]): Unit[] => {
       key = `noid:${index}`;
       externalId = '';
     } else if (groupId.length === 0) {
-      key = `item:${id}`;
+      // Same external_id twice stays two units so the duplicate guard below can reject the later one.
+      key = `item:${id}:${index}`;
       externalId = id;
     } else {
       key = `group:${groupId}\u0000${colorKey}`;
@@ -269,6 +299,7 @@ interface Candidate {
   unit: Unit;
   payload: MerchantPayload;
   colorRaw: string;
+  canonicalUrl: string;
   unmappedColors: string[];
   reviewCount: number;
 }
@@ -295,6 +326,7 @@ export const buildMerchantImport = (
     unmappedColors: {},
     unmappedCategories: {},
     enrichmentReview: 0,
+    possibleDuplicateUrls: [],
   };
 
   const units = buildUnits(items);
@@ -372,6 +404,7 @@ export const buildMerchantImport = (
     candidates.push({
       unit,
       colorRaw: value.colorRaw,
+      canonicalUrl: value.canonicalUrl,
       unmappedColors: colors.unmapped,
       reviewCount: enrichment.review.length,
       payload: {
@@ -418,19 +451,30 @@ export const buildMerchantImport = (
     });
   }
 
-  // Duplicate guard on the final identity: first id wins, later same-id or same-url products are dropped.
-  candidates.sort((left, right) => (left.payload.product.id < right.payload.product.id ? -1 : 1));
+  // Duplicate guard: only the same external_id (hence the same provider-id) is a duplicate.
+  // The same canonical URL under a different id is kept and reported as a warning.
+  const feedOrderIndex = new Map(units.map((unit, index) => [unit, index]));
+  candidates.sort((left, right) => {
+    const l = left.payload.product.id;
+    const r = right.payload.product.id;
+    return l < r ? -1 : l > r ? 1 : feedOrderIndex.get(left.unit)! - feedOrderIndex.get(right.unit)!;
+  });
   const seenIds = new Set<string>();
-  const seenUrls = new Set<string>();
+  const urlOwner = new Map<string, string>();
   const survivors: Candidate[] = [];
   for (const candidate of candidates) {
-    const { id, product_url } = candidate.payload.product;
-    if (seenIds.has(id) || seenUrls.has(product_url)) {
+    const { id } = candidate.payload.product;
+    if (seenIds.has(id)) {
       rejected.push({ id: candidate.unit.externalId, reason: 'duplicate_in_input' });
       continue;
     }
     seenIds.add(id);
-    seenUrls.add(product_url);
+    const owner = urlOwner.get(candidate.canonicalUrl);
+    if (owner !== undefined) {
+      stats.possibleDuplicateUrls.push({ id, otherId: owner, canonicalUrl: candidate.canonicalUrl });
+    } else {
+      urlOwner.set(candidate.canonicalUrl, id);
+    }
     survivors.push(candidate);
   }
 
@@ -440,7 +484,7 @@ export const buildMerchantImport = (
     if (candidate.unit.groupId.length === 0) continue;
     byGroup.set(candidate.unit.groupId, [...(byGroup.get(candidate.unit.groupId) ?? []), candidate]);
   }
-  const feedOrder = new Map(units.map((unit, index) => [unit, index]));
+  const feedOrder = feedOrderIndex;
   for (const members of byGroup.values()) {
     if (members.length < 2) continue;
     const ordered = [...members].sort((left, right) => feedOrder.get(left.unit)! - feedOrder.get(right.unit)!);

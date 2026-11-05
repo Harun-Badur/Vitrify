@@ -1,3 +1,4 @@
+import { GOOGLE_TAXONOMY_IDS } from './googleTaxonomy';
 import type { GarmentCategory, OutfitRole } from '../../../types/product';
 
 export interface CategoryInput {
@@ -75,19 +76,6 @@ const RULES: readonly (Rule | Excluded)[] = [
   { keys: ['aksesuar', 'accessories', 'kemer', 'belt', 'atki', 'scarf', 'sal', 'kolye', 'necklace', 'kupe', 'earring', 'bileklik', 'bracelet', 'yuzuk', 'saat', 'watch', 'eldiven', 'glove', 'cuzdan', 'wallet'], category: 'accessories', subcategory: 'aksesuar', role: 'accessory' },
 ];
 
-/**
- * Google product taxonomy ids this importer trusts. Every other id is rejected as unmapped, so a
- * missing id costs coverage but never mislabels a product. Verify against the official taxonomy file
- * before the staging stage; text paths are unaffected.
- */
-const GOOGLE_ID_PATHS: Readonly<Record<string, string>> = {
-  '212': 'Apparel & Accessories > Clothing > Shirts & Tops',
-  '2271': 'Apparel & Accessories > Clothing > Dresses',
-  '204': 'Apparel & Accessories > Clothing > Pants',
-  '187': 'Apparel & Accessories > Shoes',
-  '6551': 'Apparel & Accessories > Handbags, Wallets & Cases > Handbags',
-};
-
 export const foldText = (value: string): string =>
   value
     .toLocaleLowerCase('tr-TR')
@@ -142,7 +130,7 @@ const isExcluded = (match: Rule | Excluded): match is Excluded => 'excluded' in 
 
 export const mapFeedCategory = (input: CategoryInput): CategoryDecision => {
   const google = input.googleCategory.trim().replace(/^(\d+)\s*-.*$/, '$1');
-  const googlePath = GOOGLE_ID_PATHS[google] ?? (/^\d+$/.test(google) ? '' : google);
+  const googlePath = GOOGLE_TAXONOMY_IDS[google] ?? (/^\d+$/.test(google) ? '' : google);
   const sources = [
     ...input.productTypes.map((path) => decidePath(path)),
     decidePath(googlePath),
