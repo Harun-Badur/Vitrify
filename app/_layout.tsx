@@ -12,6 +12,7 @@ import { PremiumProvider } from '../hooks/usePremium';
 import { useProductPrefGate } from '../hooks/useProductPrefGate';
 import { initAnalytics, track } from '../lib/analytics';
 import { perfEnabled, perfLog, perfMarkTouch, perfSetRoute, perfSinceTouch } from '../lib/perfLog';
+import { startPerfBisectMonitor } from '../lib/perfBisect';
 import { isExpoGo } from '../lib/expoGo';
 import { logger } from '../lib/logger';
 import { STACK_TRANSITION_MS } from '../lib/motion';
@@ -195,6 +196,7 @@ function PerfTouchProbe({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  useEffect(() => startPerfBisectMonitor(), []);
   return (
     <GestureHandlerRootView style={styles.root}>
       <PerfTouchProbe>

@@ -7,6 +7,7 @@ import { logger } from '../lib/logger';
 import { perfGenderLabel, perfLog, perfNow } from '../lib/perfLog';
 import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
+import { perfBisect } from '../lib/perfBisect';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
 import { RECOMMENDATION_ENGINE_VERSION } from '../src/recommendationCache/fingerprint';
 import { recommendationCacheCutoff } from '../src/recommendationCache/retention';
@@ -340,6 +341,8 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
 export async function loadDiscoverRecommendationPacket(request: FeedPacketRequest, ownerId: string | null,
   signal: AbortSignal, onPacket: (packet: RecommendationFeedPacket) => void, session?: DiscoverRecommendationCache,
   onCacheError?: () => void): Promise<void> {
+  // Diagnosis only: no ranking/complement preparation at all (the recommendation strip may stay empty).
+  if (perfBisect('noRanking')) return;
   const current = captureOwnerPublication(ownerId), controller = new AbortController();
   const abort = () => controller.abort(); signal.addEventListener('abort', abort, { once: true });
   if (signal.aborted) abort();

@@ -7,10 +7,13 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { TAB_TRANSITION_MS } from '../../lib/motion';
 import { colors, spacing } from '../../lib/theme';
 import { getTabBarMetrics } from '../../lib/tabBarLayout';
+import { perfBisect } from '../../lib/perfBisect';
 
 const ACTIVE_COLOR = colors.accent;
 const INACTIVE_COLOR = colors.textSecondary;
 const ICON_SIZE = 25;
+// Diagnosis only (noProfile): other tabs get no button, so they are never mounted (tabs are lazy).
+const discoverOnly = perfBisect('noProfile');
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -77,6 +80,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="style"
         options={{
+          ...(discoverOnly ? { href: null } : {}),
           title: 'Favoriler',
           tabBarIcon: ({ color }) => <Heart color={color} size={ICON_SIZE} />,
         }}
@@ -84,6 +88,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="liked"
         options={{
+          ...(discoverOnly ? { href: null } : {}),
           title: 'Dolap',
           tabBarIcon: ({ color }) => <Shirt color={color} size={ICON_SIZE} />,
         }}
@@ -91,6 +96,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
+          ...(discoverOnly ? { href: null } : {}),
           title: 'Profil',
           tabBarIcon: ({ color }) => <User color={color} size={ICON_SIZE} />,
         }}
