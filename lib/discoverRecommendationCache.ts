@@ -77,6 +77,13 @@ export class DiscoverRecommendationCache {
   peekPrepared(product: Product): readonly OutfitDiscoverRecommendation[] | undefined {
     return this.entries.get(product.id)?.slice().reverse().find(entry => entry.product === product)?.result;
   }
+  /** Whether a packet for this exact anchor object and exposure would only duplicate a held entry. */
+  holdsPrepared(product: Product, exposure: ReadonlyMap<string, number>): boolean {
+    if (this.closed) return false;
+    if (this.pinned.get(product.id)?.product === product) return true;
+    return this.entries.get(product.id)?.some(entry => entry.product === product && entry.exposure.size === exposure.size &&
+      [...entry.exposure].every(([id, count]) => exposure.get(id) === count)) ?? false;
+  }
   accept(packet: RecommendationFeedPacket, anchors: readonly Product[]): boolean {
     if (this.closed || !packet || !Array.isArray(packet.entries) || packet.sessionId !== this.sessionId ||
       packet.generation !== this.generation || packet.contextFingerprint !== this.contextFingerprint) return false;

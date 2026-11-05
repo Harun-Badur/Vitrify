@@ -159,12 +159,14 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
   const changed = new Set<() => void>();
   let records: CachedFinal[] = [];
   const publications = new Map<string, number>();
+  // Final keys already handed to onPacket; a reschedule does not re-send an unchanged card.
+  const delivered = new Set<string>();
   const resolutions = new Map<string, Promise<readonly OutfitDiscoverRecommendation[]>>();
   const current = (version: number) => !controller.signal.aborted && !session.disposed && revision === version;
   let handingOff = false;
   const stop = () => {
     if (controller.signal.aborted) return;
-    controller.abort(); rankings.dispose(); if (!handingOff) memory.dispose(); records = []; publications.clear(); resolutions.clear(); preparationCaches.delete(session); changed.forEach(wake => wake()); unsubscribe(); signal.removeEventListener('abort', stop);
+    controller.abort(); rankings.dispose(); if (!handingOff) memory.dispose(); records = []; publications.clear(); delivered.clear(); resolutions.clear(); preparationCaches.delete(session); changed.forEach(wake => wake()); unsubscribe(); signal.removeEventListener('abort', stop);
     if (__DEV__) discoverPrefetchTrace(session).diagnostic('workerStopped', {
       reason: discoverPrefetchTrace(session).closeReason, signalAborted: controller.signal.aborted });
     if (__DEV__) discoverPrefetchTrace(session).close(session.sessionId, discoverPrefetchTrace(session).closeReason);
@@ -283,7 +285,8 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
           }
           finalKey = measureDiscoverStageSync('cache.key', () => createFinalCacheKey(context));
           const publicationKey = finalKey.fingerprint;
-          if (publications.get(publicationKey) !== version) {
+          const unchanged = delivered.has(publicationKey) && session.holdsPrepared(anchor, exposure);
+          if (!unchanged && publications.get(publicationKey) !== version) {
             publications.set(publicationKey, version);
             let resolved = resolutions.get(publicationKey);
             if (!resolved) {
@@ -301,6 +304,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               onPacket({ sessionId: request.sessionId, generation: request.generation,
                 contextFingerprint: request.contextFingerprint, entries: [{ anchorProductId: anchor.id,
                   exposure: packetExposure, catalogVersion: context.catalogVersion, serialized: measureDiscoverStageSync('cache.serialize', () => serializeFinal(value, context)) }] });
+              delivered.add(publicationKey);
               perfLog('rec_packet', { ms: perfNow() - perfPacket });
             }).catch(error => {
               if (!controller.signal.aborted) { publications.delete(publicationKey); rejectCompletion(error); stop(); }
