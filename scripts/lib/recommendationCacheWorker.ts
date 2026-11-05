@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Product } from '../../types/product';
@@ -6,7 +6,7 @@ import type { WardrobeItemForCandidate } from '../../src/intelligence/outfits/ou
 import { prepareDiscoverRankingAsync, completeDiscoverRecommendationsAsync } from '../../src/intelligence/recommendations/getDiscoverRecommendations';
 import type { CooperativeWorkOptions } from '../../src/intelligence/cooperativeWork';
 import type { OutfitDiscoverRecommendation } from '../../src/intelligence/recommendations/discoverRecommendation';
-import { createFinalCacheKey, createRankingCacheKey, type CacheContext, type RecommendationCacheKey } from '../../src/recommendationCache/fingerprint';
+import { cacheKeyHash, createFinalCacheKey, createRankingCacheKey, type CacheContext, type RecommendationCacheKey } from '../../src/recommendationCache/fingerprint';
 import { hydrateFinal, hydrateRanking, serializeFinal, serializeRanking } from '../../src/recommendationCache/codec';
 import { RecommendationMemoryCache } from '../../src/recommendationCache/memoryCache';
 
@@ -15,13 +15,12 @@ export interface RecommendationRecordStore {
   write(key: RecommendationCacheKey, serialized: string): Promise<void>;
 }
 
-/** Local files only. The codec still verifies the full canonical key on reads. */
+/** Local files only. The codec still verifies the key on reads. */
 export class FileRecommendationRecordStore implements RecommendationRecordStore {
   private readonly root: string;
   constructor(directory: string) { this.root = path.resolve(directory); }
   private file(key: RecommendationCacheKey): string {
-    const digest = createHash('sha256').update(key.fingerprint).digest('hex');
-    return path.join(this.root, key.kind, `${digest}.json`);
+    return path.join(this.root, key.kind, `${cacheKeyHash(key)}.json`);
   }
   async read(key: RecommendationCacheKey): Promise<string | undefined> {
     try { return await readFile(this.file(key), 'utf8'); }

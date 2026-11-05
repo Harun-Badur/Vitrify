@@ -75,6 +75,7 @@ import {
 import { fetchRecommendationCatalog, resetProductPrefCatalogCaches } from '../../services/productService';
 import { createDeckRefresher } from '../../lib/deckRefresh';
 import { canResurfacePassed, resurfacePassed } from '../../lib/resurfacePassed';
+import { BoundedRecentSet } from '../../lib/boundedRecentSet';
 import { effectiveProductPref, type ProductPref } from '../../lib/productPreferenceRules';
 import { DiscoverRecommendationCache } from '../../lib/discoverRecommendationCache';
 import { fingerprint } from '../../src/recommendationCache/fingerprint';
@@ -96,6 +97,7 @@ import { getProductImages, type Product } from '../../types/product';
 import type { FeedMode } from '../../types/recommendation';
 
 const TOAST_DURATION_MS = 1600;
+const PREFETCHED_COVER_LIMIT = 512;
 /** Filtre kutusu rail sütunuyla birebir aynı 44dp: merkezler aynı dikey eksende. */
 const FILTER_HIT_SIZE = RAIL_COLUMN_WIDTH;
 const SEARCH_TRACK_DEBOUNCE_MS = 500;
@@ -365,7 +367,8 @@ export default function FeedScreen() {
     recommendationSession.setPreparationWindow(currentProducts);
     if (recommendationFocused.current && currentProduct) recommendationSession.activate(currentProduct);
   }, [recommendationSession, currentProducts, currentProduct, feedStatus, recommendationRevision, feedPreparationRevision]);
-  const prefetchedCovers = useRef(new Set<string>());
+  // Prefetch dedupe only; an evicted URL is at worst prefetched again from the image cache.
+  const prefetchedCovers = useRef(new BoundedRecentSet<string>(PREFETCHED_COVER_LIMIT));
   useFocusEffect(useCallback(() => {
     recommendationFocused.current = true;
     const controller = new AbortController();
