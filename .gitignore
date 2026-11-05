@@ -116,3 +116,6 @@ NUL
 # Variant pilot output and page cache (local only)
 /scripts/data/variants_pilot.json
 /scripts/data/.variants-cache/
+
+# Local-only downloaded feeds (never commit)
+/.local/
