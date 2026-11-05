@@ -5,12 +5,18 @@ import type { WardrobeItemForCandidate } from '../src/intelligence/outfits/outfi
 import type { OutfitDiscoverRecommendation } from '../src/intelligence/recommendations/discoverRecommendation';
 import { complementaryProductsForDisplay } from '../src/intelligence/recommendations/complementaryProductsForDisplay';
 import { hydrateFinal } from '../src/recommendationCache/codec';
-import { fingerprint, RECOMMENDATION_ENGINE_VERSION } from '../src/recommendationCache/fingerprint';
+import { fingerprint, RECOMMENDATION_ENGINE_VERSION, sha256Hex } from '../src/recommendationCache/fingerprint';
 import { anchorContext, type FeedPacketRequest, type RecommendationFeedPacket } from '../src/recommendationCache/feedPacket';
 import { effectiveProductPref, type ProductPref } from './productPreferenceRules';
 
-interface Entry { product: Product; result: readonly OutfitDiscoverRecommendation[]; exposure: ReadonlyMap<string, number> }
+interface Entry { product: Product; result: readonly OutfitDiscoverRecommendation[]; exposure: ReadonlyMap<string, number>;
+  /** Packet identity (catalog version + payload digest) for duplicate detection. */
+  payload?: string }
 let nextSession = 0;
+/** Soft per-anchor cap; only entries whose exposure can never match again are dropped. */
+const MAX_ENTRIES_PER_ANCHOR = 16;
+const sameExposure = (left: ReadonlyMap<string, number>, right: ReadonlyMap<string, number>) =>
+  left.size === right.size && [...left].every(([id, count]) => right.get(id) === count);
 /** Only packet ingestion hydrates/hashes. Gesture-time reads never compute/fetch. */
 export class DiscoverRecommendationCache {
   readonly sessionId = `discover-${++nextSession}`;
@@ -81,8 +87,11 @@ export class DiscoverRecommendationCache {
   holdsPrepared(product: Product, exposure: ReadonlyMap<string, number>): boolean {
     if (this.closed) return false;
     if (this.pinned.get(product.id)?.product === product) return true;
-    return this.entries.get(product.id)?.some(entry => entry.product === product && entry.exposure.size === exposure.size &&
-      [...entry.exposure].every(([id, count]) => exposure.get(id) === count)) ?? false;
+    return this.entries.get(product.id)?.some(entry => entry.product === product && sameExposure(entry.exposure, exposure)) ?? false;
+  }
+  /** Exposure only grows, so an entry missing or below a current count can never match `find` again. */
+  private reachable(exposure: ReadonlyMap<string, number>): boolean {
+    return [...this.exposure].every(([id, count]) => exposure.has(id) && exposure.get(id)! >= count);
   }
   accept(packet: RecommendationFeedPacket, anchors: readonly Product[]): boolean {
     if (this.closed || !packet || !Array.isArray(packet.entries) || packet.sessionId !== this.sessionId ||
@@ -96,11 +105,19 @@ export class DiscoverRecommendationCache {
       const product = products.get(item.anchorProductId);
       if (!product || this.pinned.get(product.id)?.product === product) continue;
       const exposure = new Map(item.exposure);
+      const payload = `${item.catalogVersion ?? ''}:${sha256Hex(item.serialized)}`;
+      let entries = this.entries.get(product.id) ?? [];
+      // An identical packet hydrates to an equal result; the held entry keeps answering lookups.
+      if (entries.some(entry => entry.product === product && entry.payload === payload && sameExposure(entry.exposure, exposure))) {
+        accepted = true;
+        continue;
+      }
       const result = hydrateFinal(item.serialized, anchorContext(this.catalog, product, this.wardrobe, exposure, item.catalogVersion));
       if (result.status !== 'hit') continue;
-      const entry = { product, result: result.value, exposure };
-      const entries = this.entries.get(product.id) ?? [];
-      entries.push(entry); this.entries.set(product.id, entries); accepted = true;
+      const entry = { product, result: result.value, exposure, payload };
+      entries.push(entry);
+      if (entries.length > MAX_ENTRIES_PER_ANCHOR && !this.shown.has(product.id)) entries = entries.filter(held => this.reachable(held.exposure));
+      this.entries.set(product.id, entries); accepted = true;
       if (__DEV__) discoverPrefetchTrace(this).stage(product, 'packetAcceptedAt');
       if (__DEV__) discoverPrefetchTrace(this).published(this, product);
     }
