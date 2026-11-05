@@ -25,6 +25,7 @@ export type MerchantRejectReason =
   | 'invalid_price'
   | 'missing_currency'
   | 'unsupported_currency'
+  | 'ambiguous_parent_category'
   | 'unmapped_category'
   | 'unsupported_category'
   | 'category_conflict'
@@ -222,6 +223,7 @@ const checkItem = (item: RawFeedItem): ItemCheck => {
   const decision = mapFeedCategory({
     googleCategory: field(item, 'google_product_category'),
     productTypes: fieldAll(item, 'product_type'),
+    title,
   });
   if (!decision.ok) return fail(decision.reason, decision.key);
   const sale = parseFeedPrice(field(item, 'sale_price'));

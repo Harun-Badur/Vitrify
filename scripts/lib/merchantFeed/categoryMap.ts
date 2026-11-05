@@ -6,9 +6,11 @@ export interface CategoryInput {
   googleCategory: string;
   /** g:product_type values: ">" separated paths in the merchant's own language. */
   productTypes: readonly string[];
+  /** Item title; only read to settle a parent Google id (bag vs wallet). */
+  title?: string;
 }
 
-export type CategoryRejectReason = 'unmapped_category' | 'unsupported_category' | 'category_conflict';
+export type CategoryRejectReason = 'ambiguous_parent_category' | 'unmapped_category' | 'unsupported_category' | 'category_conflict';
 
 export type CategoryDecision =
   | { ok: true; category: GarmentCategory; subcategory: string | null; outfitRole: OutfitRole }
@@ -128,15 +130,47 @@ const decidePath = (path: string): PathDecision => {
 
 const isExcluded = (match: Rule | Excluded): match is Excluded => 'excluded' in match;
 
+/** Paths with children, derived from the generated table: a path is a parent when another path extends it. */
+const PARENT_PATHS: ReadonlySet<string> = (() => {
+  const paths = Object.values(GOOGLE_TAXONOMY_IDS);
+  return new Set(paths.filter((path) => paths.some((other) => other.startsWith(`${path} > `))));
+})();
+
+const HANDBAG_FAMILY = 'Apparel & Accessories > Handbags, Wallets & Cases';
+const BAG_KEYS = ['canta', 'bag', 'handbag', 'backpack'];
+const WALLET_KEYS = ['cuzdan', 'wallet', 'kartlik', 'card holder'];
+
+const mentions = (texts: readonly string[], keys: readonly string[]): boolean =>
+  texts.some((text) => {
+    const tokens = foldText(text).split(' ').filter((token) => token.length > 0);
+    return keys.some((key) => keyMatches(tokens, key));
+  });
+
+/** A parent id names a whole branch, so it never decides alone: bag-vs-wallet needs the text; other parents need the product_type. */
+const decideParentFamily = (input: CategoryInput, key: string): CategoryDecision => {
+  const texts = [...input.productTypes, input.title ?? ''];
+  const bag = mentions(texts, BAG_KEYS);
+  const wallet = mentions(texts, WALLET_KEYS);
+  if (bag === wallet) return { ok: false, reason: 'ambiguous_parent_category', key };
+  return bag
+    ? { ok: true, category: 'bags', subcategory: 'canta', outfitRole: 'bag' }
+    : { ok: true, category: 'accessories', subcategory: 'aksesuar', outfitRole: 'accessory' };
+};
+
 export const mapFeedCategory = (input: CategoryInput): CategoryDecision => {
   const google = input.googleCategory.trim().replace(/^(\d+)\s*-.*$/, '$1');
-  const googlePath = GOOGLE_TAXONOMY_IDS[google] ?? (/^\d+$/.test(google) ? '' : google);
+  const rawPath = GOOGLE_TAXONOMY_IDS[google] ?? (/^\d+$/.test(google) ? '' : google);
+  const isParent = PARENT_PATHS.has(rawPath);
+  if (isParent && rawPath === HANDBAG_FAMILY) return decideParentFamily(input, google);
+  // Any other parent id is ignored as evidence; the merchant's product_type must carry the decision.
+  const googlePath = isParent ? '' : rawPath;
   const sources = [
     ...input.productTypes.map((path) => decidePath(path)),
     decidePath(googlePath),
   ];
   const matches = sources.filter((source): source is PathDecision & { match: Rule | Excluded } => source.match !== null);
 
+  if (matches.length === 0 && isParent) return { ok: false, reason: 'ambiguous_parent_category', key: google };
   if (matches.length === 0) {
     // Report the leaf of the first non-empty path, or the raw id when only an unknown id was given.
     const firstPath = input.productTypes.find((path) => path.trim().length > 0) ?? googlePath;

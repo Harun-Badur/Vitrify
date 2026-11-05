@@ -109,6 +109,25 @@ describe('mapFeedCategory', () => {
       .toEqual(['dresses', 'elbise', 'one_piece']);
   });
 
+  it('never lets a parent id decide alone', () => {
+    const parent = (productTypes: string[], title: string, googleCategory = '6551') =>
+      mapFeedCategory({ googleCategory, productTypes, title });
+    expect(ok(parent([], 'Siyah Sırt Çantası'))).toEqual(['bags', 'canta', 'bag']);
+    expect(ok(parent(['Aksesuar > Omuz Çantası'], 'Siyah Model'))).toEqual(['bags', 'canta', 'bag']);
+    expect(ok(parent([], 'Deri Cüzdan'))).toEqual(['accessories', 'aksesuar', 'accessory']);
+    expect(ok(parent(['Kartlık'], 'Deri Model'))).toEqual(['accessories', 'aksesuar', 'accessory']);
+    expect(parent([], 'Siyah Model')).toEqual({ ok: false, reason: 'ambiguous_parent_category', key: '6551' });
+    expect(parent([], 'Çanta ve Cüzdan Seti')).toEqual({ ok: false, reason: 'ambiguous_parent_category', key: '6551' });
+    // Another parent (Clothing) is ignored as evidence; product_type decides, else reject.
+    expect(ok(parent(['Giyim > Tişört'], 'Model', '1604'))).toEqual(['upper_body', 'tisort', 'top']);
+    expect(parent([], 'Model', '1604')).toEqual({ ok: false, reason: 'ambiguous_parent_category', key: '1604' });
+  });
+
+  it('maps leaf ids directly', () => {
+    expect(ok(mapFeedCategory({ googleCategory: '2271', productTypes: [], title: 'Model' }))).toEqual(['dresses', 'elbise', 'one_piece']);
+    expect(ok(mapFeedCategory({ googleCategory: '187', productTypes: [] }))).toEqual(['shoes', 'ayakkabi', 'shoes']);
+  });
+
   it('refines a generic google category with a specific product_type', () => {
     expect(ok(mapFeedCategory({
       googleCategory: 'Apparel & Accessories > Clothing > Shirts & Tops',
