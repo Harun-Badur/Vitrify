@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import type { LogContext } from './logger.ts';
 import { perfSetSpanSink } from './perfLog';
+import { perfBisect } from './perfBisect';
 import { buildDeviceTags, scrubBreadcrumb, scrubEvent, scrubTransaction } from './sentryScrub';
 
 /** Share of sessions that send performance data (also reported to Sentry as tracesSampleRate). */
@@ -79,19 +80,21 @@ export const initSentry = (): void => {
   }
 
   // One decision per session: sampled sessions send every transaction and the [PERF] spans.
-  const sessionSampled = Math.random() < TRACES_SAMPLE_RATE;
-  navigationIntegration = Sentry.reactNavigationIntegration();
+  // Diagnosis only (noSentryPerf): errors are still reported, but no transaction, span or tracking.
+  const noPerf = perfBisect('noSentryPerf');
+  const sessionSampled = !noPerf && Math.random() < TRACES_SAMPLE_RATE;
+  navigationIntegration = noPerf ? null : Sentry.reactNavigationIntegration();
 
   Sentry.init({
     dsn,
     enabled: true,
     sendDefaultPii: false,
-    tracesSampleRate: TRACES_SAMPLE_RATE,
+    tracesSampleRate: noPerf ? 0 : TRACES_SAMPLE_RATE,
     tracesSampler: () => (sessionSampled ? 1 : 0),
-    enableNativeFramesTracking: true,
-    enableAppStartTracking: true,
-    enableStallTracking: true,
-    integrations: [navigationIntegration],
+    enableNativeFramesTracking: !noPerf,
+    enableAppStartTracking: !noPerf,
+    enableStallTracking: !noPerf,
+    integrations: navigationIntegration ? [navigationIntegration] : [],
     beforeSend: (event) => scrubEvent(event as never) as typeof event,
     beforeSendTransaction: (event) => scrubTransaction(event as never) as typeof event,
     beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb as never) as typeof breadcrumb | null,

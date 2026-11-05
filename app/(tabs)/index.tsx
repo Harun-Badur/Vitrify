@@ -76,6 +76,7 @@ import { fetchRecommendationCatalog, resetProductPrefCatalogCaches } from '../..
 import { createDeckRefresher } from '../../lib/deckRefresh';
 import { canResurfacePassed, resurfacePassed } from '../../lib/resurfacePassed';
 import { BoundedRecentSet } from '../../lib/boundedRecentSet';
+import { perfBisect } from '../../lib/perfBisect';
 import { effectiveProductPref, type ProductPref } from '../../lib/productPreferenceRules';
 import { DiscoverRecommendationCache } from '../../lib/discoverRecommendationCache';
 import { fingerprint } from '../../src/recommendationCache/fingerprint';
@@ -402,13 +403,15 @@ export default function FeedScreen() {
           workerStartAttempt: true, anchorCount: anchors.length, signalAborted: controller.signal.aborted });
         void loadDiscoverRecommendationPacket(request, userId, controller.signal, packet => {
           if (controller.signal.aborted || !recommendationFocused.current || preparationInputs.current.session !== recommendationSession) return;
+          // Diagnosis only (noPublish): no packet ingestion, activation or re-render.
+          if (perfBisect('noPublish')) return;
           if (!recommendationSession.accept(packet, preparationInputs.current.products)) return;
           const active = preparationInputs.current.products[0];
           if (active) recommendationSession.activate(active);
           publishRecommendations(revision => revision + 1);
           // Android expo-image prefetch decodes original-size Glide targets.
           // Mounted active/next/warm cards already warm view-sized cached images.
-          if (Platform.OS === 'android') return;
+          if (Platform.OS === 'android' || perfBisect('noImagePrefetch')) return;
           const imageUrls = [...new Set(preparationInputs.current.products.flatMap(product => complementaryProductsForDisplay(
             recommendationSession.peekPrepared(product) ?? EMPTY_RECOMMENDATIONS, product.id).flatMap(recommended => getProductImages(recommended).slice(0, 1))))]
             .filter(url => !prefetchedCovers.current.has(url));
@@ -613,7 +616,7 @@ export default function FeedScreen() {
     const unique = Array.from(new Set(urls)).filter(
       (url): url is string => typeof url === 'string' && url.length > 0 && !prefetchedCovers.current.has(url),
     );
-    if (unique.length === 0) {
+    if (unique.length === 0 || perfBisect('noImagePrefetch')) {
       return;
     }
     const handle = requestIdleCallback(() => {

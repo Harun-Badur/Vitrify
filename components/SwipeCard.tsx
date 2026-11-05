@@ -57,6 +57,7 @@ import {
   shouldCommitPass,
   shouldCommitUndo,
 } from '../lib/motion';
+import { perfBisect } from '../lib/perfBisect';
 import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfCountRender, perfMeasuring, perfNow, perfPeekSwipe, perfRenderFields, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
@@ -834,7 +835,7 @@ function SwipeCard({
 
   // Current card only: warm one or two unselected color images shortly after it settles.
   useEffect(() => {
-    if (!isCurrent || !product.colorVariants || product.colorVariants.length < 2) return;
+    if (!isCurrent || !product.colorVariants || product.colorVariants.length < 2 || perfBisect('noImagePrefetch')) return;
     const timer = setTimeout(() => {
       (product.colorVariants ?? [])
         .map((variant, index) => ({ url: variant.imageUrl?.trim(), index }))
