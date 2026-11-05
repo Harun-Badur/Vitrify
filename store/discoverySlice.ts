@@ -1,6 +1,8 @@
 import { captureOwnerPublication, trackOwnerWork } from '../lib/accountDeviceWork';
 import type { StateCreator } from 'zustand';
 import { track } from '../lib/analytics';
+import { detourConfig } from '../lib/detourConfig';
+import { clearTemporary, openDetour as openDetourState, popDetour } from './detourState';
 import { createAnalyticsAction } from '../lib/analyticsAction';
 import {isPreferenceOutcomeUnknown} from '../services/preferenceTransactionAdapter';
 import { hasAnyFilter, type FeedQueryFilters } from '../lib/feedQuery';
@@ -25,6 +27,8 @@ export interface DiscoverySlice {
   currentProducts: Product[];
   passedProductIds: string[];
   passedStack: PassedStackEntry[];
+  /** Session-only complement detour cards alive right now (deck front or return stack). */
+  detourIds: string[];
   feedStatus: FeedStatus;
   feedWarning: 'LOCAL_RANK_FAILED' | 'FEED_TIMEOUT' | null;
   feedSource: FeedSource | null;
@@ -50,6 +54,11 @@ export interface DiscoverySlice {
    * Likes and passes are kept.
    */
   resetFeedForProductPref: () => void;
+  /**
+   * Complement tap: `opened` becomes a temporary card right after `source` (the front card).
+   * View only: no pass/like write, no ranking input. Returns false when refused.
+   */
+  openDetour: (source: Product, opened: Product) => boolean;
   swipeLeft: (product: Product) => void;
   undoPass: () => boolean | Promise<boolean>;
 }
@@ -69,11 +78,12 @@ const withFeedDeadline = <T>(work: Promise<T>): Promise<T> =>
   });
 
 /**
- * One return stack for the down swipe. `liked` entries are cards that left the deck while liked:
+ * One return stack for the down swipe. `detour` entries are source cards left through a complement tap:
+ * returning is a view change only, nothing was rated. `liked` entries are cards that left the deck while liked:
  * returning to them is a view change only (no pass was ever written).
  * The product object is stored as is: the complements cache finds cards by object identity.
  */
-export interface PassedStackEntry { product: Product; kind: 'passed' | 'liked' }
+export interface PassedStackEntry { product: Product; kind: 'passed' | 'liked' | 'detour' }
 export const PASSED_STACK_LIMIT = 20;
 
 /** Current card plus the next/warm cards the screen has already prepared. */
@@ -110,6 +120,10 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
     let refreshGeneration = 0;
     let context: { userId: string | null; filters: FeedQueryFilters; searchMode: boolean } | null = null;
     let deliveredIds = new Set<string>();
+    /** Cards opened as a detour this session: the normal flow must not show them again. */
+    let detourSeen = new Set<string>();
+    const unseenByDetour = (products: Product[]): Product[] =>
+      detourSeen.size === 0 ? products : products.filter(product => !detourSeen.has(product.id));
     let emptyPages = 0;
     let mutationGeneration = 0;
     const passVersions = new Map<string, number>();
@@ -117,16 +131,18 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
     let pendingUndo: { owner: string; promise: Promise<boolean>; token: symbol } | null = null;
     const excludedIds = (): string[] => [...new Set([
       ...deliveredIds,
+      ...detourSeen,
       ...get().currentProducts.map(product => product.id),
       ...get().likedProducts.map(item => item.product.id),
       ...effectivePassedIds(get().passedProductIds),
     ])];
     return ({
-    invalidateDiscoveryWork: () => { generation++; mutationGeneration++; context = null; deliveredIds.clear(); passVersions.clear(); passWrites.clear(); pendingUndo = null; set({ feedWarning: null,preferenceWriteError:null }); },
+    invalidateDiscoveryWork: () => { generation++; mutationGeneration++; context = null; deliveredIds.clear(); detourSeen.clear(); passVersions.clear(); passWrites.clear(); pendingUndo = null; set({ feedWarning: null,preferenceWriteError:null }); },
     currentProducts: [],
     passedProductIds: [],
     preferenceWriteError: null,
     passedStack: [],
+    detourIds: [],
     feedStatus: 'idle',
     feedWarning: null,
     feedSource: null,
@@ -174,7 +190,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         const perfSetStart = perfNow();
         set((state) => ({
           currentProducts: excludeSeen(
-            [...new Map(result.products.map(product => [product.id, product])).values()],
+            unseenByDetour([...new Map(result.products.map(product => [product.id, product])).values()]),
             state.likedProducts,
             effectivePassedIds(state.passedProductIds),
           ),
@@ -237,7 +253,7 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
           deliveredIds.add(product.id);
           return true;
         });
-        const fresh = excludeSeen(incoming, get().likedProducts, effectivePassedIds(get().passedProductIds));
+        const fresh = excludeSeen(unseenByDetour(incoming), get().likedProducts, effectivePassedIds(get().passedProductIds));
         // A page without a showable product must not be requested again forever.
         emptyPages = fresh.length > 0 ? 0 : emptyPages + 1;
         set(state => ({
@@ -280,8 +296,8 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         const head = get().currentProducts.slice(0, PRESERVED_HEAD);
         const headIds = new Set(head.map(product => product.id));
         const tail = excludeSeen(
-          [...new Map(result.products.map(product => [product.id, product])).values()]
-            .filter(product => !headIds.has(product.id)),
+          unseenByDetour([...new Map(result.products.map(product => [product.id, product])).values()]
+            .filter(product => !headIds.has(product.id))),
           get().likedProducts,
           effectivePassedIds(get().passedProductIds),
         );
@@ -309,14 +325,37 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
       // Invalidates in-flight loads/pages/refreshes so no batch read under the old preference lands.
       generation++; refreshGeneration++;
       context = null; deliveredIds = new Set();
-      set(state => ({ currentProducts: [], passedStack: [], hasMore: true, isFetchingNext: false,
+      set(state => ({ currentProducts: [], passedStack: [], detourIds: [], hasMore: true, isFetchingNext: false,
         feedPreparationRevision: state.feedPreparationRevision + 1 }));
       if (previous) void get().loadFeed(previous.userId, { filters: previous.filters, searchMode: previous.searchMode });
+    },
+    openDetour: (source, opened): boolean => {
+      const state = get();
+      if (state.currentProducts[0]?.id !== source.id) return false;
+      const next = openDetourState({ deck: state.currentProducts, stack: state.passedStack, detourIds: state.detourIds }, opened);
+      if (next === null) return false;
+      detourSeen.add(opened.id);
+      set({ currentProducts: next.deck, passedStack: next.stack, detourIds: next.detourIds });
+      if (detourConfig.complementOpenTracking) {
+        track('complement_open', opened.id, {
+          source_product_id: source.id, opened_product_id: opened.id, depth: next.detourIds.length,
+        });
+      }
+      return true;
     },
     swipeLeft: (product): void => {
       const userId = get().sessionUserId;
       const current = captureOwnerPublication(userId);
       if (!current()) return;
+      if (get().detourIds.length > 0) {
+        // Temporary cards are never rated: leaving them (or their source) deletes them silently.
+        const leavingTemporary = get().detourIds.includes(product.id);
+        set(state => {
+          const cleared = clearTemporary({ deck: state.currentProducts, stack: state.passedStack, detourIds: state.detourIds });
+          return { currentProducts: cleared.deck, passedStack: cleared.stack, detourIds: cleared.detourIds };
+        });
+        if (leavingTemporary) return;
+      }
       if (get().likedProducts.some(item => item.product.id === product.id)) {
         // A liked card is not a pass: no event, no write, the like stays. It only leaves the deck.
         set((state) => ({
@@ -372,6 +411,14 @@ export const createDiscoverySlice: StateCreator<AppState, [], [], DiscoverySlice
         return false;
       }
       const { product } = entry;
+      if (entry.kind === 'detour') {
+        // View only: no pass was ever written; the temporary card in front is deleted.
+        set(state => {
+          const next = popDetour({ deck: state.currentProducts, stack: state.passedStack, detourIds: state.detourIds });
+          return { currentProducts: next.deck, passedStack: next.stack, detourIds: next.detourIds };
+        });
+        return true;
+      }
       if (entry.kind === 'liked') {
         // View only: the like stays, no pass was written, so nothing is undone on the server.
         set((state) => ({

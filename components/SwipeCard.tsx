@@ -148,6 +148,8 @@ export interface SwipeCardProps {
   recommendationStatus?: RecommendationStatus;
   selectedRecommendationProductIds?: readonly string[];
   onSelectRecommendation?: (product: Product) => void;
+  /** Complement body tap: (source = this card's product, opened). Only the current card forwards it. */
+  onOpenComplement?: (source: Product, opened: Product) => void;
   /** Seçicinin bu karta atadığı tek chip; null/undefined ise chip çizilmez. */
   insightChip?: InsightChipModel | null;
   onOpenInsightWardrobe?: () => void;
@@ -205,6 +207,7 @@ function SwipeCard({
   recommendationStatus,
   selectedRecommendationProductIds,
   onSelectRecommendation,
+  onOpenComplement,
   insightChip,
   onOpenInsightWardrobe,
   onHideInsightKind,
@@ -456,6 +459,10 @@ function SwipeCard({
       })();
     }
   }, [onUndoPass, exitAnimationId, pageIndexSV, hasExited, dragOffset]);
+
+  const handleOpenComplement = useCallback((opened: Product): void => {
+    if (isCurrent) onOpenComplement?.(product, opened);
+  }, [isCurrent, onOpenComplement, product]);
 
   const handleStorePress = useCallback((): void => {
     handleBuy();
@@ -1036,6 +1043,7 @@ function SwipeCard({
           status={recommendationStatus}
           selectedProductIds={selectedRecommendationProductIds}
           onSelectProduct={onSelectRecommendation}
+          onOpenProduct={onOpenComplement && isCurrent ? handleOpenComplement : undefined}
         />
       ) : null}
       {insightChip ? (

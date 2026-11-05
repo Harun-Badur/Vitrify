@@ -12,7 +12,8 @@ export type AnalyticsEventType =
   | 'filter'
   | 'back'
   | 'share'
-  | 'feed_fallback';
+  | 'feed_fallback'
+  | 'complement_open';
 
 /** Optional client-only hint on `like` events: which control produced the like. */
 export type LikeInputSource = 'button' | 'double_tap';

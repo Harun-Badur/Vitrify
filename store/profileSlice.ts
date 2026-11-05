@@ -81,6 +81,7 @@ export const createProfileSlice: StateCreator<
       likedProducts: [],
       passedProductIds: [],
       passedStack: [],
+      detourIds: [],
       feedIsPersonalized: false,
       feedMode: DEFAULT_FEED_MODE,
       feedFallback: false,
