@@ -15,6 +15,8 @@ interface DiscoverProductImageProps extends Omit<
 > {
   uri: string;
   slot: DiscoverImageSlot;
+  /** Fills the frame until this URI loads or fails; never shown behind a loaded bitmap. */
+  placeholderColor?: string;
 }
 
 interface LoadedDimensions {
@@ -26,6 +28,7 @@ interface LoadedDimensions {
 export default function DiscoverProductImage({
   uri,
   slot,
+  placeholderColor,
   style,
   onLoad,
   onLoadStart,
@@ -38,6 +41,7 @@ export default function DiscoverProductImage({
   });
   const [loaded, setLoaded] = useState<LoadedDimensions | null>(null);
   const [failedUri, setFailedUri] = useState<string | null>(null);
+  const [shownUri, setShownUri] = useState<string | null>(null);
   const loadStart = useRef<{ uri: string; at: number } | null>(null);
   const currentUri = useRef(uri);
   useLayoutEffect(() => {
@@ -72,6 +76,7 @@ export default function DiscoverProductImage({
         );
       }
       setFailedUri(null);
+      setShownUri(uri);
       onLoad?.(event);
     },
     [uri, onLoad],
@@ -85,6 +90,13 @@ export default function DiscoverProductImage({
 
   return (
     <View style={[style, styles.frame]} onLayout={handleLayout}>
+      {placeholderColor && uri.trim() && shownUri !== uri && failedUri !== uri ? (
+        <View
+          testID="discover-image-placeholder"
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: placeholderColor }]}
+        />
+      ) : null}
       {(!uri.trim() || failedUri === uri) ? (
         <View style={styles.unavailable} testID="discover-image-unavailable">
           <Text accessibilityRole="text">Görsel yüklenemedi</Text>

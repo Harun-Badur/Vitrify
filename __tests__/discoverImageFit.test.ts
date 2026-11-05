@@ -262,3 +262,39 @@ describe('DiscoverProductImage native image measurements', () => {
     expect(imageStyle()).toEqual(expected);
   });
 });
+
+describe('DiscoverProductImage loading placeholder', () => {
+  let tree: RenderedTree & { root: RenderedNode & { findAll: (match: (node: RenderedNode & { type: unknown }) => boolean) => RenderedNode[] } };
+  const hostsWith = (testID: string) => tree.root.findAll(node => typeof node.type === 'string' && node.props.testID === testID);
+  const placeholder = () => hostsWith('discover-image-placeholder');
+  const render = (props: Record<string, unknown>) => renderer.act(() => {
+    tree = renderer.create(createElement(DiscoverProductImage, { uri: 'a.jpg', slot: 'recommendation', ...props })) as typeof tree;
+  });
+  afterEach(async () => { await renderer.act(() => tree.unmount()); });
+  const imageProp = <T,>(name: string) => tree.root.findByType('Image').props[name] as T;
+
+  it('shows the given color until the image loads, then removes it', async () => {
+    await render({ placeholderColor: '#ECE3D6' });
+    expect(placeholder()).toHaveLength(1);
+    expect(StyleSheet.flatten(placeholder()[0].props.style as StyleProp<ImageStyle>)?.backgroundColor).toBe('#ECE3D6');
+    await renderer.act(() => imageProp<(event: ImageLoadEventData) => void>('onLoad')({
+      cacheType: 'disk', source: { url: 'a.jpg', width: 0, height: 0, mediaType: 'image/jpeg' } }));
+    expect(placeholder()).toHaveLength(0);
+  });
+
+  it('returns for the next image and gives way to the failure fallback', async () => {
+    await render({ placeholderColor: '#ECE3D6' });
+    await renderer.act(() => imageProp<(event: ImageLoadEventData) => void>('onLoad')({
+      cacheType: 'memory', source: { url: 'a.jpg', width: 10, height: 10, mediaType: 'image/jpeg' } }));
+    await renderer.act(() => tree.update(createElement(DiscoverProductImage, { uri: 'b.jpg', slot: 'recommendation', placeholderColor: '#ECE3D6' })));
+    expect(placeholder()).toHaveLength(1);
+    await renderer.act(() => imageProp<(event: { error: string }) => void>('onError')({ error: 'network unavailable' }));
+    expect(placeholder()).toHaveLength(0);
+    expect(hostsWith('discover-image-unavailable')).toHaveLength(1);
+  });
+
+  it('adds nothing when no placeholder color is given (main card unchanged)', async () => {
+    await render({ slot: 'main' });
+    expect(placeholder()).toHaveLength(0);
+  });
+});

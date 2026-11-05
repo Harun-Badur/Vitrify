@@ -99,6 +99,7 @@ function DiscoverRecommendations({
                       <DiscoverProductImage
                         uri={imageUrl}
                         slot="recommendation"
+                        placeholderColor={colors.imagePlaceholder}
                         style={StyleSheet.absoluteFill}
                         cachePolicy="memory-disk"
                         accessibilityLabel={product.title}
