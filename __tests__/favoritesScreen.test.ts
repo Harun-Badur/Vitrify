@@ -47,6 +47,8 @@ jest.mock('../store/useAppStore', () => ({
   useAppStore: (selector: (state: typeof mockState) => unknown) =>
     selector(mockState),
 }));
+let mockFocused = true;
+jest.mock('expo-router', () => ({ useIsFocused: () => mockFocused }));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 24, bottom: 24, left: 0, right: 0 }),
 }));
@@ -118,6 +120,7 @@ describe('Favorites screen', () => {
   let view: TestTree;
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockFocused = true;
     mockState.favoritesOwner = 'alice';
     mockState.favoritesStatus = 'success';
     mockState.favoritesError = null;
@@ -150,6 +153,21 @@ describe('Favorites screen', () => {
     await renderer.act(() => view.update(createElement(FavoritesScreen)));
     expect(view.root.findByProps({ accessibilityLabel: 'Favorileri yeniden yükle' })).toBeDefined();
     expect(view.root.findAllByProps({ children: 'Henüz favori ürün yok.' })).toHaveLength(0);
+  });
+
+  it('ignores favorites changes while the tab is blurred and shows them on return', async () => {
+    const list = (): TestNode => view.root.findByType(FlatList);
+    mockFocused = false;
+    await renderer.act(() => view.update(createElement(FavoritesScreen)));
+    mockState.likedProducts = mockState.likedProducts.slice(0, 1);
+    mockState.favoritesStatus = 'loading';
+    await renderer.act(() => view.update(createElement(FavoritesScreen)));
+    expect(list().props.data).toHaveLength(3);
+    expect(view.root.findAllByProps({ accessibilityLabel: 'Favoriler yükleniyor' })).toHaveLength(0);
+    mockFocused = true;
+    mockState.favoritesStatus = 'success';
+    await renderer.act(() => view.update(createElement(FavoritesScreen)));
+    expect(list().props.data).toHaveLength(1);
   });
 
   it('keeps cached favorites visible during a refresh failure', async () => {

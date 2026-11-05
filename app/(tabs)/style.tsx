@@ -44,6 +44,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, radius, shadows, spacing } from '../../lib/theme';
 import { openProductPage } from '../../services/deeplinkService';
+import { useIsFocused } from 'expo-router';
+import { useFocusGatedSelection } from '../../hooks/useFocusGatedSelection';
 import { useAppStore } from '../../store/useAppStore';
 import {
   formatTryPrice,
@@ -278,29 +280,25 @@ function FavoriteCard({
 
 export default function FavoritesScreen(): ReactElement {
   const insets = useSafeAreaInsets();
-  const likedProducts = useAppStore((state) => state.likedProducts);
   const sessionOwner = useAppStore((state) => state.sessionUserId);
-  const favoritesStatus = useAppStore((state) =>
-    state.favoritesOwner === state.sessionUserId
-      ? state.favoritesStatus
-      : 'idle',
-  );
-  const favoritesError = useAppStore((state) =>
-    state.favoritesOwner === state.sessionUserId &&
-    state.favoritesStatus === 'error'
-      ? state.favoritesError
-      : null,
-  );
+  // Likes from Discover must not re-render this tab while it is hidden.
+  const { likedProducts, favoritesStatus, favoritesError, metadataWarning } =
+    useFocusGatedSelection(useIsFocused(), (state) => {
+      const owned = state.favoritesOwner === state.sessionUserId;
+      return {
+        likedProducts: state.likedProducts,
+        favoritesStatus: owned ? state.favoritesStatus : 'idle',
+        favoritesError:
+          owned && state.favoritesStatus === 'error' ? state.favoritesError : null,
+        metadataWarning: (state.likedProducts as LikedProductsResult).warning
+          ? 'Bazı ürünlerin katalog bilgisi yok; kayıtlı bilgiler korunuyor.'
+          : owned && state.favoritesStatus === 'success'
+            ? state.favoritesError
+            : null,
+      };
+    });
   const ownerRef = useRef(sessionOwner);
   ownerRef.current = sessionOwner;
-  const metadataWarning = useAppStore((state) =>
-    (state.likedProducts as LikedProductsResult).warning
-      ? 'Bazı ürünlerin katalog bilgisi yok; kayıtlı bilgiler korunuyor.'
-      : state.favoritesOwner === state.sessionUserId &&
-          state.favoritesStatus === 'success'
-        ? state.favoritesError
-        : null,
-  );
   useEffect(() => {
     if (metadataWarning) Alert.alert('Favori ürün bilgisi', metadataWarning);
   }, [metadataWarning]);

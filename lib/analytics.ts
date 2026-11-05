@@ -2,6 +2,7 @@ import { invalidateStyleProfileSnapshot } from './recsConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, type AppStateStatus } from 'react-native';
 import { logger } from './logger';
+import { perfBisect } from './perfBisect';
 import { getSupabaseClient } from './supabase';
 import type {
   AnalyticsEventType,
@@ -213,7 +214,7 @@ const wait = (ms: number): Promise<void> =>
   });
 
 export const flushAnalytics = async (): Promise<void> => {
-  if (flushing) {
+  if (flushing || perfBisect('noAnalytics')) {
     return;
   }
   flushing = true;
@@ -270,6 +271,8 @@ export const track = (
   payload: AnalyticsPayload = {},
   committedAction?: AnalyticsActionContext,
 ): void => {
+  // Diagnosis only: no event, queue or AsyncStorage write.
+  if (perfBisect('noAnalytics')) return;
   const epoch = queueEpoch;
   void (async () => {
     try {
@@ -333,7 +336,7 @@ const handleAppState = (status: AppStateStatus): void => {
 };
 
 export const initAnalytics = (): void => {
-  if (initialized) {
+  if (initialized || perfBisect('noAnalytics')) {
     return;
   }
   initialized = true;

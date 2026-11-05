@@ -1,6 +1,6 @@
 import { wardrobeCutoutPresentation } from '../../lib/wardrobeCutoutState';
 import { itemCutoutV2Confirmed } from '../../lib/wardrobeCutoutV2Gate';
-import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -97,7 +97,7 @@ interface LikedItemProps {
   onCombine: (product: Product) => void;
 }
 
-function LikedItem({
+function LikedItemView({
   item,
   width,
   favorite = false,
@@ -427,6 +427,9 @@ function WardrobeStarter({ compact }: { compact: boolean }) {
   );
 }
 
+// Cards re-render only on their own props/store slices, not on every screen render.
+const LikedItem = memo(LikedItemView);
+
 export default function LikedScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -460,14 +463,26 @@ export default function LikedScreen() {
       })),
     [wardrobeItems],
   );
-  const handleWardrobeDelete = (product: Product): void => {
+  const handleWardrobeDelete = useCallback((product: Product): void => {
     void removeWardrobeItem(product.id).catch(() =>
       Alert.alert(
         'Silinemedi',
         'Kıyafet kaldırılırken bir sorun oluştu. Tekrar dene.',
       ),
     );
-  };
+  }, [removeWardrobeItem]);
+  const handleWardrobeEdit = useCallback((product: Product): void => {
+    openWardrobeEditor(product.id);
+  }, []);
+  const handleWardrobeCombine = useCallback((product: Product): void => {
+    router.push({
+      pathname: '/wardrobe/create',
+      params: {
+        wardrobeItemId: product.id,
+        source: 'wardrobe',
+      },
+    });
+  }, []);
   const refreshLikedProducts = useAppStore(
     (state) => state.refreshLikedProducts,
   );
@@ -517,6 +532,65 @@ export default function LikedScreen() {
           .includes(text),
     );
   }, [category, query, brand, wardrobeProducts]);
+  const clothesData = useMemo(
+    () => [...filteredProducts.slice(0, 3), null, ...filteredProducts.slice(3)],
+    [filteredProducts],
+  );
+  const outfitsData = useMemo(
+    () => [...savedOutfits.slice(0, 2), null],
+    [savedOutfits],
+  );
+  const renderClothesItem = useCallback(
+    ({ item }: { item: LikedProduct | null }) => (
+      <View
+        style={{
+          width: cardWidth,
+          height: clothingCardHeight,
+        }}
+      >
+        {item ? (
+          <LikedItem
+            item={item}
+            width={cardWidth}
+            wardrobe
+            matchFavoriteLayout
+            imageHeight={clothingImageHeight}
+            onTryOn={handleWardrobeEdit}
+            onOpenStore={handleOpenStore}
+            onSwipeDelete={handleWardrobeDelete}
+            onCombine={handleWardrobeCombine}
+          />
+        ) : (
+          <AddCard width={cardWidth} />
+        )}
+      </View>
+    ),
+    [cardWidth, clothingCardHeight, clothingImageHeight, handleWardrobeEdit, handleOpenStore, handleWardrobeDelete, handleWardrobeCombine],
+  );
+  const renderOutfitItem = useCallback(
+    ({ item: outfit }: { item: SavedOutfit | null }) => (
+      <View style={{ width: cardWidth, height: outfitCardHeight }}>
+        {outfit ? (
+          <View style={styles.card}>
+            <OutfitCover outfit={outfit} style={styles.image} />
+            <View style={styles.metaCopy}>
+              <Text style={styles.title} numberOfLines={1}>
+                {outfit.title}
+              </Text>
+              <Text style={styles.category}>
+                {outfit.wardrobeItemIds.length +
+                  outfit.catalogProductIds.length}{' '}
+                parça
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <AddCard width={cardWidth} outfit />
+        )}
+      </View>
+    ),
+    [cardWidth, outfitCardHeight],
+  );
   const chooseFilter = (): void => {
     const brands = [
       ...new Set(
@@ -654,46 +728,11 @@ export default function LikedScreen() {
               }
               accessibilityLabel="Kıyafet ürünleri"
               numColumns={3}
-              data={[
-                ...filteredProducts.slice(0, 3),
-                null,
-                ...filteredProducts.slice(3),
-              ]}
+              data={clothesData}
               keyExtractor={(item) => (item ? item.product.id : 'add-clothes')}
               columnWrapperStyle={{ gap: GRID_GAP }}
               contentContainerStyle={{ gap: GRID_GAP }}
-              renderItem={({ item }) => (
-                <View
-                  style={{
-                    width: cardWidth,
-                    height: clothingCardHeight,
-                  }}
-                >
-                  {item ? (
-                    <LikedItem
-                      item={item}
-                      width={cardWidth}
-                      wardrobe
-                      matchFavoriteLayout
-                      imageHeight={clothingImageHeight}
-                      onTryOn={(product) => openWardrobeEditor(product.id)}
-                      onOpenStore={handleOpenStore}
-                      onSwipeDelete={handleWardrobeDelete}
-                      onCombine={(product) =>
-                        router.push({
-                          pathname: '/wardrobe/create',
-                          params: {
-                            wardrobeItemId: product.id,
-                            source: 'wardrobe',
-                          },
-                        })
-                      }
-                    />
-                  ) : (
-                    <AddCard width={cardWidth} />
-                  )}
-                </View>
-              )}
+              renderItem={renderClothesItem}
             />
           )}
         </View>
@@ -722,31 +761,11 @@ export default function LikedScreen() {
               }
               accessibilityLabel="Kombin kartları"
               numColumns={3}
-              data={[...savedOutfits.slice(0, 2), null]}
+              data={outfitsData}
               keyExtractor={(item) => (item ? item.id : 'add-outfit')}
               columnWrapperStyle={{ gap: GRID_GAP }}
               contentContainerStyle={{ gap: GRID_GAP }}
-              renderItem={({ item: outfit }) => (
-                <View style={{ width: cardWidth, height: outfitCardHeight }}>
-                  {outfit ? (
-                    <View style={styles.card}>
-                      <OutfitCover outfit={outfit} style={styles.image} />
-                      <View style={styles.metaCopy}>
-                        <Text style={styles.title} numberOfLines={1}>
-                          {outfit.title}
-                        </Text>
-                        <Text style={styles.category}>
-                          {outfit.wardrobeItemIds.length +
-                            outfit.catalogProductIds.length}{' '}
-                          parça
-                        </Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <AddCard width={cardWidth} outfit />
-                  )}
-                </View>
-              )}
+              renderItem={renderOutfitItem}
             />
           )}
         </View>
