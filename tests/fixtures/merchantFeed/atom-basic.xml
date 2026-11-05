@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:g="http://base.google.com/ns/1.0">
+  <title>Örnek Marka Atom (sahte test feed)</title>
+  <entry>
+    <g:id>A1001</g:id>
+    <title>Kruvaze Blazer Ceket</title>
+    <link rel="alternate" href="https://www.ornekmarka.example/urun/kruvaze-blazer-ceket?utm=x"/>
+    <g:image_link>https://img.ornekmarka.example/a1001/1.jpg</g:image_link>
+    <g:price>2.499,00 TRY</g:price>
+    <g:sale_price>1.999,00 TRY</g:sale_price>
+    <g:brand>Örnek Marka</g:brand>
+    <g:color>Gri</g:color>
+    <g:size>36</g:size>
+    <g:gender>female</g:gender>
+    <g:availability>in_stock</g:availability>
+    <g:product_type>Giyim &gt; Dış Giyim &gt; Blazer</g:product_type>
+  </entry>
+  <entry>
+    <g:id>A1002</g:id>
+    <title>Deri Omuz Çantası</title>
+    <link href="https://www.ornekmarka.example/urun/deri-omuz-cantasi"/>
+    <g:image_link>https://img.ornekmarka.example/a1002/1.jpg</g:image_link>
+    <g:price>1499.00 TRY</g:price>
+    <g:brand>Örnek Marka</g:brand>
+    <g:color>Kahverengi</g:color>
+    <g:gender>female</g:gender>
+    <g:availability>in_stock</g:availability>
+    <g:google_product_category>Apparel &amp; Accessories &gt; Handbags, Wallets &amp; Cases &gt; Handbags</g:google_product_category>
+  </entry>
+</feed>

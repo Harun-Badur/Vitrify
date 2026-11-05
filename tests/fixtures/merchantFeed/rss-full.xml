@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Örnek Marka (sahte test feed)</title>
+    <link>https://www.ornekmarka.example</link>
+    <description>Elle yazılmış sahte fixture</description>
+    <item>
+      <g:id>TS1-SYH-S</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-siyah?size=S</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/siyah/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/siyah/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Siyah</g:color>
+      <g:size>S</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+      <g:sale_price>249.90 TRY</g:sale_price>
+    </item>
+    <item>
+      <g:id>TS1-SYH-M</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-siyah?size=M</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/siyah/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/siyah/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Siyah</g:color>
+      <g:size>M</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+      <g:sale_price>249.90 TRY</g:sale_price>
+    </item>
+    <item>
+      <g:id>TS1-SYH-L</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-siyah?size=L</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/siyah/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/siyah/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Siyah</g:color>
+      <g:size>L</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+      <g:sale_price>249.90 TRY</g:sale_price>
+    </item>
+    <item>
+      <g:id>TS1-SYH-XL</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-siyah?size=XL</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/siyah/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/siyah/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Siyah</g:color>
+      <g:size>XL</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+      <g:sale_price>249.90 TRY</g:sale_price>
+    </item>
+    <item>
+      <g:id>TS1-BYZ-S</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-beyaz?size=S</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/beyaz/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/beyaz/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Beyaz</g:color>
+      <g:size>S</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>TS1-BYZ-M</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-beyaz?size=M</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/beyaz/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/beyaz/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Beyaz</g:color>
+      <g:size>M</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>TS1-BYZ-L</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-beyaz?size=L</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/beyaz/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/beyaz/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Beyaz</g:color>
+      <g:size>L</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>TS1-BYZ-XL</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-beyaz?size=XL</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/beyaz/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/beyaz/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Beyaz</g:color>
+      <g:size>XL</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>out_of_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>TS1-LCV-S</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-lacivert?size=S</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/lacivert/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/lacivert/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Navy Blue</g:color>
+      <g:size>S</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>TS1-LCV-M</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-lacivert?size=M</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/lacivert/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/lacivert/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Navy Blue</g:color>
+      <g:size>M</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>TS1-LCV-L</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-lacivert?size=L</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/lacivert/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/lacivert/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Navy Blue</g:color>
+      <g:size>L</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>TS1-LCV-XL</g:id>
+      <g:title>Basic Pamuklu T-Shirt</g:title>
+      <g:description>Sahte örnek ürün açıklaması.</g:description>
+      <link>https://www.ornekmarka.example/urun/basic-tisort-lacivert?size=XL</link>
+      <g:image_link>https://img.ornekmarka.example/ts1/lacivert/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/ts1/lacivert/2.jpg</g:additional_image_link>
+      <g:price>299,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Navy Blue</g:color>
+      <g:size>XL</g:size>
+      <g:gender>unisex</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:item_group_id>TS1</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Shirts &amp; Tops</g:google_product_category>
+      <g:product_type>Giyim &gt; Üst Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>D2001</g:id>
+      <g:title>Çiçek Desenli Midi Elbise</g:title>
+      <link>https://www.ornekmarka.example/urun/cicek-desenli-midi-elbise</link>
+      <g:image_link>https://img.ornekmarka.example/d2001/1.jpg</g:image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/d2001/2.jpg</g:additional_image_link>
+      <g:additional_image_link>https://img.ornekmarka.example/d2001/3.jpg</g:additional_image_link>
+      <g:price>1.299,00 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Siyah/Beyaz</g:color>
+      <g:size>38</g:size>
+      <g:gender>female</g:gender>
+      <g:age_group>adult</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:google_product_category>2271</g:google_product_category>
+    </item>
+    <item>
+      <g:id>J3001</g:id>
+      <g:title>Slim Fit Erkek Jean Pantolon</g:title>
+      <link>https://www.ornekmarka.example/urun/slim-fit-erkek-jean</link>
+      <g:image_link>https://img.ornekmarka.example/j3001/1.jpg</g:image_link>
+      <g:price>1299.00 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Mavi</g:color>
+      <g:size>32</g:size>
+      <g:gender>male</g:gender>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Men &gt; Clothing &gt; Jeans</g:product_type>
+    </item>
+    <item>
+      <g:id>K4001</g:id>
+      <g:title>Çocuk Baskılı Tişört</g:title>
+      <link>https://www.ornekmarka.example/urun/cocuk-baskili-tisort</link>
+      <g:image_link>https://img.ornekmarka.example/k4001/1.jpg</g:image_link>
+      <g:price>199,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Kırmızı</g:color>
+      <g:gender>unisex</g:gender>
+      <g:age_group>kids</g:age_group>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Giyim &gt; Tişört</g:product_type>
+    </item>
+    <item>
+      <g:id>O5001</g:id>
+      <g:title>Kapüşonlu Sweatshirt</g:title>
+      <link>https://www.ornekmarka.example/urun/kapusonlu-sweatshirt</link>
+      <g:image_link>https://img.ornekmarka.example/o5001/1.jpg</g:image_link>
+      <g:price>599,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Kırmızı</g:color>
+      <g:gender>female</g:gender>
+      <g:availability>out_of_stock</g:availability>
+      <g:product_type>Kadın &gt; Sweatshirt</g:product_type>
+    </item>
+    <item>
+      <g:id>M6001</g:id>
+      <g:title>Basic Sweatshirt</g:title>
+      <link>https://www.ornekmarka.example/urun/basic-sweatshirt</link>
+      <g:image_link>https://img.ornekmarka.example/m6001/1.jpg</g:image_link>
+      <g:price>549,00 TL</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:gender>female</g:gender>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Kadın &gt; Sweatshirt</g:product_type>
+    </item>
+    <item>
+      <g:id>U7001</g:id>
+      <g:title>Bikini Takımı</g:title>
+      <link>https://www.ornekmarka.example/urun/bikini-takimi</link>
+      <g:image_link>https://img.ornekmarka.example/u7001/1.jpg</g:image_link>
+      <g:price>399,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Siyah</g:color>
+      <g:gender>female</g:gender>
+      <g:availability>in_stock</g:availability>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing &gt; Swimwear</g:google_product_category>
+    </item>
+    <item>
+      <g:id>U7002</g:id>
+      <g:title>Banyo Havlusu</g:title>
+      <link>https://www.ornekmarka.example/urun/banyo-havlusu</link>
+      <g:image_link>https://img.ornekmarka.example/u7002/1.jpg</g:image_link>
+      <g:price>149,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Beyaz</g:color>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Ev Tekstili &gt; Havlu</g:product_type>
+    </item>
+    <item>
+      <g:id>X8001</g:id>
+      <g:title>Basic Bluz</g:title>
+      <link>https://www.ornekmarka.example/urun/basic-bluz</link>
+      <g:image_link>https://img.ornekmarka.example/x8001/1.jpg</g:image_link>
+      <g:price>19.99 USD</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Pembe</g:color>
+      <g:gender>female</g:gender>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Bluz</g:product_type>
+    </item>
+    <item>
+      <g:id>S9001</g:id>
+      <g:title>Beyaz Deri Sneaker</g:title>
+      <link>https://www.ornekmarka.example/urun/beyaz-deri-sneaker</link>
+      <g:image_link>https://img.ornekmarka.example/s9001/1.jpg</g:image_link>
+      <g:price>1.899,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>White</g:color>
+      <g:size>40</g:size>
+      <g:size>41</g:size>
+      <g:size>42</g:size>
+      <g:gender>unisex</g:gender>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Ayakkabı &gt; Sneaker</g:product_type>
+    </item>
+    <item>
+      <g:id>N1101</g:id>
+      <g:title>Görselsiz Ceket</g:title>
+      <link>https://www.ornekmarka.example/urun/gorselsiz-ceket</link>
+      <g:price>899,90 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Siyah</g:color>
+      <g:gender>male</g:gender>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Dış Giyim &gt; Ceket</g:product_type>
+    </item>
+    <item>
+      <g:id>P1201</g:id>
+      <g:title>Kadın Basic Bluz</g:title>
+      <link>https://www.ornekmarka.example/urun/kadin-basic-bluz</link>
+      <g:image_link>https://img.ornekmarka.example/p1201/1.jpg</g:image_link>
+      <g:price>1299 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Pudra</g:color>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Giyim &gt; Bluz</g:product_type>
+    </item>
+    <item>
+      <g:id>P1202</g:id>
+      <g:title>Kadın Basic Bluz Kopya</g:title>
+      <link>https://www.ornekmarka.example/urun/kadin-basic-bluz?renk=2</link>
+      <g:image_link>https://img.ornekmarka.example/p1202/1.jpg</g:image_link>
+      <g:price>1299 TRY</g:price>
+      <g:brand>Örnek Marka</g:brand>
+      <g:color>Pudra</g:color>
+      <g:availability>in_stock</g:availability>
+      <g:product_type>Giyim &gt; Bluz</g:product_type>
+    </item>
+  </channel>
+</rss>
