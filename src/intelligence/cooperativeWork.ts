@@ -12,6 +12,8 @@ export interface CooperativeWorkOptions {
   sliceBudgetMs?: () => number;
   /** Pause off-window preparation without discarding its generator/promise. */
   waitForTurn?: () => Promise<void>;
+  /** Host queue level between slices; older queued tasks still run first. Defaults to low. */
+  hostPriority?: 'normal';
   recommendationMemo?: RecommendationMemo;
   /** Diagnosis only: time spent in each work slice, host yield and turn wait. Never changes scheduling. */
   sliceProbe?: (kind: 'slice' | 'yield' | 'turn', ms: number) => void;
@@ -24,11 +26,12 @@ const checkAbort = (signal?: AbortSignal): void => {
 
 interface NativeHostScheduler {
   unstable_LowPriority: number;
+  unstable_NormalPriority?: number;
   unstable_scheduleCallback(priority: number, callback: () => void): unknown;
   unstable_cancelCallback(task: unknown): void;
 }
 let reportedHost: string | undefined;
-const yieldToHost = (signal?: AbortSignal): Promise<void> => new Promise((resolve, reject) => {
+const yieldToHost = (signal?: AbortSignal, hostPriority?: 'normal'): Promise<void> => new Promise((resolve, reject) => {
   checkAbort(signal);
   const candidate = (globalThis as typeof globalThis & { nativeRuntimeScheduler?: NativeHostScheduler }).nativeRuntimeScheduler;
   const scheduler = candidate && typeof candidate.unstable_scheduleCallback === 'function'
@@ -54,7 +57,10 @@ const yieldToHost = (signal?: AbortSignal): Promise<void> => new Promise((resolv
     }
     // Native tasks return to the host queue at low priority instead of waiting for
     // another frame's timer batch. Per-slice CPU budgets/priority gates stay intact.
-    if (scheduler) task = scheduler.unstable_scheduleCallback(scheduler.unstable_LowPriority, finish);
+    if (scheduler) {
+      const priority = hostPriority === 'normal' ? scheduler.unstable_NormalPriority ?? scheduler.unstable_LowPriority : scheduler.unstable_LowPriority;
+      task = scheduler.unstable_scheduleCallback(priority, finish);
+    }
     else timer = setTimeout(finish, 0);
   } catch (error) {
     signal?.removeEventListener('abort', onAbort);
@@ -71,11 +77,11 @@ export const runSynchronously = <T>(work: Generator<void, T, void>): T => {
 export const runCooperatively = async <T>(
   work: Generator<void, T, void>, options: CooperativeWorkOptions = {},
 ): Promise<T> => {
-  const { signal, sliceProbe } = options;
+  const { signal, sliceProbe, hostPriority } = options;
   const yieldProbed = async (): Promise<void> => {
-    if (!sliceProbe) return yieldToHost(signal);
+    if (!sliceProbe) return yieldToHost(signal, hostPriority);
     const yielded = performance.now();
-    await yieldToHost(signal);
+    await yieldToHost(signal, hostPriority);
     sliceProbe('yield', performance.now() - yielded);
   };
   const diagnostic = __DEV__ ? options.diagnosticStage : undefined;

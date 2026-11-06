@@ -24,6 +24,21 @@ test('separates cooperative CPU slices from host waiting without changing the re
 });
 
 
+test('normal host priority is opt-in and falls back to low priority when the host has no such level', async () => {
+  const host = globalThis as typeof globalThis & { nativeRuntimeScheduler?: unknown };
+  const previous = host.nativeRuntimeScheduler;
+  const schedule = jest.fn((_priority: number, callback: () => void) => { callback(); return {}; });
+  function* work() { return 'unchanged'; }
+  try {
+    host.nativeRuntimeScheduler = { unstable_LowPriority: 4, unstable_NormalPriority: 3, unstable_scheduleCallback: schedule, unstable_cancelCallback: jest.fn() };
+    await expect(runCooperatively(work(), { hostPriority: 'normal' })).resolves.toBe('unchanged');
+    await expect(runCooperatively(work())).resolves.toBe('unchanged');
+    host.nativeRuntimeScheduler = { unstable_LowPriority: 4, unstable_scheduleCallback: schedule, unstable_cancelCallback: jest.fn() };
+    await expect(runCooperatively(work(), { hostPriority: 'normal' })).resolves.toBe('unchanged');
+    expect(schedule.mock.calls.map(([priority]) => priority)).toEqual([3, 4, 4]);
+  } finally { host.nativeRuntimeScheduler = previous; }
+});
+
 test('uses cancellable native low-priority host tasks while preserving timer fallback and result', async () => {
   const host = globalThis as typeof globalThis & { nativeRuntimeScheduler?: unknown };
   const previous = host.nativeRuntimeScheduler;

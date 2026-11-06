@@ -42,6 +42,25 @@ describe('cooperative recommendation work', () => {
     } finally { host.nativeRuntimeScheduler = previous; }
   });
 
+  it.each([1, 4, 10, 1_000_000])('keeps ranked results identical with a %i ms slice at normal host priority', async budget => {
+    for (const anchor of catalog) {
+      const input = { wardrobeItems: [{ id: 'test-wardrobe-bottom', category: 'bottom' }], catalogProducts: catalog,
+        requiredCatalogProductId: anchor.id, firstOnly: true, recommendationExposure: new Map([[catalog[2].id, 9]]) };
+      expect(await getDiscoverRecommendationsAsync(input, { sliceBudgetMs: () => budget, hostPriority: 'normal' })).toEqual(getDiscoverRecommendations(input));
+    }
+  });
+
+  it('re-reads the slice budget between slices, so a touch shrinks the next slice', async () => {
+    let clock = 0, budget = 10;
+    const ends: number[] = [];
+    jest.spyOn(performance, 'now').mockImplementation(() => clock);
+    function* work(): Generator<void, void, void> {
+      for (let step = 0; step < 6; step++) { clock += 2; ends.push(clock); if (step === 4) budget = 4; yield; }
+    }
+    await runCooperatively(work(), { sliceBudgetMs: () => budget, sliceProbe: (kind, ms) => { if (kind === 'slice') ends.push(-ms); } });
+    expect(ends.filter(value => value < 0)).toEqual([-10, -2]);
+  });
+
   it('preserves the unanchored path and hard filters', async () => {
     const input = { wardrobeItems: [], catalogProducts: catalog, catalogFilters: { gender: 'men' as const } };
     expect(await getDiscoverRecommendationsAsync(input)).toEqual(getDiscoverRecommendations(input));

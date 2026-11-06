@@ -8,6 +8,7 @@ import { perfGenderLabel, perfLog, perfNow } from '../lib/perfLog';
 import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { perfBisect } from '../lib/perfBisect';
+import { rankingSliceBudgetMs } from '../lib/rankingSliceBudget';
 import { stripLatency } from '../lib/stripLatency';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
 import { RECOMMENDATION_ENGINE_VERSION } from '../src/recommendationCache/fingerprint';
@@ -26,6 +27,7 @@ import { getProductRepository, type ProductRepository } from './productRepositor
 
 interface CachedFinal { payload: string; catalog_version: string | null; anchor_product_id: string }
 const CACHE_READ_TIMEOUT_MS = 1_200;
+const RANKING_WORK = { sliceBudgetMs: rankingSliceBudgetMs, hostPriority: 'normal' } as const;
 const preparationCaches = new WeakMap<DiscoverRecommendationCache, {
   memory: RecommendationMemoryCache;
   rankings: RankingPreparationCache<Product, PreparedDiscoverRanking>;
@@ -251,7 +253,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 try {
                   stripLatency?.prepareStart(product.id);
                   const perfPrep = perfNow();
-                  value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
+                  value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { ...RANKING_WORK, signal: rankingSignal,
                     waitForTurn: () => rankings.waitForTurn(product, rankingSignal), sliceProbe: stripLatency?.prepareProbe(product.id) })));
                   perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep, gender: perfGenderLabel(effectiveProductPref(request.productPref)) });
                   stripLatency?.prepareEnd(product.id);
@@ -273,7 +275,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
               if (prepared === undefined) break;
               if (!current(version)) break;
               const perfSel = perfNow();
-              result = await measureDiscoverStage('ranking.select', () => span('ranking_select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { signal: controller.signal })));
+              result = await measureDiscoverStage('ranking.select', () => span('ranking_select', () => completeDiscoverRecommendationsAsync(prepared, exposure, { ...RANKING_WORK, signal: controller.signal })));
               perfLog('rec_ranking_select', { ms: perfNow() - perfSel });
               // Empty-slot signal: how many complements this anchor got (0 = an empty combo).
               const complements = complementaryProductsForDisplay(result, product.id).length;

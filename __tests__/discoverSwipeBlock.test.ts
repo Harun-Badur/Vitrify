@@ -2,6 +2,7 @@ import { createElement, type ElementType, type ReactElement } from 'react';
 import { StyleSheet, Text, type ViewStyle } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import { withSpring } from 'react-native-reanimated';
+import * as rankingSliceBudget from '../lib/rankingSliceBudget';
 import { Gesture } from 'react-native-gesture-handler';
 import SwipeCard, { type SwipeCardProps } from '../components/SwipeCard';
 import { getDiscoverRecommendations } from '../src/intelligence/recommendations/getDiscoverRecommendations';
@@ -47,6 +48,8 @@ jest.mock('../components/DiscoverProductImage', () => ({
     return react.createElement('DiscoverProductImage', props);
   },
 }));
+jest.mock('../lib/rankingSliceBudget', () => ({ ...jest.requireActual('../lib/rankingSliceBudget'),
+  noteRankingTouchStart: jest.fn(), noteRankingTouchEnd: jest.fn() }));
 jest.mock('react-native-gesture-handler', () => {
   const builder = (): Record<string, jest.Mock> => {
     const chain: Record<string, jest.Mock> = {};
@@ -136,6 +139,18 @@ describe('SwipeCard exit animation ownership', () => {
     expect(withSpring).toHaveBeenCalledTimes(2);
     await renderer.act(() => { callback()(true); });
     expect(props.onPass).toHaveBeenCalledTimes(1);
+  });
+
+  it('marks the ranking slice budget interactive from touch down until the pan finalizes', async () => {
+    const touchStart = jest.mocked(rankingSliceBudget.noteRankingTouchStart);
+    const touchEnd = jest.mocked(rankingSliceBudget.noteRankingTouchEnd);
+    touchStart.mockClear(); touchEnd.mockClear();
+    const gesture = pan() as unknown as { onTouchesDown: jest.Mock; onFinalize: jest.Mock };
+    gesture.onTouchesDown.mock.calls[0][0]({ allTouches: [{ x: 1, y: 2 }] });
+    expect(touchStart).toHaveBeenCalledTimes(1);
+    expect(touchEnd).not.toHaveBeenCalled();
+    gesture.onFinalize.mock.calls[0][0]();
+    expect(touchEnd).toHaveBeenCalledTimes(1);
   });
 
   it('ignores a cancelled old callback after a newer gesture takes ownership', async () => {

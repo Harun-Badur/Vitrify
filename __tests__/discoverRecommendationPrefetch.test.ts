@@ -1,3 +1,4 @@
+import { rankingSliceBudgetMs } from '../lib/rankingSliceBudget';
 import { DiscoverRecommendationCache } from '../lib/discoverRecommendationCache';
 import { loadDiscoverRecommendationPacket } from '../services/discoverRecommendationCacheService';
 import { getProductRepository } from '../services/productRepository';
@@ -225,7 +226,8 @@ it('promotes next immediately, pauses the original ranking promise, and resumes 
     release();
     await until(() => state.session.lookup(state.products[0]) !== undefined);
     expect(prepare.mock.calls.filter(([input]) => input.requiredCatalogProductId === top.id)).toHaveLength(1);
-    expect(prepare.mock.calls.every(([, options]) => options?.budgetMs === undefined && options?.sliceBudgetMs === undefined)).toBe(true);
+    expect(prepare.mock.calls.every(([, options]) => options?.budgetMs === undefined && options?.sliceBudgetMs === rankingSliceBudgetMs
+      && options?.hostPriority === 'normal')).toBe(true);
   } finally { release(); state.controller.abort(); await state.done; }
 });
 

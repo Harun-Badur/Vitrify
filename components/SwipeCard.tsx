@@ -60,6 +60,7 @@ import {
   shouldCommitUndo,
 } from '../lib/motion';
 import { perfBisect } from '../lib/perfBisect';
+import { noteRankingTouchEnd, noteRankingTouchStart } from '../lib/rankingSliceBudget';
 import { perfColdStartFirstCard, perfEnabled, perfHasPendingSwipe, perfLog, perfCountRender, perfMeasuring, perfNow, perfPeekSwipe, perfRenderFields, perfTakeRefreshImage, perfTakeSwipe } from '../lib/perfLog';
 import { IMPRESSION_MIN_DWELL_MS, type LikeInputSource } from '../types/analytics';
 import {
@@ -517,6 +518,7 @@ function SwipeCard({
       panStartX.value = touch.x;
       panStartY.value = touch.y;
       panAxisDecided.value = false;
+      runOnJS(noteRankingTouchStart)();
     })
     .onTouchesMove((event, stateManager) => {
       if (panAxisDecided.value) return;
@@ -583,6 +585,9 @@ function SwipeCard({
       }
 
       snapHome();
+    })
+    .onFinalize(() => {
+      runOnJS(noteRankingTouchEnd)();
     });
 
   const openInsight = useCallback((): void => setIsInsightOpen(true), []);
