@@ -13,6 +13,8 @@ export interface CooperativeWorkOptions {
   /** Pause off-window preparation without discarding its generator/promise. */
   waitForTurn?: () => Promise<void>;
   recommendationMemo?: RecommendationMemo;
+  /** Diagnosis only: time spent in each work slice, host yield and turn wait. Never changes scheduling. */
+  sliceProbe?: (kind: 'slice' | 'yield' | 'turn', ms: number) => void;
 }
 
 const aborted = (): Error => Object.assign(new Error('Work cancelled'), { name: 'AbortError' });
@@ -69,16 +71,26 @@ export const runSynchronously = <T>(work: Generator<void, T, void>): T => {
 export const runCooperatively = async <T>(
   work: Generator<void, T, void>, options: CooperativeWorkOptions = {},
 ): Promise<T> => {
-  const { signal } = options;
+  const { signal, sliceProbe } = options;
+  const yieldProbed = async (): Promise<void> => {
+    if (!sliceProbe) return yieldToHost(signal);
+    const yielded = performance.now();
+    await yieldToHost(signal);
+    sliceProbe('yield', performance.now() - yielded);
+  };
   const diagnostic = __DEV__ ? options.diagnosticStage : undefined;
   const totalStarted = diagnostic ? performance.now() : 0;
   let cpuMs = 0, maxSliceMs = 0, completed = false, slices = 0, perfCpuMs = 0;
   // Measurement reuses the clock reads the scheduler already makes; it adds none of its own.
   let perfStarted = -1, lastRead = 0;
   try {
-    await yieldToHost(signal);
+    await yieldProbed();
     for (;;) {
-      if (options.waitForTurn) await options.waitForTurn();
+      if (options.waitForTurn) {
+        const waited = sliceProbe ? performance.now() : 0;
+        await options.waitForTurn();
+        sliceProbe?.('turn', performance.now() - waited);
+      }
       checkAbort(signal);
       const budget = Math.max(1, options.sliceBudgetMs?.() ?? options.budgetMs ?? 4);
       const started = performance.now();
@@ -92,6 +104,7 @@ export const runCooperatively = async <T>(
           if (lastRead - started >= budget) break;
         }
       } finally {
+        sliceProbe?.('slice', performance.now() - started);
         if (perfEnabled()) {
           const sliceMs = lastRead - started;
           slices += 1;
@@ -103,7 +116,7 @@ export const runCooperatively = async <T>(
           cpuMs += elapsed; maxSliceMs = Math.max(maxSliceMs, elapsed);
         }
       }
-      await yieldToHost(signal);
+      await yieldProbed();
     }
   } finally {
     if (perfEnabled() && completed) {
