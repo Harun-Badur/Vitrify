@@ -95,6 +95,8 @@ const sharedTokens = (
   readTokens: (item: OutfitCandidateItem) => string[],
 ): string[] => {
   const tokens = items.map(item => readTokens(item));
+  // Catalog items never carry style tags: without any token nothing can be shared, so skip the key.
+  if (tokens.every(list => list.length === 0)) return [];
   let key = kind;
   for (let index = 0; index < items.length; index++) {
     const item = items[index];

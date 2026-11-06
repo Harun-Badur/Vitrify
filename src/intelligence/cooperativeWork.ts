@@ -132,6 +132,9 @@ export const runCooperatively = async <T>(
   }
 };
 
+// One comparison is far cheaper than a generator step; a checkpoint per element dominated large sorts.
+const SORT_CHECKPOINT_MASK = 63;
+
 /** Stable ordering, including comparator ties, with checkpoints inside the sort. */
 export function* cooperativeSort<T>(
   values: T[], compare: (left: T, right: T) => number,
@@ -146,7 +149,7 @@ export function* cooperativeSort<T>(
       for (let index = start; index < end; index++) {
         target[index] = left < middle && (right >= end || compare(source[left], source[right]) <= 0)
           ? source[left++] : source[right++];
-        yield;
+        if ((index & SORT_CHECKPOINT_MASK) === 0) yield;
       }
     }
     [source, target] = [target, source];

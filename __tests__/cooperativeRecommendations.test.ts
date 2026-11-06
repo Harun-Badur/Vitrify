@@ -61,6 +61,22 @@ describe('cooperative recommendation work', () => {
     expect(events).toEqual([['yield', 0], ['turn', 7], ['slice', 5], ['yield', 0], ['turn', 7], ['slice', 3]]);
   });
 
+  it('checks in rarely while sorting: a sort is most of the generator steps of a large band', () => {
+    const values = Array.from({ length: 1024 }, (_, index) => (index * 37) % 1024);
+    const sort = cooperativeSort([...values], (left, right) => left - right);
+    let steps = 0, step = sort.next();
+    while (!step.done) { steps++; step = sort.next(); }
+    expect(step.value).toEqual([...values].sort((left, right) => left - right));
+    // 1024 elements over 10 merge passes, one check-in per 64 merged elements.
+    expect(steps).toBe(160);
+  });
+
+  it.each([0, 1, 2, 63, 64, 65, 1000])('keeps stable ties for %i elements', length => {
+    const entries = Array.from({ length }, (_, index) => ({ index, score: index % 3 }));
+    const compare = (left: typeof entries[number], right: typeof entries[number]): number => left.score - right.score;
+    expect(runSynchronously(cooperativeSort([...entries], compare))).toEqual([...entries].sort(compare));
+  });
+
   it('keeps native stable-sort ordering for comparator ties', async () => {
     const entries = catalog.map((product, index) => ({ product, score: index % 3 }));
     const compare = (a: typeof entries[number], b: typeof entries[number]): number => a.score - b.score;
