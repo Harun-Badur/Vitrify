@@ -11,7 +11,7 @@ import { hasCoreFootwear } from '../pairing/outfitRules.ts';
 import type { Product } from '../../../types/product';
 import { catalogCompatibility, catalogSemanticKey } from './catalogCompatibility';
 import { cooperativeSort, runCooperatively, runSynchronously, type CooperativeWorkOptions } from '../cooperativeWork';
-import { searchOutfitCandidatesAsync, type OutfitCandidateInput } from './generateOutfitCandidates';
+import { outfitCandidateFromItems, searchOutfitCandidatesAsync, type OutfitCandidateInput } from './generateOutfitCandidates';
 import { perfLog } from '../../../lib/perfLog';
 import { BAND_CAP_LIMIT, capCatalogBand, presentOptionalRoles } from './bandCap';
 
@@ -126,6 +126,38 @@ export const rankOutfitCandidatesAsync = <T extends WardrobeItemForCandidate>(
   candidates: readonly OutfitCandidate<T>[], anchor?: Product, options?: CooperativeWorkOptions,
 ): Promise<RankedOutfitCandidate<T>[]> => runCooperatively(rankingWork(candidates, anchor, true), options);
 
+/**
+ * The firstOnly diversity band as bare leaves, in search order. Every leaf shares the band's footwear,
+ * optional count and style count, so only compatibility separates them for selection. Ranked entries
+ * are built from these leaves only where they are read: selection needs just the small final subset.
+ */
+export interface DiversityBand<T extends WardrobeItemForCandidate = WardrobeItemForCandidate> {
+  anchor: Product;
+  leaves: (readonly OutfitCandidateItem<T>[])[];
+  /** compatibilityForItems of the leaf at the same index; search order already is ranking's item order. */
+  compatibility: number[];
+}
+
+/** Candidate ID order, then the stable rank sort: the order of the whole band or of any subset of it. */
+export function* rankBandLeavesWork<T extends WardrobeItemForCandidate>(
+  leaves: readonly (readonly OutfitCandidateItem<T>[])[], anchor: Product,
+): Generator<void, RankedOutfitCandidate<T>[], void> {
+  const candidates: OutfitCandidate<T>[] = [];
+  for (const leaf of leaves) {
+    candidates.push(outfitCandidateFromItems(leaf));
+    yield;
+  }
+  const sorted = yield* cooperativeSort(candidates, (left, right) => compareText(left.id, right.id));
+  return yield* rankingWork(sorted, anchor, true);
+}
+
+export const rankDiversityBand = <T extends WardrobeItemForCandidate>(band: DiversityBand<T>): RankedOutfitCandidate<T>[] =>
+  runSynchronously(rankBandLeavesWork(band.leaves, band.anchor));
+
+export const rankDiversityBandAsync = <T extends WardrobeItemForCandidate>(
+  band: DiversityBand<T>, options?: CooperativeWorkOptions,
+): Promise<RankedOutfitCandidate<T>[]> => runCooperatively(rankBandLeavesWork(band.leaves, band.anchor), options);
+
 interface DiversityBoundary {
   footwear: number;
   optionalCount: number;
@@ -141,10 +173,10 @@ interface DiversityBoundary {
  * still evaluated by the original stable ranking for every retained candidate.
  * Full ranking of arbitrary input remains the reference path above.
  */
-export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCandidate>(
+export const findDiversityBandAsync = async <T extends WardrobeItemForCandidate>(
   fullInput: OutfitCandidateInput<T>, anchor: Product, options?: CooperativeWorkOptions,
   bandLimit = BAND_CAP_LIMIT,
-): Promise<RankedOutfitCandidate<T>[]> => {
+): Promise<DiversityBand<T>> => {
   const tokens = createOutfitRankingTokenCache();
   const scores = new WeakMap<Product, number>();
   const score = (product: Product): number => {
@@ -255,8 +287,9 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
   };
   let searchInput = { ...fullInput, maximalOnly: true };
   let boundary = await findBoundary(searchInput);
+  const band: DiversityBand<T> = { anchor, leaves: [], compatibility: [] };
   if (boundary === null) {
-    return [];
+    return band;
   }
   // The cap applies only when every present optional role fits, i.e. the band really is the cross product.
   if (capped !== fullInput.catalogProducts && boundary.optionalCount === presentOptionalRoles(fullInput)) {
@@ -266,7 +299,7 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
   }
   const threshold = boundary.compatibility - 0.12;
   // Pass two retains the complete diversity band, not a fixed number of winners.
-  const candidates = await searchOutfitCandidatesAsync(searchInput, {
+  await searchOutfitCandidatesAsync(searchInput, {
     canExtend: (items, groups, optionalCount, coreFootwear = hasCoreFootwear(items)) => {
       const remaining = future(groups), capacity = optionalCount + remaining.capacity;
       if (Number(coreFootwear || remaining.footwear) < boundary.footwear) return false;
@@ -277,14 +310,24 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
     accept: (items, optionalCount, coreFootwear = hasCoreFootwear(items)) => {
       if (Number(coreFootwear) !== boundary.footwear || optionalCount !== boundary.optionalCount) return false;
       const value = minimum(items, optionalCount, coreFootwear);
-      return value.styleCount === boundary.styleCount && value.compatibility >= threshold;
+      if (value.styleCount === boundary.styleCount && value.compatibility >= threshold) {
+        band.leaves.push(items);
+        band.compatibility.push(value.compatibility);
+      }
+      return false;
     },
   }, options);
-  perfLog('rec_band', { n: candidates.length, optional: boundary.optionalCount, footwear: boundary.footwear });
-  options?.sliceProbe?.('band', candidates.length);
-  // ID ordering before a stable rank sort is unchanged, including genuinely equal evidence.
-  return rankOutfitCandidatesAsync(candidates, anchor, options);
+  perfLog('rec_band', { n: band.leaves.length, optional: boundary.optionalCount, footwear: boundary.footwear });
+  options?.sliceProbe?.('band', band.leaves.length);
+  return band;
 };
+
+/** The whole band as ranked entries, for callers that read all of it. */
+export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCandidate>(
+  fullInput: OutfitCandidateInput<T>, anchor: Product, options?: CooperativeWorkOptions,
+  bandLimit = BAND_CAP_LIMIT,
+): Promise<RankedOutfitCandidate<T>[]> =>
+  rankDiversityBandAsync(await findDiversityBandAsync(fullInput, anchor, options, bandLimit), options);
 
 /** Same ordering as rankOutfitCandidates, without sorting when only rank 1 is used. */
 export const rankTopOutfitCandidate = <T extends WardrobeItemForCandidate>(

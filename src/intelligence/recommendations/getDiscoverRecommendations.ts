@@ -4,12 +4,15 @@ import type { WardrobeItemForCandidate } from '../outfits/outfitCandidate';
 import type { OutfitCandidateInput } from '../outfits/generateOutfitCandidates';
 import { generateOutfitCandidates, generateOutfitCandidatesAsync } from '../outfits/generateOutfitCandidates';
 import { generateWardrobeCatalogOutfits } from '../outfits/generateWardrobeCatalogOutfits';
-import { rankOutfitCandidates, rankOutfitCandidatesAsync, rankDiversityCandidatesAsync } from '../outfits/rankOutfitCandidates';
+import { findDiversityBandAsync, rankDiversityBand, rankDiversityBandAsync, rankOutfitCandidates, rankOutfitCandidatesAsync,
+  type DiversityBand } from '../outfits/rankOutfitCandidates';
+import type { RankedOutfitCandidate } from '../outfits/outfitRanking';
 import type { OutfitDiscoverRecommendation } from './discoverRecommendation';
-import { selectDiverseComplements, selectDiverseComplementsAsync } from './selectDiverseComplements';
+import { selectDiverseComplements, selectDiverseComplementsAsync, selectFromDiversityBandAsync } from './selectDiverseComplements';
 import { isCatalogPairEligible } from './catalogPairing';
 import type { CooperativeWorkOptions } from '../cooperativeWork';
-import { createRecommendationMemo } from '../../../lib/recommendationMemo';
+import { createRecommendationMemo, type RecommendationMemo } from '../../../lib/recommendationMemo';
+import type { Product } from '../../../types/product';
 import { perfLog, perfNow } from '../../../lib/perfLog';
 
 export interface DiscoverRecommendationInput<T extends WardrobeItemForCandidate>
@@ -66,10 +69,20 @@ export const getDiscoverRecommendations = <T extends WardrobeItemForCandidate>(
   }));
 };
 
+export interface PreparedDiscoverRanking<T extends WardrobeItemForCandidate = WardrobeItemForCandidate> {
+  ranked: RankedOutfitCandidate<T>[];
+  requiredProduct: Product | undefined;
+  diverse: boolean;
+  firstOnly: boolean | undefined;
+  recommendationMemo?: RecommendationMemo;
+  /** Absent on a hydrated ranking, which carries its ranked list instead. */
+  band?: DiversityBand<T>;
+}
+
 /** Exposure-independent pool, with its computation memo retained for selection. */
 export const prepareDiscoverRankingAsync = async <T extends WardrobeItemForCandidate>(
   input: DiscoverRecommendationInput<T>, options?: CooperativeWorkOptions,
-) => {
+): Promise<PreparedDiscoverRanking<T>> => {
   const workOptions: CooperativeWorkOptions = {
     ...options,
     recommendationMemo: createRecommendationMemo(),
@@ -81,28 +94,35 @@ export const prepareDiscoverRankingAsync = async <T extends WardrobeItemForCandi
     compatible: outfitInput.catalogProducts.length, wardrobe: input.wardrobeItems.length,
     gender: input.catalogFilters?.gender ?? 'none' });
   const diverse = !!(input.firstOnly && requiredProduct);
-  const ranked = diverse
-    ? await rankDiversityCandidatesAsync(outfitInput, requiredProduct!, workOptions)
-    : await rankOutfitCandidatesAsync(await generateOutfitCandidatesAsync(outfitInput, workOptions),
-      requiredProduct, workOptions);
-  return { ranked, requiredProduct, diverse, firstOnly: input.firstOnly,
-    recommendationMemo: workOptions.recommendationMemo };
+  const { firstOnly } = input, { recommendationMemo } = workOptions;
+  if (diverse) {
+    const band = await findDiversityBandAsync(outfitInput, requiredProduct!, workOptions);
+    let ranked: RankedOutfitCandidate<T>[] | undefined;
+    // Selection works on the band; ranked entries are built only for a reader of the whole list.
+    // No object spread here: the compiled spread would read the getter and build them all.
+    return { requiredProduct, diverse, firstOnly, recommendationMemo, band, get ranked() { return ranked ??= rankDiversityBand(band); } };
+  }
+  const ranked = await rankOutfitCandidatesAsync(await generateOutfitCandidatesAsync(outfitInput, workOptions),
+    requiredProduct, workOptions);
+  return { requiredProduct, diverse, firstOnly, recommendationMemo, ranked };
 };
 
-export type PreparedDiscoverRanking<T extends WardrobeItemForCandidate = WardrobeItemForCandidate> =
-  Awaited<ReturnType<typeof prepareDiscoverRankingAsync<T>>>;
 
 /** Changed exposure repeats only selection, never candidate generation or ranking. */
 export const completeDiscoverRecommendationsAsync = async <T extends WardrobeItemForCandidate>(
   prepared: PreparedDiscoverRanking<T>, exposure?: ReadonlyMap<string, number>, options?: CooperativeWorkOptions,
 ): Promise<OutfitDiscoverRecommendation<T>[]> => {
-  const { ranked, requiredProduct } = prepared;
+  const { requiredProduct } = prepared;
   if (prepared.diverse && requiredProduct) {
-    const selection = await selectDiverseComplementsAsync(ranked, requiredProduct, exposure,
-      { ...options, recommendationMemo: prepared.recommendationMemo, diagnosticStage: 'selection' });
+    const selectionOptions: CooperativeWorkOptions = { ...options, recommendationMemo: prepared.recommendationMemo, diagnosticStage: 'selection' };
+    const fromBand = prepared.band
+      ? await selectFromDiversityBandAsync(prepared.band, requiredProduct, exposure, selectionOptions) : undefined;
+    const selection = fromBand !== undefined ? fromBand : await selectDiverseComplementsAsync(
+      prepared.band ? await rankDiversityBandAsync(prepared.band, selectionOptions) : prepared.ranked, requiredProduct, exposure, selectionOptions);
     return selection ? [{ type: 'outfit', ...selection.outfit, rank: 1,
       sources: selection.outfit.candidate.sources, displayProducts: selection.products }] : [];
   }
+  const { ranked } = prepared;
   return (prepared.firstOnly ? ranked.slice(0, 1) : ranked).map(entry => ({
     type: 'outfit', ...entry, sources: entry.candidate.sources,
   }));
