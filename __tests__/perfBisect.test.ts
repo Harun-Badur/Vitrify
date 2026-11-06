@@ -5,11 +5,14 @@ describe('parsePerfBisect', () => {
     expect(parsePerfBisect(undefined)).toEqual({ active: false, flags: new Set(), unknown: [] });
   });
 
+  it('is inactive when the variable is empty or only whitespace', () => {
+    for (const raw of ['', ' ', ' \t\n ']) expect(parsePerfBisect(raw)).toEqual({ active: false, flags: new Set(), unknown: [] });
+  });
+
   it('parses a comma list, trims, ignores case-sensitive unknowns and keeps the monitor on for "on"', () => {
     expect(parsePerfBisect(' noRanking, noPublish ,,noranking,bogus')).toEqual({
       active: true, flags: new Set(['noRanking', 'noPublish']), unknown: ['noranking', 'bogus'] });
     expect(parsePerfBisect('on')).toEqual({ active: true, flags: new Set(), unknown: [] });
-    expect(parsePerfBisect('')).toEqual({ active: true, flags: new Set(), unknown: [] });
     expect(parsePerfBisect('noRanking,noPublish,noImagePrefetch,noAnalytics,noProfile,noSentryPerf').flags.size).toBe(6);
   });
 });
