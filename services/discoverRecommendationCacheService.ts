@@ -8,6 +8,7 @@ import { perfGenderLabel, perfLog, perfNow } from '../lib/perfLog';
 import { effectiveProductPref } from '../lib/productPreferenceRules';
 import { discoverPrefetchTrace } from '../lib/discoverPrefetchInstrumentation';
 import { perfBisect } from '../lib/perfBisect';
+import { stripLatency } from '../lib/stripLatency';
 import { hydrateFinal, serializeFinal } from '../src/recommendationCache/codec';
 import { RECOMMENDATION_ENGINE_VERSION } from '../src/recommendationCache/fingerprint';
 import { recommendationCacheCutoff } from '../src/recommendationCache/retention';
@@ -248,10 +249,12 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).stage(product, 'preparationStartedAt', 'ranking_miss');
                 let value: PreparedDiscoverRanking;
                 try {
+                  stripLatency?.prepareStart(product.id);
                   const perfPrep = perfNow();
                   value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
                     waitForTurn: () => rankings.waitForTurn(product, rankingSignal) })));
                   perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep, gender: perfGenderLabel(effectiveProductPref(request.productPref)) });
+                  stripLatency?.prepareEnd(product.id);
                 } catch (error) {
                   if (__DEV__ && !rankingSignal.aborted) trace?.cancel(product, attempt!, 'preparation_failed');
                   throw error;

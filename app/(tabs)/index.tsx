@@ -79,6 +79,7 @@ import { createDeckRefresher } from '../../lib/deckRefresh';
 import { canResurfacePassed, resurfacePassed } from '../../lib/resurfacePassed';
 import { BoundedRecentSet } from '../../lib/boundedRecentSet';
 import { perfBisect } from '../../lib/perfBisect';
+import { stripLatency } from '../../lib/stripLatency';
 import { effectiveProductPref, type ProductPref } from '../../lib/productPreferenceRules';
 import { DiscoverRecommendationCache } from '../../lib/discoverRecommendationCache';
 import { fingerprint } from '../../src/recommendationCache/fingerprint';
@@ -368,6 +369,7 @@ export default function FeedScreen() {
     }
     preparationInputs.current = { session: recommendationSession, products: currentProducts, feedStatus, feedPreparationRevision };
     recommendationSession.setPreparationWindow(currentProducts);
+    stripLatency?.deck(currentProducts.slice(0, 3).map(product => product.id));
     // Showing the card changes exposure, so a held entry for the next card may match now. The worker does not
     // republish unchanged cards, so re-render here (before paint) to let that card's strip and images mount.
     if (recommendationFocused.current && currentProduct && recommendationSession.activate(currentProduct)) {

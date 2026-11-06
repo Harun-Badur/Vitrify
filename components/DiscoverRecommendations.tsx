@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import DiscoverProductImage from './DiscoverProductImage';
+import { stripImageHandlers, useStripLatency } from '../lib/stripLatency';
 import { Check, Heart } from 'lucide-react-native';
 import PressableScale from './PressableScale';
 import { colors, radius, spacing } from '../lib/theme';
@@ -53,6 +54,7 @@ function DiscoverRecommendations({
   const products = useMemo(() => complementaryProductsForDisplay(
     recommendations, currentProductId,
   ), [recommendations, currentProductId]);
+  useStripLatency(currentProductId, status, products);
 
   // Faz 4 S3b: no complements means no section (no empty heading or placeholder).
   if (status === 'ready' && products.length === 0) return null;
@@ -103,6 +105,7 @@ function DiscoverRecommendations({
                         style={StyleSheet.absoluteFill}
                         cachePolicy="memory-disk"
                         accessibilityLabel={product.title}
+                        {...stripImageHandlers(currentProductId, imageUrl)}
                       />
                     ) : null}
                     {onSelectProduct ? (

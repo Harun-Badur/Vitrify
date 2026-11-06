@@ -4,6 +4,7 @@ import { createComboReadinessTracker } from '../lib/discoverPerf';
 import { perfTraceEnabled, startLongTaskWatch, stopLongTaskWatch } from '../lib/perfTrace';
 import { perfMarkSwipe } from '../lib/perfLog';
 import { perfBisectMarkSwipe } from '../lib/perfBisect';
+import { stripLatency } from '../lib/stripLatency';
 import type { Product } from '../types/product';
 
 /**
@@ -35,5 +36,5 @@ export function useDiscoverPerfTrace(
     tracker.current.update(ready);
   }, [session, current, revision]);
 
-  return useCallback(() => { perfMarkSwipe(); perfBisectMarkSwipe(); tracker.current.swipe(); }, []);
+  return useCallback(() => { perfMarkSwipe(); perfBisectMarkSwipe(); stripLatency?.swipe(); tracker.current.swipe(); }, []);
 }
