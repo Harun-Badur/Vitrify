@@ -15,7 +15,7 @@ const ROLES = ['current', 'next', '+2'] as const;
 type Role = typeof ROLES[number];
 
 interface StripState { status: StripStatus; readySince?: number; uris: readonly string[]; loaded: Map<string, number>; failed: Set<string> }
-interface Preparation { start: number; end?: number }
+interface Preparation { start: number; end?: number; cpu: number; slices: number; maxSlice: number; yieldWait: number; turnWait: number }
 interface CardRecord { id: string; role: Role; start: number; cold: boolean; done: boolean }
 type Value = number | '-' | 'pre' | 'err' | `>${number}`;
 interface Sample { swipeToReady: Value; readyToImages: Value; queueWait: Value; prepare: Value }
@@ -35,6 +35,7 @@ export function createStripLatencyTracker({ now, log, summaryEvery = 10 }: Strip
   let swiped = false;
   let rounds = 0;
   let samples = new Map<Role, Sample[]>();
+  let prepared: Preparation[] = [];
 
   const ms = (value: number): number => Math.round(Math.max(0, value));
   const waiting = (value: number): Value => `>${ms(value)}`;
@@ -165,11 +166,31 @@ export function createStripLatencyTracker({ now, log, summaryEvery = 10 }: Strip
     /** ranking.prepare began for the anchor; a retry after an abort keeps the first start. */
     prepareStart(id: string): void {
       const previous = preps.get(id);
-      if (!previous || previous.end !== undefined) preps.set(id, { start: now() });
+      if (!previous || previous.end !== undefined) preps.set(id, { start: now(), cpu: 0, slices: 0, maxSlice: 0, yieldWait: 0, turnWait: 0 });
+    },
+    /** Receives one preparation's slice, host yield and turn wait durations (see runCooperatively). */
+    prepareProbe(id: string): (kind: 'slice' | 'yield' | 'turn', duration: number) => void {
+      return (kind, duration) => {
+        const prep = preps.get(id);
+        if (!prep) return;
+        if (kind === 'yield') prep.yieldWait += duration;
+        else if (kind === 'turn') prep.turnWait += duration;
+        else { prep.cpu += duration; prep.slices += 1; prep.maxSlice = Math.max(prep.maxSlice, duration); }
+      };
     },
     prepareEnd(id: string): void {
       const prep = preps.get(id);
-      if (prep && prep.end === undefined) prep.end = now();
+      if (!prep || prep.end !== undefined) return;
+      prep.end = now();
+      const role = records.find(record => record.id === id)?.role ?? 'none';
+      log(`[BISECT] prepare role=${role} prepare_ms=${ms(prep.end - prep.start)} prepare_cpu_ms=${ms(prep.cpu)} slice_count=${prep.slices}`
+        + ` max_slice_ms=${ms(prep.maxSlice)} yield_wait_ms=${ms(prep.yieldWait)} turn_wait_ms=${ms(prep.turnWait)}`);
+      prepared.push(prep);
+      if (prepared.length < summaryEvery) return;
+      log(`[BISECT] prepare_summary n=${prepared.length} prepare_ms=${percentiles(prepared.map(entry => ms(entry.end! - entry.start)))}`
+        + ` prepare_cpu_ms=${percentiles(prepared.map(entry => ms(entry.cpu)))} slice_count=${percentiles(prepared.map(entry => entry.slices))}`
+        + ` yield_wait_ms=${percentiles(prepared.map(entry => ms(entry.yieldWait)))} turn_wait_ms=${percentiles(prepared.map(entry => ms(entry.turnWait)))}`);
+      prepared = [];
     },
   };
 }

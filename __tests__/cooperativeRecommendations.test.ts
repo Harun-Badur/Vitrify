@@ -48,6 +48,19 @@ describe('cooperative recommendation work', () => {
     expect(await getDiscoverRecommendationsAsync({ ...input, requiredCatalogProductId: 'missing', firstOnly: true })).toEqual([]);
   });
 
+  it('reports slice, host yield and turn wait durations to the probe without changing the result', async () => {
+    let clock = 0;
+    jest.spyOn(performance, 'now').mockImplementation(() => clock);
+    const events: [string, number][] = [];
+    function* work(): Generator<void, string, void> {
+      clock += 5; yield;
+      clock += 3; return 'done';
+    }
+    const turn = (): Promise<void> => { clock += 7; return Promise.resolve(); };
+    await expect(runCooperatively(work(), { budgetMs: 4, waitForTurn: turn, sliceProbe: (kind, ms) => events.push([kind, ms]) })).resolves.toBe('done');
+    expect(events).toEqual([['yield', 0], ['turn', 7], ['slice', 5], ['yield', 0], ['turn', 7], ['slice', 3]]);
+  });
+
   it('keeps native stable-sort ordering for comparator ties', async () => {
     const entries = catalog.map((product, index) => ({ product, score: index % 3 }));
     const compare = (a: typeof entries[number], b: typeof entries[number]): number => a.score - b.score;
