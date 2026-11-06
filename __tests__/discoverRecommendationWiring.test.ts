@@ -760,6 +760,10 @@ describe('Discover recommendation wiring', () => {
   const cardStatus = (view: ReturnType<typeof renderer.create>, id: string) => view.root.findAllByType('SwipeCard')
     .find(node => (node.props.product as Product).id === id)?.props.recommendationStatus;
 
+  const nextFrame = (): Promise<void> => renderer.act(async () => {
+    await new Promise<void>(resolve => { requestAnimationFrame(() => resolve()); });
+  }) as Promise<void>;
+
   it('makes the new next card ready right after a swipe without another packet, hydrate or render loop', async () => {
     const view = await mount();
     expect(cardStatus(view, bottom.id)).toBe('ready');
@@ -767,8 +771,14 @@ describe('Discover recommendation wiring', () => {
     expect(cardStatus(view, shoes.id)).toBe('loading');
     const hydrate = jest.spyOn(codec, 'hydrateFinal');
     const before = mockSwipeCardRender.mock.calls.length;
+    const frames: FrameRequestCallback[] = [];
+    const frame = jest.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(callback => frames.push(callback));
     mockState.currentProducts = catalog.slice(1);
     await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    // The off-screen strip waits for the next frame, so its mount is not part of the swipe commit.
+    expect(cardStatus(view, shoes.id)).toBe('loading');
+    frame.mockRestore();
+    await renderer.act(() => { frames.splice(0).forEach(callback => callback(0)); });
     expect(cardStatus(view, shoes.id)).toBe('ready');
     expect(loadDiscoverRecommendationPacket).toHaveBeenCalledTimes(1);
     expect(hydrate).not.toHaveBeenCalled();
@@ -776,6 +786,7 @@ describe('Discover recommendation wiring', () => {
     expect(mockSwipeCardRender.mock.calls.slice(before).filter(([id]) => id === shoes.id)).toHaveLength(2);
     const settled = mockSwipeCardRender.mock.calls.length;
     await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    await nextFrame();
     expect(mockSwipeCardRender.mock.calls.length).toBe(settled);
     hydrate.mockRestore();
   });
@@ -795,6 +806,7 @@ describe('Discover recommendation wiring', () => {
       });
       mockState.currentProducts = [...rest];
       await renderer.act(() => { view.update(createElement(FeedScreen)); });
+      await nextFrame();
       const result = host.__DISCOVER_PREFETCH_DIAGNOSTICS__.records.filter(record =>
         record.type === 'discover_prefetch_swipe_result' && record.productId === target.id).at(-1);
       rows.push({ productId: target.id, cacheAtSwipe: result?.cacheAtSwipe, waitMs: result?.waitMs, renderedAtSwipe });
