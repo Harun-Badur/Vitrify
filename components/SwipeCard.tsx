@@ -216,6 +216,9 @@ function SwipeCard({
 }: SwipeCardProps) {
   perfCountRender('card');
   const isCurrent = pageIndex === 0;
+  const offScreen = useRef(pageIndex > 0);
+  offScreen.current = pageIndex > 0;
+  const isOffScreen = useCallback((): boolean => offScreen.current, []);
   /** Pose slot index — parent atomically writes on deck remap; do not sync from React. */
   const pageIndexSV = useSharedValue<number>(pageIndex);
   // Register during render so parent useLayoutEffect sees SVs before paint.
@@ -1045,6 +1048,7 @@ function SwipeCard({
           selectedProductIds={selectedRecommendationProductIds}
           onSelectProduct={onSelectRecommendation}
           onOpenProduct={onOpenComplement && isCurrent ? handleOpenComplement : undefined}
+          staggerImagesWhile={isOffScreen}
         />
       ) : null}
       {insightChip ? (

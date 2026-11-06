@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import DiscoverProductImage from './DiscoverProductImage';
 import { stripImageHandlers, useStripLatency } from '../lib/stripLatency';
@@ -23,6 +23,11 @@ interface DiscoverRecommendationsProps {
   onSelectProduct?: (product: Product) => void;
   /** Tap on the card body (not the heart/check button): opens the product as a temporary next card. */
   onOpenProduct?: (product: Product) => void;
+  /**
+   * While true, mounts one cover per frame, so an off-screen strip is not one long JS task.
+   * A stable function, not a flag: a card turning current must not re-render its strip.
+   */
+  staggerImagesWhile?: () => boolean;
 }
 
 // UI container measurements from the approved reference, independent of bitmap fitting.
@@ -34,6 +39,24 @@ const CARD_INFO_HEIGHT = 38;
 export { complementaryProductsForDisplay } from '../src/intelligence/recommendations/complementaryProductsForDisplay';
 import { complementaryProductsForDisplay } from '../src/intelligence/recommendations/complementaryProductsForDisplay';
 
+/** Holds the cream frame for `frames` frames; only this slot re-renders. A cover once shown stays mounted. */
+function StaggeredCover({ frames, staggerWhile, children }: { frames: number; staggerWhile?: () => boolean; children: ReactNode }) {
+  const [elapsed, setElapsed] = useState(0);
+  const shown = useRef(false);
+  if (!staggerWhile?.() || elapsed >= frames) shown.current = true;
+  useEffect(() => {
+    if (shown.current) return undefined;
+    const frame = requestAnimationFrame(() => setElapsed(count => count + 1));
+    return () => cancelAnimationFrame(frame);
+  }, [elapsed]);
+  return shown.current ? children : (
+    <View
+      testID="discover-recommendation-image-pending"
+      style={[StyleSheet.absoluteFill, { backgroundColor: colors.imagePlaceholder }]}
+    />
+  );
+}
+
 function DiscoverRecommendations({
   currentProductId,
   status = 'ready',
@@ -41,6 +64,7 @@ function DiscoverRecommendations({
   selectedProductIds = [],
   onSelectProduct,
   onOpenProduct,
+  staggerImagesWhile,
 }: DiscoverRecommendationsProps) {
   const { width, height } = useWindowDimensions();
   const columnWidth = (width - spacing.lg * 2 - spacing.sm * 2) / 3;
@@ -98,15 +122,17 @@ function DiscoverRecommendations({
                     testID={`discover-recommendation-image-${product.id}`}
                   >
                     {imageUrl ? (
-                      <DiscoverProductImage
-                        uri={imageUrl}
-                        slot="recommendation"
-                        placeholderColor={colors.imagePlaceholder}
-                        style={StyleSheet.absoluteFill}
-                        cachePolicy="memory-disk"
-                        accessibilityLabel={product.title}
-                        {...stripImageHandlers(currentProductId, imageUrl)}
-                      />
+                      <StaggeredCover frames={index + 1} staggerWhile={staggerImagesWhile}>
+                        <DiscoverProductImage
+                          uri={imageUrl}
+                          slot="recommendation"
+                          placeholderColor={colors.imagePlaceholder}
+                          style={StyleSheet.absoluteFill}
+                          cachePolicy="memory-disk"
+                          accessibilityLabel={product.title}
+                          {...stripImageHandlers(currentProductId, imageUrl)}
+                        />
+                      </StaggeredCover>
                     ) : null}
                     {onSelectProduct ? (
                       <PressableScale

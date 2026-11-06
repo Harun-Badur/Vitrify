@@ -166,6 +166,44 @@ describe('Discover recommendation UI geometry', () => {
     }
   });
 
+  describe('off-screen cover mounting', () => {
+    const mountStaggered = async (staggerImagesWhile?: () => boolean): Promise<void> => {
+      await renderer.act(() => {
+        tree = renderer.create(createElement(DiscoverRecommendations, { currentProductId: top.id, recommendations, staggerImagesWhile }));
+      });
+    };
+    const images = (): number => tree.root.findAllByType('DiscoverProductImage').length;
+    const frame = (): Promise<void> => renderer.act(() => { jest.advanceTimersByTime(20); });
+    beforeEach(() => { jest.useFakeTimers(); });
+    afterEach(() => { jest.useRealTimers(); });
+
+    it('mounts one cover per frame while the card is off screen, keeping the cream frame until then', async () => {
+      await mountStaggered(() => true);
+      expect(images()).toBe(0);
+      expect(tree.root.findAllByType(View).filter(node => node.props.testID === 'discover-recommendation-image-pending')).toHaveLength(3);
+      await frame();
+      expect(images()).toBe(1);
+      await frame();
+      expect(images()).toBe(2);
+      await frame();
+      expect(images()).toBe(3);
+      expect(tree.root.findAllByType(View).filter(node => node.props.testID === 'discover-recommendation-image-pending')).toHaveLength(0);
+    });
+
+    it('shows the remaining covers on the next frame once the card is on screen', async () => {
+      let offScreen = true;
+      await mountStaggered(() => offScreen);
+      offScreen = false;
+      await frame();
+      expect(images()).toBe(3);
+    });
+
+    it('mounts every cover immediately for the current card', async () => {
+      await mountStaggered();
+      expect(images()).toBe(3);
+    });
+  });
+
   it('gives every strip image the neutral cream loading placeholder', async () => {
     await mount();
     const images = tree.root.findAllByType('DiscoverProductImage');
