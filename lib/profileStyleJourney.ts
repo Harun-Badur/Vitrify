@@ -39,7 +39,7 @@ export interface StyleJourney {
   status: DiscoveryStatus;
   notice: string | null;
   insightNotice?: string;
-  /** loading: first read of the calculated profile; error: it could not be verified for this owner. */
+  /** loading: first read of the calculated profile; error: it (or the session sync it waits for) failed for this owner. */
   insightState: 'ready' | 'loading' | 'error';
   ready: { ratings: boolean; wardrobe: boolean };
   counts: { evaluations: number; wardrobe: number; outfits: number; declared: number;
@@ -128,7 +128,7 @@ export function buildStyleJourney(input: StyleJourneyInput): StyleJourney {
   const supplied = input.calculatedProfile;
   const backendInsights = Boolean(supplied && !(supplied.state==='ready' && owned
     && supplied.profile.snapshot.userId===input.userId && supplied.profile.algorithm==='v1'));
-  const insightState: StyleJourney['insightState'] = !supplied ? 'ready'
+  const insightState: StyleJourney['insightState'] = owned && input.sessionSyncStatus === 'error' ? 'error' : !supplied ? 'ready'
     : supplied.state === 'ready' && owned && supplied.profile.snapshot.userId === input.userId ? 'ready'
       : supplied.state === 'loading' ? 'loading' : 'error';
   const result: StyleJourney = { percent, counts, task, notice, insightState, declaredItems, declaredValues,

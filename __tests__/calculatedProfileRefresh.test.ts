@@ -1,4 +1,4 @@
-import { refreshStartState } from '../lib/calculatedProfileRefresh';
+import { calculatedRetryAction, refreshStartState } from '../lib/calculatedProfileRefresh';
 import { emptyStyleProfile } from '../lib/scoring';
 import type { CalculatedStyleProfileState } from '../types/calculatedStyleProfile';
 
@@ -21,5 +21,18 @@ describe('refreshStartState', () => {
   test('retry always shows loading', () => {
     expect(refreshStartState(ready, 'retry')).toEqual({ state: 'loading' });
     expect(refreshStartState({ state: 'error' }, 'retry')).toEqual({ state: 'loading' });
+  });
+});
+
+describe('calculatedRetryAction', () => {
+  test('a running focus refresh is simply retried', () => {
+    expect(calculatedRetryAction(true, 'success')).toBe('refresh');
+  });
+  test('a failed session sync is repeated: its success starts the profile read', () => {
+    expect(calculatedRetryAction(false, 'error')).toBe('resync');
+  });
+  test('nothing to do while the sync is still open', () => {
+    expect(calculatedRetryAction(false, 'loading')).toBe('none');
+    expect(calculatedRetryAction(false, 'idle')).toBe('none');
   });
 });

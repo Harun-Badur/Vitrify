@@ -21,3 +21,10 @@ test('the style journey is rebuilt only while focused (last result kept while bl
   expect(profile).toMatch(/focused \|\| !journeyRef\.current\s*\?\s*buildStyleJourney\(/);
   expect(profile).toMatch(/\[focused, userId, sessionUserId, sessionSyncStatus, wardrobeStatus, likedProducts, passedProductIds, wardrobeItems, savedOutfits, studio, calculatedProfile\]/);
 });
+
+test('Yeniden dene repeats a failed session sync, whose success restarts the profile read', () => {
+  expect(profile).toMatch(/calculatedRetryAction\(refreshRef\.current !== null, sessionSyncStatus\)/);
+  expect(profile).toMatch(/action === 'resync' && userId\) void hydrateSession\(userId\)/);
+  expect(profile).toContain("if (!userId || userId !== sessionUserId || sessionSyncStatus !== 'success') return;");
+  expect(profile).toMatch(/\[userId, sessionUserId, sessionSyncStatus, studio\]\)\);/);
+});
