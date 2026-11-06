@@ -249,7 +249,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                 if (__DEV__) discoverPrefetchTrace(session).stage(product, 'preparationStartedAt', 'ranking_miss');
                 let value: PreparedDiscoverRanking;
                 try {
-                  stripLatency?.prepareStart(product.id);
+                  stripLatency?.prepareStart(product.id, effectiveProductPref(request.productPref));
                   const perfPrep = perfNow();
                   value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
                     waitForTurn: () => rankings.waitForTurn(product, rankingSignal), sliceProbe: stripLatency?.prepareProbe(product.id) })));

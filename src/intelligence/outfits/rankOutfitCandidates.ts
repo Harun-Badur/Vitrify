@@ -281,6 +281,7 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
     },
   }, options);
   perfLog('rec_band', { n: candidates.length, optional: boundary.optionalCount, footwear: boundary.footwear });
+  options?.sliceProbe?.('band', candidates.length);
   // ID ordering before a stable rank sort is unchanged, including genuinely equal evidence.
   return rankOutfitCandidatesAsync(candidates, anchor, options);
 };
