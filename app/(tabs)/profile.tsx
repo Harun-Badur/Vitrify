@@ -63,7 +63,7 @@ import { PROFILE_MENU_LABEL, PROFILE_SECTION_GAP, colors, radius, spacing } from
 import { initials } from '../../lib/profileDisplay';
 import { buildStyleJourney, type JourneyTarget, type StyleJourney } from '../../lib/profileStyleJourney';
 import { fetchCalculatedStyleProfile, subscribeStyleProfileChanges } from '../../lib/recsConfig';
-import { refreshStartState, type CalculatedRefreshReason } from '../../lib/calculatedProfileRefresh';
+import { calculatedRetryAction, refreshStartState, type CalculatedRefreshReason } from '../../lib/calculatedProfileRefresh';
 import type { CalculatedStyleProfileState } from '../../types/calculatedStyleProfile';
 import { LOW_RES_MODEL_PHOTO_HINT } from '../../lib/vtonPersonImage';
 import { completeAccountDeletion, AccountDeletionPendingError } from '../../services/accountService';
@@ -170,6 +170,7 @@ export default function ProfileScreen() {
     }));
   const sessionUserId = useAppStore((state) => state.sessionUserId);
   const sessionSyncStatus = useAppStore((state) => state.sessionSyncStatus);
+  const hydrateSession = useAppStore((state) => state.hydrateSession);
   const wardrobeStatus = useAppStore((state) => state.wardrobeStatus);
   const [account, setAccount] = useOwnedState<AccountDetails | null>(userId, null);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -233,7 +234,11 @@ export default function ProfileScreen() {
     refresh('focus');
     return () => { active=false; refreshRef.current = null; unsubscribe(); };
   }, [userId, sessionUserId, sessionSyncStatus, studio]));
-  const handleRetryCalculated = useCallback(() => { refreshRef.current?.('retry'); }, []);
+  const handleRetryCalculated = useCallback(() => {
+    const action = calculatedRetryAction(refreshRef.current !== null, sessionSyncStatus);
+    if (action === 'refresh') refreshRef.current?.('retry');
+    else if (action === 'resync' && userId) void hydrateSession(userId);
+  }, [hydrateSession, sessionSyncStatus, userId]);
   useEffect(() => cancelScheduledFeedRefreshOnOwnerChange(sessionUserId), [sessionUserId]);
   const journeyRef = useRef<StyleJourney | null>(null);
   const journey = useMemo(() => focused || !journeyRef.current ? buildStyleJourney({ userId, sessionUserId, sessionSyncStatus,

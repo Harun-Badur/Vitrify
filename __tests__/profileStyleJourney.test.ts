@@ -88,6 +88,12 @@ test('insightState tells loading, error and ready apart; a foreign owner is an e
   expect(buildStyleJourney(input()).insightState).toBe('ready');
   expect(buildStyleJourney(input({ userId: 'B', calculatedProfile: ready })).insightState).toBe('error');
 });
+test('a failed session sync is an insight error for the owner, whatever the calculated profile state', () => {
+  expect(buildStyleJourney(input({ sessionSyncStatus: 'error' })).insightState).toBe('error');
+  expect(buildStyleJourney(input({ sessionSyncStatus: 'error', calculatedProfile: { state: 'loading' } })).insightState).toBe('error');
+  expect(buildStyleJourney(input({ sessionSyncStatus: 'loading', calculatedProfile: { state: 'loading' } })).insightState).toBe('loading');
+  expect(buildStyleJourney(input({ userId: null, sessionUserId: null, sessionSyncStatus: 'error' })).insightState).toBe('ready');
+});
 test('backend insights carry the raw top values next to the display labels', () => {
   const calculatedProfile = { state: 'ready' as const, profile: { snapshot: { ...emptyStyleProfile('A'), colorW: { navy: 1, siyah: 0.5 } },
     algorithm: 'v2' as const, eventCount: 3, computedAt: null } };

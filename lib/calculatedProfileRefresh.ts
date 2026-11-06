@@ -1,3 +1,4 @@
+import type { SessionSyncStatus } from '../store/profileSlice';
 import type { CalculatedStyleProfileState } from '../types/calculatedStyleProfile';
 
 export type CalculatedRefreshReason = 'focus' | 'changed' | 'retry';
@@ -12,4 +13,14 @@ export function refreshStartState(
 ): CalculatedStyleProfileState | null {
   if (reason === 'focus' && previous.state === 'ready') return null;
   return { state: 'loading' };
+}
+
+/** What "Yeniden dene" does. The profile read starts only after a successful session sync,
+ * so a failed sync is repeated first; its success starts the read through the focus effect.
+ */
+export function calculatedRetryAction(
+  canRefresh: boolean, sessionSyncStatus: SessionSyncStatus,
+): 'refresh' | 'resync' | 'none' {
+  if (canRefresh) return 'refresh';
+  return sessionSyncStatus === 'error' ? 'resync' : 'none';
 }

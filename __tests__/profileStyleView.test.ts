@@ -182,6 +182,12 @@ describe('style grid', () => {
     expect(grid.errorText).toBe('Stil profilin doğrulanamadı.');
     expect(JSON.stringify(grid)).not.toContain('Keşfediliyor');
   });
+  test('a failed session sync shows the error state, not endless "Yükleniyor" boxes', () => {
+    const grid = buildStyleGrid(buildStyleJourney(input({ sessionSyncStatus: 'error', calculatedProfile: { state: 'loading' } })));
+    expect(grid.state).toBe('error');
+    expect(grid.tiles).toEqual([]);
+    expect(grid.errorText).toBe('Stil profilin doğrulanamadı.');
+  });
   test('first load is loading, not an error', () => {
     const grid = buildStyleGrid(buildStyleJourney(input({ calculatedProfile: { state: 'loading' } })));
     expect(grid.state).toBe('loading');

@@ -1,7 +1,7 @@
 /**
- * Diagnosis only (perf/bisect-flags, never merged). Active only when the bundle was started with
- * EXPO_PUBLIC_PERF_BISECT defined: a comma list of flags that switch off one subsystem each, or "on"
- * for the stall monitor alone. Without the variable every export is a no-op and behavior is unchanged.
+ * Diagnosis only; ships in release bundles but stays inert. Active only when the bundle was started with
+ * EXPO_PUBLIC_PERF_BISECT set: a comma list of flags that switch off one subsystem each, or "on" for the
+ * stall monitor alone. Unset, empty or blank, every export is a no-op and behavior is unchanged.
  * Logs carry numbers and closed flag names only.
  */
 export const PERF_BISECT_FLAGS = ['noRanking', 'noPublish', 'noImagePrefetch', 'noAnalytics', 'noProfile', 'noSentryPerf'] as const;
@@ -10,7 +10,7 @@ export type PerfBisectFlag = typeof PERF_BISECT_FLAGS[number];
 export interface PerfBisectConfig { active: boolean; flags: ReadonlySet<PerfBisectFlag>; unknown: string[] }
 
 export const parsePerfBisect = (raw: string | undefined): PerfBisectConfig => {
-  if (raw === undefined) return { active: false, flags: new Set(), unknown: [] };
+  if (raw === undefined || raw.trim() === '') return { active: false, flags: new Set(), unknown: [] };
   const flags = new Set<PerfBisectFlag>();
   const unknown: string[] = [];
   for (const token of raw.split(',').map(part => part.trim()).filter(Boolean)) {
@@ -25,7 +25,7 @@ const config = parsePerfBisect(process.env.EXPO_PUBLIC_PERF_BISECT);
 
 export const perfBisect = (flag: PerfBisectFlag): boolean => config.flags.has(flag);
 
-/** True when the bundle was started with EXPO_PUBLIC_PERF_BISECT defined (any value). */
+/** True when the bundle was started with a non-blank EXPO_PUBLIC_PERF_BISECT. */
 export const perfBisectActive = config.active;
 
 const TICK_MS = 50;
