@@ -252,7 +252,7 @@ async function prepareWindow(request: FeedPacketRequest, ownerId: string | null,
                   stripLatency?.prepareStart(product.id);
                   const perfPrep = perfNow();
                   value = await measureDiscoverStage('ranking.prepare', () => span('ranking_prepare', () => prepareDiscoverRankingAsync(context.input, { signal: rankingSignal,
-                    waitForTurn: () => rankings.waitForTurn(product, rankingSignal) })));
+                    waitForTurn: () => rankings.waitForTurn(product, rankingSignal), sliceProbe: stripLatency?.prepareProbe(product.id) })));
                   perfLog('rec_ranking_prepare', { ms: perfNow() - perfPrep, gender: perfGenderLabel(effectiveProductPref(request.productPref)) });
                   stripLatency?.prepareEnd(product.id);
                 } catch (error) {

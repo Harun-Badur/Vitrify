@@ -14,6 +14,40 @@ function harness(summaryEvery = 10) {
 const strips = (lines: string[]) => lines.filter(line => line.startsWith('[BISECT] strip '));
 
 describe('createStripLatencyTracker', () => {
+  it('splits one ranking.prepare into CPU slices, host yield wait and turn wait, one line per preparation', () => {
+    const { tracker, lines, at } = harness();
+    tracker.deck(['a', 'b']);
+    at(100); tracker.prepareStart('b');
+    const probe = tracker.prepareProbe('b');
+    probe('yield', 30); probe('slice', 4); probe('yield', 50); probe('turn', 200); probe('slice', 6); probe('yield', 10); probe('slice', 2);
+    at(400); tracker.prepareEnd('b');
+    expect(lines).toEqual(['[BISECT] prepare role=next prepare_ms=300 prepare_cpu_ms=12 slice_count=3 max_slice_ms=6 yield_wait_ms=90 turn_wait_ms=200']);
+  });
+
+  it('keeps counting across a retried preparation and reports a card off the deck as role=none', () => {
+    const { tracker, lines, at } = harness();
+    tracker.deck(['a']);
+    tracker.prepareStart('z');
+    tracker.prepareProbe('z')('slice', 5);
+    at(10); tracker.prepareStart('z');
+    tracker.prepareProbe('z')('slice', 3);
+    at(20); tracker.prepareEnd('z');
+    expect(lines).toEqual(['[BISECT] prepare role=none prepare_ms=20 prepare_cpu_ms=8 slice_count=2 max_slice_ms=5 yield_wait_ms=0 turn_wait_ms=0']);
+  });
+
+  it('summarizes every 10 preparations with median and p90', () => {
+    const { tracker, lines, at } = harness();
+    tracker.deck(['a']);
+    for (let index = 1; index <= 10; index++) {
+      at(index * 1000); tracker.prepareStart('a');
+      const probe = tracker.prepareProbe('a');
+      probe('slice', index); probe('yield', index * 10);
+      at(index * 1000 + index * 100); tracker.prepareEnd('a');
+    }
+    expect(lines.filter(line => line.startsWith('[BISECT] prepare_summary'))).toEqual([
+      '[BISECT] prepare_summary n=10 prepare_ms=p50:500/p90:900 prepare_cpu_ms=p50:5/p90:9 slice_count=p50:1/p90:1 yield_wait_ms=p50:50/p90:90 turn_wait_ms=p50:0/p90:0']);
+  });
+
   it('measures swipe → ready strip → all cover images per role, with queue wait and prepare time', () => {
     const { tracker, lines, at } = harness();
     // Cold open: no swipe yet, so the deck appearing is the start.
@@ -186,6 +220,12 @@ describe('strip latency wiring', () => {
     const { strip, service, cache, repo } = modules!;
     const started = jest.spyOn(strip.stripLatency!, 'prepareStart');
     const ended = jest.spyOn(strip.stripLatency!, 'prepareEnd');
+    const reported = new Set<string>();
+    const realProbe = strip.stripLatency!.prepareProbe;
+    const probe = jest.spyOn(strip.stripLatency!, 'prepareProbe').mockImplementation(id => {
+      const inner = realProbe(id);
+      return (kind, ms) => { reported.add(kind); inner(kind, ms); };
+    });
     const products = repo.getProductRepository().register([anchor, product('bottom', 'bottom', 'lower_body'),
       product('shoes', 'shoes', 'shoes')]);
     const session = new cache.DiscoverRecommendationCache(products, [], null);
@@ -200,6 +240,8 @@ describe('strip latency wiring', () => {
     expect(published).toBe(true);
     expect(started.mock.calls).toEqual([[anchor.id]]);
     expect(ended.mock.calls).toEqual([[anchor.id]]);
+    expect(probe.mock.calls).toEqual([[anchor.id]]);
+    expect(reported.has('slice') && reported.has('yield')).toBe(true);
     controller.abort(); await done;
   });
 });
