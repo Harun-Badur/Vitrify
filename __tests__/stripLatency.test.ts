@@ -17,35 +17,35 @@ describe('createStripLatencyTracker', () => {
   it('splits one ranking.prepare into CPU slices, host yield wait and turn wait, one line per preparation', () => {
     const { tracker, lines, at } = harness();
     tracker.deck(['a', 'b']);
-    at(100); tracker.prepareStart('b');
+    at(100); tracker.prepareStart('b', 'kadin');
     const probe = tracker.prepareProbe('b');
-    probe('yield', 30); probe('slice', 4); probe('yield', 50); probe('turn', 200); probe('slice', 6); probe('yield', 10); probe('slice', 2);
+    probe('yield', 30); probe('slice', 4); probe('yield', 50); probe('turn', 200); probe('slice', 6); probe('yield', 10); probe('slice', 2); probe('band', 3072);
     at(400); tracker.prepareEnd('b');
-    expect(lines).toEqual(['[BISECT] prepare role=next prepare_ms=300 prepare_cpu_ms=12 slice_count=3 max_slice_ms=6 yield_wait_ms=90 turn_wait_ms=200']);
+    expect(lines).toEqual(['[BISECT] prepare role=next pref=kadin band=3072 prepare_ms=300 prepare_cpu_ms=12 slice_count=3 max_slice_ms=6 yield_wait_ms=90 turn_wait_ms=200']);
   });
 
   it('keeps counting across a retried preparation and reports a card off the deck as role=none', () => {
     const { tracker, lines, at } = harness();
     tracker.deck(['a']);
-    tracker.prepareStart('z');
+    tracker.prepareStart('z', 'hepsi');
     tracker.prepareProbe('z')('slice', 5);
-    at(10); tracker.prepareStart('z');
+    at(10); tracker.prepareStart('z', 'hepsi');
     tracker.prepareProbe('z')('slice', 3);
     at(20); tracker.prepareEnd('z');
-    expect(lines).toEqual(['[BISECT] prepare role=none prepare_ms=20 prepare_cpu_ms=8 slice_count=2 max_slice_ms=5 yield_wait_ms=0 turn_wait_ms=0']);
+    expect(lines).toEqual(['[BISECT] prepare role=none pref=hepsi band=- prepare_ms=20 prepare_cpu_ms=8 slice_count=2 max_slice_ms=5 yield_wait_ms=0 turn_wait_ms=0']);
   });
 
   it('summarizes every 10 preparations with median and p90', () => {
     const { tracker, lines, at } = harness();
     tracker.deck(['a']);
     for (let index = 1; index <= 10; index++) {
-      at(index * 1000); tracker.prepareStart('a');
+      at(index * 1000); tracker.prepareStart('a', 'erkek');
       const probe = tracker.prepareProbe('a');
-      probe('slice', index); probe('yield', index * 10);
+      probe('slice', index); probe('yield', index * 10); probe('band', index * 100);
       at(index * 1000 + index * 100); tracker.prepareEnd('a');
     }
     expect(lines.filter(line => line.startsWith('[BISECT] prepare_summary'))).toEqual([
-      '[BISECT] prepare_summary n=10 prepare_ms=p50:500/p90:900 prepare_cpu_ms=p50:5/p90:9 slice_count=p50:1/p90:1 yield_wait_ms=p50:50/p90:90 turn_wait_ms=p50:0/p90:0']);
+      '[BISECT] prepare_summary pref=erkek n=10 band=p50:500/p90:900 prepare_ms=p50:500/p90:900 prepare_cpu_ms=p50:5/p90:9 slice_count=p50:1/p90:1 yield_wait_ms=p50:50/p90:90 turn_wait_ms=p50:0/p90:0']);
   });
 
   it('measures swipe → ready strip → all cover images per role, with queue wait and prepare time', () => {
@@ -56,14 +56,14 @@ describe('createStripLatencyTracker', () => {
     at(9); ['a1', 'a2', 'a3'].forEach(uri => tracker.imageLoaded('a', uri));
     expect(strips(lines)).toEqual(['[BISECT] strip role=current swipe_to_ready_ms=5 ready_to_images_ms=4 queue_wait_ms=- prepare_ms=- cold=true']);
 
-    at(20); tracker.prepareStart('b');
+    at(20); tracker.prepareStart('b', 'hepsi');
     at(70); tracker.prepareEnd('b');
     at(80); tracker.strip('b', 'ready', ['b1', 'b2']);
     at(100); tracker.imageLoaded('b', 'b1'); tracker.imageLoaded('b', 'b2');
     at(1000); tracker.swipe();
     at(1004); tracker.deck(['b', 'c', 'd']);
     // b was ready with loaded images before the swipe; c and d were not.
-    at(1010); tracker.prepareStart('d');
+    at(1010); tracker.prepareStart('d', 'hepsi');
     at(1030); tracker.strip('c', 'ready', ['c1']);
     at(1100); tracker.imageLoaded('c', 'c1');
     at(1250); tracker.prepareEnd('d');
@@ -84,7 +84,7 @@ describe('createStripLatencyTracker', () => {
     tracker.deck(['a', 'b']);
     at(10); tracker.swipe(); tracker.deck(['b', 'c']);
     at(15); tracker.strip('b', 'loading', []);
-    at(40); tracker.prepareStart('c');
+    at(40); tracker.prepareStart('c', 'hepsi');
     at(60); tracker.strip('c', 'ready', ['c1', 'c2']);
     at(70); tracker.imageLoaded('c', 'c1');
     at(500); tracker.swipe(); tracker.deck(['c', 'd']);
@@ -238,10 +238,10 @@ describe('strip latency wiring', () => {
     const deadline = Date.now() + 5000;
     while (!published && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 5));
     expect(published).toBe(true);
-    expect(started.mock.calls).toEqual([[anchor.id]]);
+    expect(started.mock.calls).toEqual([[anchor.id, 'hepsi']]);
     expect(ended.mock.calls).toEqual([[anchor.id]]);
     expect(probe.mock.calls).toEqual([[anchor.id]]);
-    expect(reported.has('slice') && reported.has('yield')).toBe(true);
+    expect(reported.has('slice') && reported.has('yield') && reported.has('band')).toBe(true);
     controller.abort(); await done;
   });
 });

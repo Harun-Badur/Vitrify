@@ -13,8 +13,8 @@ export interface CooperativeWorkOptions {
   /** Pause off-window preparation without discarding its generator/promise. */
   waitForTurn?: () => Promise<void>;
   recommendationMemo?: RecommendationMemo;
-  /** Diagnosis only: time spent in each work slice, host yield and turn wait. Never changes scheduling. */
-  sliceProbe?: (kind: 'slice' | 'yield' | 'turn', ms: number) => void;
+  /** Diagnosis only: time spent in each work slice, host yield and turn wait, and the candidate band size. Never changes scheduling. */
+  sliceProbe?: (kind: 'slice' | 'yield' | 'turn' | 'band', value: number) => void;
 }
 
 const aborted = (): Error => Object.assign(new Error('Work cancelled'), { name: 'AbortError' });
