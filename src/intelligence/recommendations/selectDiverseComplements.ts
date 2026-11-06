@@ -4,7 +4,7 @@ import type { WardrobeItemForCandidate } from '../outfits/outfitCandidate';
 import { hasCoreFootwear } from '../pairing/outfitRules.ts';
 import type { RankedOutfitCandidate } from '../outfits/outfitRanking';
 import { catalogCompatibility, catalogSemanticKey, sameCatalogProduct } from '../outfits/catalogCompatibility';
-import { isCatalogPairEligible } from './catalogPairing';
+import { createPairEligibilityMemo } from './catalogPairing';
 import { runCooperatively, runSynchronously, type CooperativeWorkOptions } from '../cooperativeWork';
 
 export interface ComplementSelection<T extends WardrobeItemForCandidate> {
@@ -40,6 +40,8 @@ function* selectionWork<T extends WardrobeItemForCandidate>(
   }
   const selected: Product[] = [], roles = new Set<OutfitRole>();
   const itemScores = new Map<Product, number>();
+  // Every outfit repeats the same products; a pair is judged once per run.
+  const eligible = createPairEligibilityMemo();
   for (let slot = 0; slot < MAX_COMPLEMENTS; slot++) {
     const choices = new Map<string, Product>();
     for (const entry of compatible) for (const item of entry.candidate.items) {
@@ -47,8 +49,8 @@ function* selectionWork<T extends WardrobeItemForCandidate>(
         // Pairing decides against the anchor and every complement already chosen; a slot with no
         // eligible product stays empty (0-3 complements, never force-filled).
         if (item.sourceType === 'catalog' && !choices.has(item.sourceId) && !roles.has(item.role)
-          && isCatalogPairEligible(anchor, item.product)
-          && selected.every((chosen) => isCatalogPairEligible(chosen, item.product))) choices.set(item.sourceId, item.product);
+          && eligible(anchor, item.product)
+          && selected.every((chosen) => eligible(chosen, item.product))) choices.set(item.sourceId, item.product);
 
       yield;
     }

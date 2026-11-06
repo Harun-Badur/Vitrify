@@ -70,3 +70,27 @@ export const catalogPairDecision = (
 /** Only eligible pairs are shown; rejected and uncertain (insufficient evidence) pairs are not. */
 export const isCatalogPairEligible = (anchor: Product, candidate: Product): boolean =>
   productComboRelation(anchor, candidate) !== 'hard' && catalogPairDecision(anchor, candidate).outcome === 'eligible';
+
+let eligibilityRevision = 0;
+/** The repository refreshes products in place, so identity alone cannot key a remembered answer. */
+export const forgetPairEligibility = (): void => { eligibilityRevision += 1; };
+
+/** isCatalogPairEligible for one selection run, which can span slices; a refreshed product clears it. */
+export const createPairEligibilityMemo = (): ((anchor: Product, candidate: Product) => boolean) => {
+  const rows = new Map<Product, Map<Product, boolean>>();
+  let revision = eligibilityRevision;
+  return (anchor, candidate) => {
+    if (revision !== eligibilityRevision) {
+      rows.clear();
+      revision = eligibilityRevision;
+    }
+    let row = rows.get(anchor);
+    if (!row) { row = new Map(); rows.set(anchor, row); }
+    let eligible = row.get(candidate);
+    if (eligible === undefined) {
+      eligible = isCatalogPairEligible(anchor, candidate);
+      row.set(candidate, eligible);
+    }
+    return eligible;
+  };
+};

@@ -2,6 +2,7 @@ import type { Product } from '../types/product';
 import { logger } from '../lib/logger';
 import { getSupabaseClient } from '../lib/supabase';
 import type { ProductAttributeContext, ProductSemanticAttributeRow } from '../src/intelligence/product/productIntelligence';
+import { forgetPairEligibility } from '../src/intelligence/recommendations/catalogPairing';
 import { enrichProduct } from '../src/intelligence/style/productStyle';
 import { forgetSnapshotDigest } from '../src/recommendationCache/fingerprint';
 import { isAttributeRow, isFeedProductRow, mapFeedRow, withVariantColumns } from './catalogProductAdapter';
@@ -40,6 +41,7 @@ export class ProductRepository {
         }
         Object.assign(canonical, product);
         forgetSnapshotDigest(canonical);
+        forgetPairEligibility();
       }
       return canonical;
     });
