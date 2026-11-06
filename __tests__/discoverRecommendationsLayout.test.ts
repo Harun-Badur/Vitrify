@@ -166,6 +166,13 @@ describe('Discover recommendation UI geometry', () => {
     }
   });
 
+  it('gives every strip image the neutral cream loading placeholder', async () => {
+    await mount();
+    const images = tree.root.findAllByType('DiscoverProductImage');
+    expect(images.length).toBeGreaterThan(0);
+    expect(images.every((node) => node.props.placeholderColor === '#ECE3D6')).toBe(true);
+  });
+
   it('preserves image URLs and passes selection/check state and callbacks to floating controls', async () => {
     await mount();
     const images = tree.root.findAllByType('DiscoverProductImage');

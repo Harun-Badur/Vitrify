@@ -19,6 +19,8 @@ export const colors = {
   icon: '#1A1A1A',
   /** Input placeholder. */
   placeholder: '#9CA3AF',
+  /** Nötr krem; görsel yüklenene kadar görsel alanını doldurur. */
+  imagePlaceholder: '#ECE3D6',
   /** Arama/filtre gölge rengi. */
   inputShadow: '#000000',
   accent: '#FE382B',

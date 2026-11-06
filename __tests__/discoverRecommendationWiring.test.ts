@@ -5,6 +5,7 @@ import FeedScreen from '../app/(tabs)/index';
 import { complementaryProductsForDisplay } from '../components/DiscoverRecommendations';
 import { loadDiscoverRecommendationPacket } from '../services/discoverRecommendationCacheService';
 import { anchorContext } from '../src/recommendationCache/feedPacket';
+import * as codec from '../src/recommendationCache/codec';
 import { serializeFinal } from '../src/recommendationCache/codec';
 const getDiscoverRecommendations = jest.fn<Promise<ReturnType<typeof realService.getDiscoverRecommendations>>, [Parameters<typeof realService.getDiscoverRecommendations>[0], unknown?]>();
 import { loadWardrobe } from '../services/wardrobeService';
@@ -754,6 +755,56 @@ describe('Discover recommendation wiring', () => {
     expect(view.root.findAllByType('SwipeCard')[0].props.recommendationStatus).toBe('ready');
     expect(view.root.findByType('DiscoverRecommendations').props.recommendations).not.toEqual([]);
     expect(loadDiscoverRecommendationPacket).toHaveBeenCalledTimes(2);
+  });
+
+  const cardStatus = (view: ReturnType<typeof renderer.create>, id: string) => view.root.findAllByType('SwipeCard')
+    .find(node => (node.props.product as Product).id === id)?.props.recommendationStatus;
+
+  it('makes the new next card ready right after a swipe without another packet, hydrate or render loop', async () => {
+    const view = await mount();
+    expect(cardStatus(view, bottom.id)).toBe('ready');
+    // The warm card was prepared for the exposure after the next card is shown, so it does not match yet.
+    expect(cardStatus(view, shoes.id)).toBe('loading');
+    const hydrate = jest.spyOn(codec, 'hydrateFinal');
+    const before = mockSwipeCardRender.mock.calls.length;
+    mockState.currentProducts = catalog.slice(1);
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    expect(cardStatus(view, shoes.id)).toBe('ready');
+    expect(loadDiscoverRecommendationPacket).toHaveBeenCalledTimes(1);
+    expect(hydrate).not.toHaveBeenCalled();
+    // One render for the new position, one for the now-matching strip; no publish loop.
+    expect(mockSwipeCardRender.mock.calls.slice(before).filter(([id]) => id === shoes.id)).toHaveLength(2);
+    const settled = mockSwipeCardRender.mock.calls.length;
+    await renderer.act(() => { view.update(createElement(FeedScreen)); });
+    expect(mockSwipeCardRender.mock.calls.length).toBe(settled);
+    hydrate.mockRestore();
+  });
+
+  it('scenario: discover_prefetch_swipe_result and the rendered next strip over two swipes', async () => {
+    const info = jest.spyOn(console, 'info').mockImplementation(() => {});
+    const host = globalThis as typeof globalThis & { __DISCOVER_PREFETCH_DIAGNOSTICS__?: { records: Record<string, unknown>[] } };
+    host.__DISCOVER_PREFETCH_DIAGNOSTICS__ = { records: [] };
+    const view = await mount();
+    const rows: { productId: string; cacheAtSwipe: unknown; waitMs: unknown; renderedAtSwipe: unknown }[] = [];
+    for (const [source, rest] of [[top, catalog.slice(1)], [bottom, catalog.slice(2)]] as const) {
+      const target = rest[0];
+      const renderedAtSwipe = cardStatus(view, target.id);
+      await renderer.act(() => {
+        (view.root.findAllByType('SwipeCard').find(node => (node.props.product as Product).id === source.id)!
+          .props.onPass as (product: Product) => void)(source);
+      });
+      mockState.currentProducts = [...rest];
+      await renderer.act(() => { view.update(createElement(FeedScreen)); });
+      const result = host.__DISCOVER_PREFETCH_DIAGNOSTICS__.records.filter(record =>
+        record.type === 'discover_prefetch_swipe_result' && record.productId === target.id).at(-1);
+      rows.push({ productId: target.id, cacheAtSwipe: result?.cacheAtSwipe, waitMs: result?.waitMs, renderedAtSwipe });
+    }
+    // cacheAtSwipe reads the session, so it was already a hit before this fix; the rendered strip was not.
+    expect(rows).toEqual([
+      { productId: bottom.id, cacheAtSwipe: 'hit', waitMs: 0, renderedAtSwipe: 'ready' },
+      { productId: shoes.id, cacheAtSwipe: 'hit', waitMs: 0, renderedAtSwipe: 'ready' },
+    ]);
+    info.mockRestore();
   });
 
 });

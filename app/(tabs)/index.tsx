@@ -368,7 +368,11 @@ export default function FeedScreen() {
     }
     preparationInputs.current = { session: recommendationSession, products: currentProducts, feedStatus, feedPreparationRevision };
     recommendationSession.setPreparationWindow(currentProducts);
-    if (recommendationFocused.current && currentProduct) recommendationSession.activate(currentProduct);
+    // Showing the card changes exposure, so a held entry for the next card may match now. The worker does not
+    // republish unchanged cards, so re-render here (before paint) to let that card's strip and images mount.
+    if (recommendationFocused.current && currentProduct && recommendationSession.activate(currentProduct)) {
+      publishRecommendations(revision => revision + 1);
+    }
   }, [recommendationSession, currentProducts, currentProduct, feedStatus, recommendationRevision, feedPreparationRevision]);
   // Prefetch dedupe only; an evicted URL is at worst prefetched again from the image cache.
   const prefetchedCovers = useRef(new BoundedRecentSet<string>(PREFETCHED_COVER_LIMIT));
