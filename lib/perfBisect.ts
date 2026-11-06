@@ -25,6 +25,9 @@ const config = parsePerfBisect(process.env.EXPO_PUBLIC_PERF_BISECT);
 
 export const perfBisect = (flag: PerfBisectFlag): boolean => config.flags.has(flag);
 
+/** True when the bundle was started with EXPO_PUBLIC_PERF_BISECT defined (any value). */
+export const perfBisectActive = config.active;
+
 const TICK_MS = 50;
 const STALL_LATE_MS = 100;
 const SWIPE_WINDOW_MS = 1_000;
