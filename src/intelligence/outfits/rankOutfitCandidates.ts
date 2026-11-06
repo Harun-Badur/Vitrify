@@ -96,6 +96,7 @@ function* rankingWork<T extends WardrobeItemForCandidate>(
   candidates: readonly OutfitCandidate<T>[],
   anchor?: Product,
   cooperative = false,
+  tieById = false,
 ): Generator<void, RankedOutfitCandidate<T>[], void> {
   const tokenCache = createOutfitRankingTokenCache();
   const compatibilityCache = new WeakMap<Product, number>();
@@ -108,7 +109,8 @@ function* rankingWork<T extends WardrobeItemForCandidate>(
     yield;
   }
   const compare = (left: typeof entries[number], right: typeof entries[number]): number =>
-    compareEvaluated(left, right, semanticCache, footwearCache);
+    compareEvaluated(left, right, semanticCache, footwearCache) ||
+    (tieById ? compareText(left.candidate.id, right.candidate.id) : 0);
   const sorted = cooperative ? yield* cooperativeSort(entries, compare) : entries.sort(compare);
   const ranked: RankedOutfitCandidate<T>[] = [];
   for (const [index, entry] of sorted.entries()) {
@@ -281,8 +283,8 @@ export const rankDiversityCandidatesAsync = async <T extends WardrobeItemForCand
     },
   }, options);
   perfLog('rec_band', { n: candidates.length, optional: boundary.optionalCount, footwear: boundary.footwear });
-  // ID ordering before a stable rank sort is unchanged, including genuinely equal evidence.
-  return rankOutfitCandidatesAsync(candidates, anchor, options);
+  // Ids are unique, so this tie-break equals a stable rank sort of id-sorted input, including equal evidence.
+  return runCooperatively(rankingWork(candidates, anchor, true, true), options);
 };
 
 /** Same ordering as rankOutfitCandidates, without sorting when only rank 1 is used. */

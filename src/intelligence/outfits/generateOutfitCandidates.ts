@@ -237,6 +237,8 @@ function* candidateWork<T extends WardrobeItemForCandidate>(
   }
   for (const base of bases) yield* extend(base, 0, 0, checkedBases.has(base));
   const values = [...candidates.values()];
+  // Search callers order the result themselves; sorting a large band twice is pure cost.
+  if (search) return values;
   const compare = (left: OutfitCandidate<T>, right: OutfitCandidate<T>): number => compareText(left.id, right.id);
   return cooperative ? yield* cooperativeSort(values, compare) : values.sort(compare);
 }
