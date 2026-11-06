@@ -361,6 +361,7 @@ export default function FeedScreen() {
   heldSession.current = { session: recommendationSession, userId };
   const [recommendationRevision, publishRecommendations] = useState(0);
   const recommendationFocused = useRef(false);
+  const stripPublishFrame = useRef<number | null>(null);
   const preparationInputs = useRef({ session: recommendationSession, products: currentProducts, feedStatus, feedPreparationRevision });
   useLayoutEffect(() => {
     if (__DEV__) {
@@ -371,11 +372,18 @@ export default function FeedScreen() {
     recommendationSession.setPreparationWindow(currentProducts);
     stripLatency?.deck(currentProducts.slice(0, 3).map(product => product.id));
     // Showing the card changes exposure, so a held entry for the next card may match now. The worker does not
-    // republish unchanged cards, so re-render here (before paint) to let that card's strip and images mount.
-    if (recommendationFocused.current && currentProduct && recommendationSession.activate(currentProduct)) {
-      publishRecommendations(revision => revision + 1);
+    // republish unchanged cards, so re-render here to let that card's strip and images mount. That card is off
+    // screen: its mount waits for the next frame instead of lengthening the swipe commit.
+    if (recommendationFocused.current && currentProduct && recommendationSession.activate(currentProduct) && stripPublishFrame.current === null) {
+      stripPublishFrame.current = requestAnimationFrame(() => {
+        stripPublishFrame.current = null;
+        publishRecommendations(revision => revision + 1);
+      });
     }
   }, [recommendationSession, currentProducts, currentProduct, feedStatus, recommendationRevision, feedPreparationRevision]);
+  useEffect(() => () => {
+    if (stripPublishFrame.current !== null) cancelAnimationFrame(stripPublishFrame.current);
+  }, []);
   // Prefetch dedupe only; an evicted URL is at worst prefetched again from the image cache.
   const prefetchedCovers = useRef(new BoundedRecentSet<string>(PREFETCHED_COVER_LIMIT));
   useFocusEffect(useCallback(() => {

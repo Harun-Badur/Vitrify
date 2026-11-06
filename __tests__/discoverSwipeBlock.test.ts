@@ -351,6 +351,10 @@ describe('Discover product block motion', () => {
       tree = renderer.create(createElement(SwipeCard, props));
       await Promise.resolve();
     });
+    // Off-screen covers mount one per frame, well before the card can become current.
+    for (let frame = 0; frame < 3; frame++) {
+      await renderer.act(async () => { await new Promise<void>(resolve => { requestAnimationFrame(() => resolve()); }); });
+    }
     const ids = ['bottom', 'shoes', 'coat'];
     const cards = ids.map(id => tree.root.findByProps({ testID: `discover-recommendation-card-${id}` }));
     const beforeRenders = mockImageRenders.mock.calls.filter(([slot]) => slot === 'recommendation').length;

@@ -76,7 +76,7 @@ describe('exposure-independent ranking preparation', () => {
 
   it.each(['top', 'bottom', 'shoes'])('reuses %s ranking across exposure changes with identical full results', async role => {
     const anchor = catalog.find(product => product.outfitRole === role)!;
-    const calls = jest.spyOn(ranking, 'rankDiversityCandidatesAsync');
+    const calls = jest.spyOn(ranking, 'findDiversityBandAsync');
     const owned = ['top', 'bottom', 'shoes'].map((category, index) => ({
       id: `owned-${category}`, category, color: ['black', 'white', 'beige'][index], style_tags: ['casual'],
     }));

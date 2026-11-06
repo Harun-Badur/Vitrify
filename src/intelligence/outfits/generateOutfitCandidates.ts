@@ -126,6 +126,22 @@ export const prepareOutfitItems = <T extends WardrobeItemForCandidate>(input: Ou
   return { normalized, byRole };
 };
 
+/** The candidate record of one valid leaf; the list it returns is proven valid for ranking. */
+export const outfitCandidateFromItems = <T extends WardrobeItemForCandidate>(
+  items: readonly OutfitCandidateItem<T>[],
+): OutfitCandidate<T> => {
+  const ordered = [...items].sort(compareItems);
+  // Ranking re-asks the same question for this exact list; it is already proven valid.
+  markValidOutfitItems(ordered);
+  return {
+    id: JSON.stringify(ordered.map((item) => [item.sourceType, item.sourceId, item.role])),
+    items: ordered,
+    roles: ordered.map((item) => item.role),
+    sources: (['wardrobe', 'catalog'] as const).filter((source) =>
+      ordered.some((item) => item.sourceType === source)),
+  };
+};
+
 /** Search callbacks see valid leaves before IDs, colors, reasons or candidate objects exist. */
 export interface OutfitCandidateSearch<T extends WardrobeItemForCandidate> {
   /** `coreFootwear` is hasCoreFootwear(items), already computed by the search for this node. */
@@ -188,18 +204,8 @@ function* candidateWork<T extends WardrobeItemForCandidate>(
       highestFootwear = footwear;
     }
     if (search && !search.accept(items, optionalCount, coreFootwear)) return;
-    const ordered = [...items].sort(compareItems);
-    // Ranking re-asks the same question for this exact list; it is already proven valid.
-    markValidOutfitItems(ordered);
-    const id = JSON.stringify(ordered.map((item) => [item.sourceType, item.sourceId, item.role]));
-    if (candidates.has(id)) return;
-    candidates.set(id, {
-      id,
-      items: ordered,
-      roles: ordered.map((item) => item.role),
-      sources: (['wardrobe', 'catalog'] as const).filter((source) =>
-        ordered.some((item) => item.sourceType === source)),
-    });
+    const candidate = outfitCandidateFromItems(items);
+    if (!candidates.has(candidate.id)) candidates.set(candidate.id, candidate);
   };
   function* extend(
     items: OutfitCandidateItem<T>[], optionalIndex: number, optionalCount: number, conflictChecked: boolean,
